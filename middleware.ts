@@ -11,6 +11,8 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  // Run on every request except Next.js static files and the API surface.
+  // Clerk's middleware needs Node APIs; Edge would refuse to bundle it.
+  runtime: "nodejs",
+  // Run on every request except Next.js internals and the API surface.
   matcher: ["/((?!_next|api/v1|v1|.*\\..*).*)"],
 };
