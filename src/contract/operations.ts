@@ -31,6 +31,11 @@ import {
   tagUpdateInputSchema,
   tagAttachInputSchema,
 } from "./schemas/tag.js";
+import {
+  contactImportCsvInputSchema,
+  vcardIngestInputSchema,
+  exportAccountFiltersSchema,
+} from "./schemas/import-export.js";
 import { accountUpdateInputSchema } from "@/domain/account.js";
 import { apiKeyCreateInputSchema } from "@/domain/api-key.js";
 import { reversibilityOf, type Reversibility } from "@/domain/action.js";
@@ -490,6 +495,52 @@ export function buildOperationCatalog(): OperationDescriptor[] {
       idempotent: true,
       supportsDryRun: true,
       supportsIntent: true,
+    },
+    // ── import / export ─────────────────────────────────────
+    {
+      operation: "contact.import_csv",
+      description:
+        "Bulk-import contacts from a CSV. Auto-detects name/email/phone columns or use an explicit columnMap. onConflict:'skip' (default) leaves duplicates out, 'link' attaches the row's other identities to the existing contact. ONE AgentAction is emitted with the list of created ids; undoing it bulk-deletes everything created by the import.",
+      inputSchema: zodToJsonSchema(contactImportCsvInputSchema, { name: "ContactImportCsvInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+    {
+      operation: "contact.ingest_vcard",
+      description:
+        "Ingest a vCard. Looks up the contact by any of its EMAIL/TEL identities; creates one if missing (toggleable). Adds any new channel identities (linkedin, telegram, etc.) and returns everything linked. Reversible.",
+      inputSchema: zodToJsonSchema(vcardIngestInputSchema, { name: "VCardIngestInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+    {
+      operation: "account.export",
+      description:
+        "Full or incremental JSON export of the account: contacts, identities, interactions, deals, tasks, notes, tags, links, and (optionally) the audit log. Pass since=ISO to export only rows modified after that timestamp.",
+      inputSchema: zodToJsonSchema(exportAccountFiltersSchema, { name: "AccountExportInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "contact.export_csv",
+      description: "Export contacts as CSV (id, name, primary_email, primary_phone, status, timestamps, identities concat).",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          status: z.string().optional(),
+          since: z.string().datetime().optional(),
+        }),
+        { name: "ContactExportCsvInput" },
+      ),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
     },
   ]);
 }

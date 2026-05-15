@@ -18,9 +18,14 @@ import {
   listActions,
 } from "@/domain/contact.js";
 import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+import { attachContactsImportExport } from "@/api/routes/import-export.js";
 
 export const contactsRoute = new Hono();
 contactsRoute.use("*", apiKeyAuth);
+
+// Attach /import, /ingest/vcard and /export.csv BEFORE the /:id routes so
+// literal segments take priority over the parameterized matcher.
+attachContactsImportExport(contactsRoute);
 
 // LIST
 contactsRoute.get("/", async (c) => {

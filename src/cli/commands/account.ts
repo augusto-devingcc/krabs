@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, type OutputFormat } from "../output.js";
+import { portabilityCommands } from "./portability.js";
 
 type Account = {
   id: string;
@@ -82,6 +83,8 @@ export function accountCommand(): Command {
         });
       },
     );
+
+  cmd.addCommand(portabilityCommands().accountExport);
 
   return cmd;
 }

@@ -72,6 +72,8 @@ const REVERSIBILITY: Record<string, Reversibility> = {
   "tag.delete": "reversible",
   "tag.attach": "reversible",
   "tag.detach": "reversible",
+  "contact.import_csv": "reversible",
+  "contact.ingest_vcard": "reversible",
   // one-way (intentionally not exposed for undo)
   "contact.merge": "one-way",
   // meta
@@ -723,6 +725,75 @@ const undoDispatchers: Record<string, UndoDispatcher> = {
         // Already exists (perhaps the contact was tagged again separately)
         return { reattached: { contactId, tagId }, note: "row already present, no-op" };
       }
+    },
+  },
+
+  // ── import / ingest ────────────────────────────────────
+  "contact.import_csv": {
+    plan: async (_ctx, a) => ({
+      willDeleteContactIds: (a.metadata?.["createdContactIds"] as string[] | undefined) ?? [],
+      willDeleteIdentityIds: (a.metadata?.["createdIdentityIds"] as string[] | undefined) ?? [],
+    }),
+    execute: async (ctx, a, tx) => {
+      const createdContactIds = (a.metadata?.["createdContactIds"] as string[] | undefined) ?? [];
+      const createdIdentityIds = (a.metadata?.["createdIdentityIds"] as string[] | undefined) ?? [];
+      // Delete attached identities for "linked" rows first (they're not bound to any
+      // contact we delete here, so the cascade won't catch them).
+      if (createdIdentityIds.length > 0) {
+        await tx
+          .delete(identities)
+          .where(
+            and(
+              eq(identities.accountId, ctx.accountId),
+              inArray(identities.id, createdIdentityIds),
+            ),
+          );
+      }
+      let deletedContacts = 0;
+      if (createdContactIds.length > 0) {
+        const r = await tx
+          .delete(contacts)
+          .where(
+            and(eq(contacts.accountId, ctx.accountId), inArray(contacts.id, createdContactIds)),
+          );
+        deletedContacts = r.rowsAffected ?? createdContactIds.length;
+      }
+      return {
+        deletedContacts,
+        deletedIdentities: createdIdentityIds.length,
+      };
+    },
+  },
+
+  "contact.ingest_vcard": {
+    plan: async (_ctx, a) => ({
+      willDelete: {
+        contactCreated: Boolean(a.metadata?.["contactCreated"]),
+        contactId: a.metadata?.["contactId"] as string | undefined,
+        addedIdentityIds: (a.metadata?.["addedIdentityIds"] as string[] | undefined) ?? [],
+      },
+    }),
+    execute: async (ctx, a, tx) => {
+      const contactCreated = Boolean(a.metadata?.["contactCreated"]);
+      const contactId = a.metadata?.["contactId"] as string | undefined;
+      const added = (a.metadata?.["addedIdentityIds"] as string[] | undefined) ?? [];
+      // Always detach the identities we added
+      if (added.length > 0) {
+        await tx
+          .delete(identities)
+          .where(and(eq(identities.accountId, ctx.accountId), inArray(identities.id, added)));
+      }
+      // If the contact was newly created by this ingest, delete it (cascade-removes
+      // any remaining identities tied to it)
+      if (contactCreated && contactId) {
+        await tx
+          .delete(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.accountId, ctx.accountId)));
+      }
+      return {
+        deletedContactId: contactCreated ? contactId : null,
+        removedIdentityIds: added,
+      };
     },
   },
 };

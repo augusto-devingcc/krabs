@@ -10,4 +10,5 @@ export * from "./schemas/deal.js";
 export * from "./schemas/task.js";
 export * from "./schemas/note.js";
 export * from "./schemas/tag.js";
+export * from "./schemas/import-export.js";
 export * from "./schemas/agent-action.js";

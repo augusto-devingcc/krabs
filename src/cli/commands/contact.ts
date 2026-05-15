@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
+import { portabilityCommands } from "./portability.js";
 import type { Contact, ContactUpdateInput } from "@/contract/schemas/contact.js";
 import type { Identity } from "@/contract/schemas/identity.js";
 
@@ -370,6 +371,11 @@ export function contactCommand(): Command {
         });
       },
     );
+
+  const portability = portabilityCommands();
+  cmd.addCommand(portability.importCsv);
+  cmd.addCommand(portability.ingestVcard);
+  cmd.addCommand(portability.exportCsv);
 
   return cmd;
 }

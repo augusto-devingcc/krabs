@@ -1266,6 +1266,135 @@ async function main() {
     },
   );
 
+  // ── Import / Export ──────────────────────────────────────
+  server.registerTool(
+    "contact_import_csv",
+    {
+      title: "Bulk-import contacts from CSV",
+      description:
+        "Import contacts from a CSV string. Auto-detects name/email/phone columns or use columnMap. onConflict:'skip' leaves duplicates out, 'link' attaches extra identities to the existing contact. One AgentAction with the list of created ids is emitted — undoing it bulk-deletes the import.",
+      inputSchema: {
+        csv: z.string().min(1).max(20_000_000),
+        columnMap: z
+          .object({
+            name: z.string().optional(),
+            email: z.string().optional(),
+            phone: z.string().optional(),
+            status: z.string().optional(),
+          })
+          .optional(),
+        defaultStatus: z.enum(contactStatuses).optional(),
+        onConflict: z.enum(["skip", "link"]).optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { csv: a.csv };
+        if (a.columnMap) body.columnMap = a.columnMap;
+        if (a.defaultStatus) body.defaultStatus = a.defaultStatus;
+        if (a.onConflict) body.onConflict = a.onConflict;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/contacts/import", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "contact_ingest_vcard",
+    {
+      title: "Ingest vCard",
+      description:
+        "Ingest a vCard text block. Looks up the contact by any email/phone identity, creates one if missing (toggleable), and attaches any new identities (linkedin, telegram, etc.). Returns the contact + all its identities + which ones were newly added.",
+      inputSchema: {
+        vcard: z.string().min(1).max(1_000_000),
+        createContactIfMissing: z.boolean().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { vcard: a.vcard };
+        if (a.createContactIfMissing !== undefined) body.createContactIfMissing = a.createContactIfMissing;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/contacts/ingest/vcard", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "account_export",
+    {
+      title: "Export account as JSON",
+      description:
+        "Returns a full JSON dump of the account: contacts, identities, interactions, deals, tasks, notes, tags, links, and (optionally) the audit log. Pass since=ISO for an incremental export.",
+      inputSchema: {
+        since: z.string().datetime().optional(),
+        includeActions: z.boolean().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string> = {};
+        if (a.since) query.since = a.since;
+        if (a.includeActions === false) query.include_actions = "0";
+        return textResult(await callApi(cfg, "/v1/account/export", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "contact_export_csv",
+    {
+      title: "Export contacts as CSV",
+      description:
+        "Returns CSV text with one row per contact (id, name, primary email/phone, status, timestamps, and identities concatenated).",
+      inputSchema: {
+        status: z.enum(contactStatuses).optional(),
+        since: z.string().datetime().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string> = {};
+        if (a.status) query.status = a.status;
+        if (a.since) query.since = a.since;
+        // CSV endpoint returns raw text, not JSON — bypass apiRequest envelope
+        const url = new URL("/v1/contacts/export.csv", cfg.apiUrl);
+        for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${cfg.token}` } });
+        if (!res.ok) {
+          return errorResult(
+            new ApiClientError(res.status, {
+              code: res.status === 401 ? "UNAUTHENTICATED" : "INTERNAL",
+              message: `Export failed with status ${res.status}`,
+            }),
+          );
+        }
+        const csv = await res.text();
+        return { content: [{ type: "text" as const, text: csv }] };
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
   // ── Audit ─────────────────────────────────────────────────
   server.registerTool(
     "action_get",
