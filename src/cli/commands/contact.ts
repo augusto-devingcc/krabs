@@ -294,6 +294,30 @@ export function contactCommand(): Command {
     );
 
   cmd
+    .command("find")
+    .description("Look up a contact by one of its identities (email/phone/telegram/etc.)")
+    .requiredOption("--kind <kind>")
+    .requiredOption("--value <value>")
+    .option("--format <format>", "json|table|auto", "auto")
+    .action(async (opts: { kind: string; value: string; format: OutputFormat }) => {
+      const cfg = requireConfig();
+      const result = await apiRequest<{ contact: Contact; identity: Identity }>(
+        cfg,
+        "/v1/contacts/find",
+        { query: { kind: opts.kind, value: opts.value } },
+      );
+      const fmt = pickFormat(opts.format);
+      emit(result, fmt, () =>
+        [
+          `${result.contact.id} (${result.contact.name})`,
+          `  matched: ${result.identity.kind} = ${result.identity.value}`,
+          `  email:   ${result.contact.primaryEmail ?? "-"}`,
+          `  phone:   ${result.contact.primaryPhone ?? "-"}`,
+        ].join("\n"),
+      );
+    });
+
+  cmd
     .command("merge")
     .description("Merge mergeId into keepId (combines identities, deletes mergeId)")
     .requiredOption("--keep <id>", "Contact id to keep")

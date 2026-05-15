@@ -118,6 +118,45 @@ export const agentActions = sqliteTable(
   }),
 );
 
+export const interactionKinds = [
+  "email_in",
+  "email_out",
+  "call",
+  "meeting",
+  "message",
+  "note",
+  "agent_log",
+  "custom",
+] as const;
+export type InteractionKind = (typeof interactionKinds)[number];
+
+export const interactionDirections = ["inbound", "outbound", "internal"] as const;
+export type InteractionDirection = (typeof interactionDirections)[number];
+
+export const interactions = sqliteTable(
+  "interactions",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+    kind: text("kind").notNull(),
+    direction: text("direction"),
+    source: text("source"),
+    subject: text("subject"),
+    body: text("body"),
+    metadata: text("metadata"),
+    occurredAt: text("occurred_at").notNull(),
+    createdAt: text("created_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountOccurredIdx: index("interactions_account_occurred_idx").on(t.accountId, t.occurredAt),
+    contactOccurredIdx: index("interactions_contact_occurred_idx").on(t.contactId, t.occurredAt),
+    kindIdx: index("interactions_kind_idx").on(t.accountId, t.kind),
+  }),
+);
+
 export const idempotencyKeys = sqliteTable(
   "idempotency_keys",
   {
@@ -145,3 +184,4 @@ export type ContactRow = typeof contacts.$inferSelect;
 export type IdentityRow = typeof identities.$inferSelect;
 export type AgentActionRow = typeof agentActions.$inferSelect;
 export type IdempotencyKeyRow = typeof idempotencyKeys.$inferSelect;
+export type InteractionRow = typeof interactions.$inferSelect;

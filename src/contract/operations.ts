@@ -5,6 +5,12 @@ import {
   contactUpdateInputSchema,
   contactListFiltersSchema,
 } from "./schemas/contact.js";
+import { identityAddInputSchema, identityFindInputSchema } from "./schemas/identity.js";
+import {
+  interactionCreateInputSchema,
+  interactionListFiltersSchema,
+  emailIngestInputSchema,
+} from "./schemas/interaction.js";
 import { accountUpdateInputSchema } from "@/domain/account.js";
 import { apiKeyCreateInputSchema } from "@/domain/api-key.js";
 import { idSchema } from "./ids.js";
@@ -149,6 +155,81 @@ export function buildOperationCatalog(): OperationDescriptor[] {
       idempotent: true,
       supportsDryRun: false,
       supportsIntent: false,
+    },
+    {
+      operation: "identity.add",
+      description:
+        "Attach an additional channel identity (email, phone, telegram, whatsapp, linkedin, etc.) to a contact. The same value cannot belong to two contacts; merge first if needed.",
+      inputSchema: zodToJsonSchema(identityAddInputSchema, { name: "IdentityAddInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+    {
+      operation: "identity.remove",
+      description: "Detach an identity from its contact. The contact itself is preserved.",
+      inputSchema: zodToJsonSchema(
+        z.object({ id: idSchema("identity") }),
+        { name: "IdentityRemoveInput" },
+      ),
+      destructive: true,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+    {
+      operation: "identity.list",
+      description: "List identities, optionally filtered by contact or kind.",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          contactId: idSchema("contact").optional(),
+          kind: z.string().optional(),
+        }),
+        { name: "IdentityListInput" },
+      ),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "contact.find_by_identity",
+      description:
+        "Look up a single contact by one of its identities (email, phone, telegram, etc.). Returns the contact and the matched identity, or 404 if no match.",
+      inputSchema: zodToJsonSchema(identityFindInputSchema, { name: "ContactFindInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "interaction.create",
+      description: "Manually create an Interaction (call, meeting, note, message, etc.).",
+      inputSchema: zodToJsonSchema(interactionCreateInputSchema, { name: "InteractionCreateInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+    {
+      operation: "interaction.list",
+      description: "List interactions with cursor pagination and filters (contactId, kind, since).",
+      inputSchema: zodToJsonSchema(interactionListFiltersSchema, { name: "InteractionListInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "interaction.ingest_email",
+      description:
+        "Ingest a parsed email: finds the contact by sender email (or creates one), inserts an email Interaction, and returns everything linked. Pass createContactIfMissing:false to require an existing match.",
+      inputSchema: zodToJsonSchema(emailIngestInputSchema, { name: "EmailIngestInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
     },
   ];
 }

@@ -15,3 +15,18 @@ export const identitySchema = z.object({
 });
 
 export type Identity = z.infer<typeof identitySchema>;
+
+export const identityAddInputSchema = z.object({
+  contactId: idSchema("contact"),
+  kind: identityKindSchema,
+  value: z.string().trim().min(1).max(500),
+  confidence: z.number().int().min(0).max(100).optional(),
+});
+
+export const identityFindInputSchema = z.object({
+  kind: identityKindSchema,
+  value: z.string().trim().min(1).max(500),
+});
+
+export type IdentityAddInput = z.infer<typeof identityAddInputSchema>;
+export type IdentityFindInput = z.infer<typeof identityFindInputSchema>;

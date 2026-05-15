@@ -2,7 +2,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { contactStatuses } from "@/db/schema.js";
+import { contactStatuses, identityKinds, interactionKinds, interactionDirections } from "@/db/schema.js";
 import { apiRequest, ApiClientError } from "@/cli/client.js";
 
 const DEFAULT_API_URL = "http://localhost:3000";
@@ -406,6 +406,235 @@ async function main() {
         if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
         if (a.dryRun) opts.dryRun = a.dryRun;
         return textResult(await callApi(cfg, `/v1/api-keys/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Identity ──────────────────────────────────────────────
+  server.registerTool(
+    "identity_add",
+    {
+      title: "Add identity to contact",
+      description:
+        "Attach an additional channel identity (email, phone, telegram, whatsapp, linkedin, etc.) to an existing contact. If the same kind+value already belongs to a different contact, you get CONFLICT — use contact_merge first.",
+      inputSchema: {
+        contactId: z.string().regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/),
+        kind: z.enum(identityKinds),
+        value: z.string().min(1).max(500),
+        confidence: z.number().int().min(0).max(100).optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = {
+          contactId: a.contactId,
+          kind: a.kind,
+          value: a.value,
+        };
+        if (a.confidence !== undefined) body.confidence = a.confidence;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/identities", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "identity_remove",
+    {
+      title: "Remove identity (destructive)",
+      description:
+        "Detach an identity from its contact. The contact is preserved. Pass dryRun:true to preview.",
+      inputSchema: {
+        id: z.string().regex(/^idy_[0-9A-HJKMNP-TV-Z]{26}$/),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/identities/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "identity_list",
+    {
+      title: "List identities",
+      description: "List identities. Filter by contactId or by kind.",
+      inputSchema: {
+        contactId: z.string().optional(),
+        kind: z.enum(identityKinds).optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string> = {};
+        if (a.contactId) query.contact_id = a.contactId;
+        if (a.kind) query.kind = a.kind;
+        return textResult(await callApi(cfg, "/v1/identities", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "contact_find_by_identity",
+    {
+      title: "Find contact by identity",
+      description:
+        "Look up a single contact by one of its identities. Faster and more reliable than searching by name/email. Returns the contact and the matched identity, or NOT_FOUND.",
+      inputSchema: {
+        kind: z.enum(identityKinds),
+        value: z.string().min(1).max(500),
+      },
+    },
+    async (a) => {
+      try {
+        return textResult(
+          await callApi(cfg, "/v1/contacts/find", { method: "GET", query: { kind: a.kind, value: a.value } }),
+        );
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Interactions ──────────────────────────────────────────
+  server.registerTool(
+    "interaction_create",
+    {
+      title: "Create interaction",
+      description:
+        "Create an Interaction (call, meeting, note, message, etc.). Either tied to a contact or standalone.",
+      inputSchema: {
+        contactId: z.string().regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/).optional(),
+        kind: z.enum(interactionKinds),
+        direction: z.enum(interactionDirections).optional(),
+        source: z.string().max(200).optional(),
+        subject: z.string().max(1000).optional(),
+        body: z.string().max(100_000).optional(),
+        metadata: z.record(z.unknown()).optional(),
+        occurredAt: z.string().datetime().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { kind: a.kind };
+        if (a.contactId) body.contactId = a.contactId;
+        if (a.direction) body.direction = a.direction;
+        if (a.source) body.source = a.source;
+        if (a.subject) body.subject = a.subject;
+        if (a.body) body.body = a.body;
+        if (a.metadata) body.metadata = a.metadata;
+        if (a.occurredAt) body.occurredAt = a.occurredAt;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/interactions", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "interaction_list",
+    {
+      title: "List interactions",
+      description: "List interactions (the timeline). Filter by contact, kind, or since-date. Cursor pagination.",
+      inputSchema: {
+        contactId: z.string().optional(),
+        kind: z.enum(interactionKinds).optional(),
+        since: z.string().datetime().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string | number> = {};
+        if (a.contactId) query.contact_id = a.contactId;
+        if (a.kind) query.kind = a.kind;
+        if (a.since) query.since = a.since;
+        if (a.limit) query.limit = a.limit;
+        if (a.cursor) query.cursor = a.cursor;
+        return textResult(await callApi(cfg, "/v1/interactions", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "interaction_ingest_email",
+    {
+      title: "Ingest email",
+      description:
+        "Ingest a parsed email. Finds the contact by sender email identity (or creates one if missing), inserts an email Interaction tied to that contact, and records the audit trail in a single call. Pass createContactIfMissing:false to require an existing match.",
+      inputSchema: {
+        from: z.object({
+          name: z.string().optional(),
+          email: z.string().email(),
+        }),
+        to: z
+          .array(
+            z.object({
+              name: z.string().optional(),
+              email: z.string().email(),
+            }),
+          )
+          .optional(),
+        subject: z.string().max(1000).optional(),
+        body: z.string().max(500_000).optional(),
+        receivedAt: z.string().datetime().optional(),
+        messageId: z.string().optional(),
+        direction: z.enum(interactionDirections).optional(),
+        source: z.string().optional(),
+        createContactIfMissing: z.boolean().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { from: a.from };
+        if (a.to) body.to = a.to;
+        if (a.subject) body.subject = a.subject;
+        if (a.body) body.body = a.body;
+        if (a.receivedAt) body.receivedAt = a.receivedAt;
+        if (a.messageId) body.messageId = a.messageId;
+        if (a.direction) body.direction = a.direction;
+        if (a.source) body.source = a.source;
+        if (a.createContactIfMissing !== undefined) body.createContactIfMissing = a.createContactIfMissing;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/interactions/ingest/email", opts));
       } catch (err) {
         return errorResult(err);
       }

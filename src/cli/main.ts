@@ -6,6 +6,8 @@ import { actionCommand } from "./commands/action.js";
 import { accountCommand } from "./commands/account.js";
 import { keyCommand } from "./commands/key.js";
 import { schemaCommand } from "./commands/schema.js";
+import { identityCommand } from "./commands/identity.js";
+import { interactionCommand } from "./commands/interaction.js";
 import { ApiClientError } from "./client.js";
 import { CliConfigError } from "./config.js";
 import { codeToExit, ExitCode } from "./exit-codes.js";
@@ -23,6 +25,8 @@ program.addCommand(schemaCommand());
 program.addCommand(accountCommand());
 program.addCommand(keyCommand());
 program.addCommand(contactCommand());
+program.addCommand(identityCommand());
+program.addCommand(interactionCommand());
 program.addCommand(actionCommand());
 
 async function main() {
