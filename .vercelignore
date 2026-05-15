@@ -1,0 +1,9 @@
+data/
+tests/
+*.test.ts
+.env*
+dist/
+coverage/
+.vitest-cache/
+.tsdown-cache/
+.DS_Store

@@ -25,6 +25,6 @@
     "sourceMap": true,
     "noEmit": true
   },
-  "include": ["src/**/*", "tests/**/*", "*.config.ts"],
+  "include": ["src/**/*", "tests/**/*", "api/**/*", "*.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

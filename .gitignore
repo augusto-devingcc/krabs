@@ -2,6 +2,8 @@ node_modules
 dist
 debug-*.mjs
 .env
+.env.*
+.vercel
 .env.local
 *.log
 .DS_Store
@@ -9,3 +11,4 @@ data/
 coverage/
 .vitest-cache/
 .tsdown-cache/
+.env*.local
