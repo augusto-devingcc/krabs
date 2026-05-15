@@ -3,7 +3,7 @@
   "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
   "buildCommand": "echo 'serverless functions only; no build step'",
   "outputDirectory": ".",
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/api/index" }],
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
