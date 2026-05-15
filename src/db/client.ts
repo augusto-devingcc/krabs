@@ -1,9 +1,4 @@
-// Use the pure-HTTP client variant so deployments without native bindings
-// (e.g. Vercel serverless functions installed with --ignore-scripts) work.
-// For local SQLite files we fall back to the default node client at the
-// bottom of this module.
-import { createClient as createWebClient } from "@libsql/client/web";
-import { createClient as createNodeClient, type Client } from "@libsql/client";
+import { createClient as createWebClient, type Client } from "@libsql/client/web";
 import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "./schema.js";
 
@@ -18,9 +13,22 @@ const authToken = process.env.DATABASE_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKE
 const clientConfig: { url: string; authToken?: string } = { url };
 if (authToken) clientConfig.authToken = authToken;
 
-// HTTP/libsql:// URLs use the web client (no native bindings).
-// file: URLs (local dev/tests) need the node client which can talk to SQLite files.
-const isRemote = url.startsWith("libsql://") || url.startsWith("https://") || url.startsWith("http://");
-export const libsql: Client = isRemote ? createWebClient(clientConfig) : createNodeClient(clientConfig);
+const isRemote =
+  url.startsWith("libsql://") ||
+  url.startsWith("https://") ||
+  url.startsWith("http://");
+
+// In production (remote Turso) use the pure-HTTP client — no native binding.
+// For local dev/tests with file: URLs, dynamically import the full node
+// client so the serverless bundle never has to resolve native deps.
+let client: Client;
+if (isRemote) {
+  client = createWebClient(clientConfig);
+} else {
+  const mod = await import("@libsql/client");
+  client = mod.createClient(clientConfig);
+}
+
+export const libsql: Client = client;
 export const db = drizzle(libsql, { schema });
 export type Db = typeof db;
