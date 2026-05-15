@@ -3,13 +3,20 @@ import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqli
 
 const nowDefault = sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`;
 
-export const accounts = sqliteTable("accounts", {
-  id: text("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  name: text("name"),
-  createdAt: text("created_at").notNull().default(nowDefault),
-  updatedAt: text("updated_at").notNull().default(nowDefault),
-});
+export const accounts = sqliteTable(
+  "accounts",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull().unique(),
+    name: text("name"),
+    clerkUserId: text("clerk_user_id"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    clerkUserIdx: uniqueIndex("accounts_clerk_user_id_idx").on(t.clerkUserId),
+  }),
+);
 
 export const apiKeys = sqliteTable(
   "api_keys",
