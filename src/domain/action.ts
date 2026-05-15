@@ -4,15 +4,24 @@ import {
   agentActions,
   apiKeys,
   contacts,
+  contactTags,
   identities,
   interactions,
   accounts,
+  deals,
+  tasks,
+  notes,
+  tags,
 } from "@/db/schema.js";
 import { ApiError } from "@/contract/errors.js";
 import { newId } from "@/contract/ids.js";
 import type { Contact } from "@/contract/schemas/contact.js";
 import type { Identity } from "@/contract/schemas/identity.js";
 import type { Interaction } from "@/contract/schemas/interaction.js";
+import type { Deal } from "@/contract/schemas/deal.js";
+import type { Task } from "@/contract/schemas/task.js";
+import type { Note } from "@/contract/schemas/note.js";
+import type { Tag } from "@/contract/schemas/tag.js";
 import {
   buildAction,
   buildIdempotencyRecord,
@@ -49,6 +58,20 @@ const REVERSIBILITY: Record<string, Reversibility> = {
   "interaction.create": "reversible",
   "interaction.delete": "reversible",
   "interaction.ingest_email": "reversible",
+  "deal.create": "reversible",
+  "deal.update": "reversible",
+  "deal.delete": "reversible",
+  "task.create": "reversible",
+  "task.update": "reversible",
+  "task.delete": "reversible",
+  "note.create": "reversible",
+  "note.update": "reversible",
+  "note.delete": "reversible",
+  "tag.create": "reversible",
+  "tag.update": "reversible",
+  "tag.delete": "reversible",
+  "tag.attach": "reversible",
+  "tag.detach": "reversible",
   // one-way (intentionally not exposed for undo)
   "contact.merge": "one-way",
   // meta
@@ -458,6 +481,248 @@ const undoDispatchers: Record<string, UndoDispatcher> = {
         reversal.deletedContactId = contactId;
       }
       return reversal;
+    },
+  },
+
+  // ── deals ────────────────────────────────────────────────
+  "deal.create": {
+    plan: async (_ctx, a) => ({ willDeleteDealId: a.targetId }),
+    execute: async (ctx, a, tx) => {
+      await tx
+        .delete(deals)
+        .where(and(eq(deals.id, a.targetId), eq(deals.accountId, ctx.accountId)));
+      return { deletedDealId: a.targetId };
+    },
+  },
+  "deal.update": {
+    plan: async (_ctx, a) => ({ willRestore: a.metadata?.["before"] as Deal | undefined }),
+    execute: async (ctx, a, tx) => {
+      const before = a.metadata?.["before"] as Deal | undefined;
+      if (!before) throw new ApiError({ code: "CONFLICT", message: "No before-snapshot in metadata" });
+      await tx
+        .update(deals)
+        .set({
+          title: before.title,
+          contactId: before.contactId,
+          stage: before.stage,
+          status: before.status,
+          value: before.value,
+          currency: before.currency,
+          expectedCloseDate: before.expectedCloseDate,
+          customFields: before.customFields ? JSON.stringify(before.customFields) : null,
+          updatedAt: before.updatedAt,
+        })
+        .where(and(eq(deals.id, a.targetId), eq(deals.accountId, ctx.accountId)));
+      return { restored: before };
+    },
+  },
+  "deal.delete": {
+    plan: async (_ctx, a) => ({ willRestore: a.metadata?.["snapshot"] as Deal | undefined }),
+    execute: async (ctx, a, tx) => {
+      const snap = a.metadata?.["snapshot"] as Deal | undefined;
+      if (!snap) throw new ApiError({ code: "CONFLICT", message: "No snapshot in metadata" });
+      await tx.insert(deals).values({
+        id: snap.id,
+        accountId: snap.accountId,
+        contactId: snap.contactId,
+        title: snap.title,
+        stage: snap.stage,
+        status: snap.status,
+        value: snap.value,
+        currency: snap.currency,
+        expectedCloseDate: snap.expectedCloseDate,
+        customFields: snap.customFields ? JSON.stringify(snap.customFields) : null,
+        createdAt: snap.createdAt,
+        updatedAt: snap.updatedAt,
+      });
+      return { restoredDealId: snap.id };
+    },
+  },
+
+  // ── tasks ────────────────────────────────────────────────
+  "task.create": {
+    plan: async (_ctx, a) => ({ willDeleteTaskId: a.targetId }),
+    execute: async (ctx, a, tx) => {
+      await tx
+        .delete(tasks)
+        .where(and(eq(tasks.id, a.targetId), eq(tasks.accountId, ctx.accountId)));
+      return { deletedTaskId: a.targetId };
+    },
+  },
+  "task.update": {
+    plan: async (_ctx, a) => ({ willRestore: a.metadata?.["before"] as Task | undefined }),
+    execute: async (ctx, a, tx) => {
+      const before = a.metadata?.["before"] as Task | undefined;
+      if (!before) throw new ApiError({ code: "CONFLICT", message: "No before-snapshot in metadata" });
+      await tx
+        .update(tasks)
+        .set({
+          title: before.title,
+          description: before.description,
+          contactId: before.contactId,
+          dealId: before.dealId,
+          status: before.status,
+          priority: before.priority,
+          dueAt: before.dueAt,
+          completedAt: before.completedAt,
+          updatedAt: before.updatedAt,
+        })
+        .where(and(eq(tasks.id, a.targetId), eq(tasks.accountId, ctx.accountId)));
+      return { restored: before };
+    },
+  },
+  "task.delete": {
+    plan: async (_ctx, a) => ({ willRestore: a.metadata?.["snapshot"] as Task | undefined }),
+    execute: async (ctx, a, tx) => {
+      const snap = a.metadata?.["snapshot"] as Task | undefined;
+      if (!snap) throw new ApiError({ code: "CONFLICT", message: "No snapshot in metadata" });
+      await tx.insert(tasks).values({
+        id: snap.id,
+        accountId: snap.accountId,
+        contactId: snap.contactId,
+        dealId: snap.dealId,
+        title: snap.title,
+        description: snap.description,
+        status: snap.status,
+        priority: snap.priority,
+        dueAt: snap.dueAt,
+        completedAt: snap.completedAt,
+        createdAt: snap.createdAt,
+        updatedAt: snap.updatedAt,
+      });
+      return { restoredTaskId: snap.id };
+    },
+  },
+
+  // ── notes ────────────────────────────────────────────────
+  "note.create": {
+    plan: async (_ctx, a) => ({ willDeleteNoteId: a.targetId }),
+    execute: async (ctx, a, tx) => {
+      await tx
+        .delete(notes)
+        .where(and(eq(notes.id, a.targetId), eq(notes.accountId, ctx.accountId)));
+      return { deletedNoteId: a.targetId };
+    },
+  },
+  "note.update": {
+    plan: async (_ctx, a) => ({ willRestore: a.metadata?.["before"] as Note | undefined }),
+    execute: async (ctx, a, tx) => {
+      const before = a.metadata?.["before"] as Note | undefined;
+      if (!before) throw new ApiError({ code: "CONFLICT", message: "No before-snapshot in metadata" });
+      await tx
+        .update(notes)
+        .set({
+          body: before.body,
+          title: before.title,
+          contactId: before.contactId,
+          dealId: before.dealId,
+          updatedAt: before.updatedAt,
+        })
+        .where(and(eq(notes.id, a.targetId), eq(notes.accountId, ctx.accountId)));
+      return { restored: before };
+    },
+  },
+  "note.delete": {
+    plan: async (_ctx, a) => ({ willRestore: a.metadata?.["snapshot"] as Note | undefined }),
+    execute: async (ctx, a, tx) => {
+      const snap = a.metadata?.["snapshot"] as Note | undefined;
+      if (!snap) throw new ApiError({ code: "CONFLICT", message: "No snapshot in metadata" });
+      await tx.insert(notes).values({
+        id: snap.id,
+        accountId: snap.accountId,
+        contactId: snap.contactId,
+        dealId: snap.dealId,
+        title: snap.title,
+        body: snap.body,
+        createdAt: snap.createdAt,
+        updatedAt: snap.updatedAt,
+      });
+      return { restoredNoteId: snap.id };
+    },
+  },
+
+  // ── tags ─────────────────────────────────────────────────
+  "tag.create": {
+    plan: async (_ctx, a) => ({ willDeleteTagId: a.targetId }),
+    execute: async (ctx, a, tx) => {
+      await tx
+        .delete(tags)
+        .where(and(eq(tags.id, a.targetId), eq(tags.accountId, ctx.accountId)));
+      return { deletedTagId: a.targetId };
+    },
+  },
+  "tag.update": {
+    plan: async (_ctx, a) => ({ willRestore: a.metadata?.["before"] as Tag | undefined }),
+    execute: async (ctx, a, tx) => {
+      const before = a.metadata?.["before"] as Tag | undefined;
+      if (!before) throw new ApiError({ code: "CONFLICT", message: "No before-snapshot in metadata" });
+      await tx
+        .update(tags)
+        .set({ name: before.name, color: before.color })
+        .where(and(eq(tags.id, a.targetId), eq(tags.accountId, ctx.accountId)));
+      return { restored: before };
+    },
+  },
+  "tag.delete": {
+    plan: async (_ctx, a) => ({
+      willRestore: a.metadata?.["snapshot"] as { tag: Tag; contactIds: string[] } | undefined,
+    }),
+    execute: async (ctx, a, tx) => {
+      const snap = a.metadata?.["snapshot"] as { tag: Tag; contactIds: string[] } | undefined;
+      if (!snap) throw new ApiError({ code: "CONFLICT", message: "No snapshot in metadata" });
+      await tx.insert(tags).values({
+        id: snap.tag.id,
+        accountId: snap.tag.accountId,
+        name: snap.tag.name,
+        color: snap.tag.color,
+        createdAt: snap.tag.createdAt,
+      });
+      const reattached: string[] = [];
+      for (const contactId of snap.contactIds) {
+        try {
+          await tx.insert(contactTags).values({ contactId, tagId: snap.tag.id });
+          reattached.push(contactId);
+        } catch {
+          /* contact may have been deleted since; skip silently */
+        }
+      }
+      return { restoredTagId: snap.tag.id, reattachedContactIds: reattached };
+    },
+  },
+  "tag.attach": {
+    plan: async (_ctx, a) => ({
+      willDetach: {
+        contactId: a.metadata?.["contactId"] as string,
+        tagId: a.metadata?.["tagId"] as string,
+      },
+    }),
+    execute: async (_ctx, a, tx) => {
+      const contactId = a.metadata?.["contactId"] as string;
+      const tagId = a.metadata?.["tagId"] as string;
+      await tx
+        .delete(contactTags)
+        .where(and(eq(contactTags.contactId, contactId), eq(contactTags.tagId, tagId)));
+      return { detached: { contactId, tagId } };
+    },
+  },
+  "tag.detach": {
+    plan: async (_ctx, a) => ({
+      willReattach: {
+        contactId: a.metadata?.["contactId"] as string,
+        tagId: a.metadata?.["tagId"] as string,
+      },
+    }),
+    execute: async (_ctx, a, tx) => {
+      const contactId = a.metadata?.["contactId"] as string;
+      const tagId = a.metadata?.["tagId"] as string;
+      const createdAt = (a.metadata?.["createdAt"] as string | undefined) ?? new Date().toISOString();
+      try {
+        await tx.insert(contactTags).values({ contactId, tagId, createdAt });
+        return { reattached: { contactId, tagId } };
+      } catch {
+        // Already exists (perhaps the contact was tagged again separately)
+        return { reattached: { contactId, tagId }, note: "row already present, no-op" };
+      }
     },
   },
 };

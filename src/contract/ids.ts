@@ -11,6 +11,10 @@ const prefixes = {
   agentAction: "act",
   idempotencyKey: "idem",
   interaction: "int",
+  deal: "dl",
+  task: "tsk",
+  note: "not",
+  tag: "tag",
 } as const;
 
 export type EntityKind = keyof typeof prefixes;

@@ -6,4 +6,8 @@ export * from "./schemas/api-key.js";
 export * from "./schemas/contact.js";
 export * from "./schemas/identity.js";
 export * from "./schemas/interaction.js";
+export * from "./schemas/deal.js";
+export * from "./schemas/task.js";
+export * from "./schemas/note.js";
+export * from "./schemas/tag.js";
 export * from "./schemas/agent-action.js";

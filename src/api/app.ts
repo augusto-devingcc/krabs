@@ -7,6 +7,10 @@ import { apiKeysRoute } from "./routes/api-keys.js";
 import { schemaRoute } from "./routes/schema.js";
 import { identitiesRoute, contactFindRoute } from "./routes/identities.js";
 import { interactionsRoute } from "./routes/interactions.js";
+import { dealsRoute } from "./routes/deals.js";
+import { tasksRoute } from "./routes/tasks.js";
+import { notesRoute } from "./routes/notes.js";
+import { tagsRoute } from "./routes/tags.js";
 import { errorHandler } from "./middleware/error.js";
 
 export function buildApp() {
@@ -24,6 +28,10 @@ export function buildApp() {
   app.route("/v1/contacts", contactsRoute);
   app.route("/v1/identities", identitiesRoute);
   app.route("/v1/interactions", interactionsRoute);
+  app.route("/v1/deals", dealsRoute);
+  app.route("/v1/tasks", tasksRoute);
+  app.route("/v1/notes", notesRoute);
+  app.route("/v1/tags", tagsRoute);
   app.route("/v1/actions", actionsRoute);
 
   app.notFound((c) =>

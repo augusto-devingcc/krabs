@@ -10,6 +10,7 @@ export const targetKindSchema = z.enum([
   "task",
   "note",
   "tag",
+  "contact_tag",
   "interaction",
 ]);
 

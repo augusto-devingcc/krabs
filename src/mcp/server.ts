@@ -2,7 +2,15 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { contactStatuses, identityKinds, interactionKinds, interactionDirections } from "@/db/schema.js";
+import {
+  contactStatuses,
+  identityKinds,
+  interactionKinds,
+  interactionDirections,
+  dealStatuses,
+  taskStatuses,
+  taskPriorities,
+} from "@/db/schema.js";
 import { apiRequest, ApiClientError } from "@/cli/client.js";
 
 const DEFAULT_API_URL = "http://localhost:3000";
@@ -661,6 +669,597 @@ async function main() {
         if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
         if (a.dryRun) opts.dryRun = a.dryRun;
         return textResult(await callApi(cfg, `/v1/interactions/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Deals ─────────────────────────────────────────────────
+  const contactIdRegex = /^cnt_[0-9A-HJKMNP-TV-Z]{26}$/;
+  const dealIdRegex = /^dl_[0-9A-HJKMNP-TV-Z]{26}$/;
+  const taskIdRegex = /^tsk_[0-9A-HJKMNP-TV-Z]{26}$/;
+  const noteIdRegex = /^not_[0-9A-HJKMNP-TV-Z]{26}$/;
+  const tagIdRegex = /^tag_[0-9A-HJKMNP-TV-Z]{26}$/;
+
+  server.registerTool(
+    "deal_create",
+    {
+      title: "Create deal",
+      description: "Create a new deal (revenue opportunity). Optionally tied to a contact.",
+      inputSchema: {
+        title: z.string().min(1).max(200),
+        contactId: z.string().regex(contactIdRegex).optional(),
+        stage: z.string().min(1).max(50).optional(),
+        status: z.enum(dealStatuses).optional(),
+        value: z.number().int().nonnegative().optional(),
+        currency: z.string().length(3).optional(),
+        expectedCloseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { title: a.title };
+        if (a.contactId) body.contactId = a.contactId;
+        if (a.stage) body.stage = a.stage;
+        if (a.status) body.status = a.status;
+        if (a.value !== undefined) body.value = a.value;
+        if (a.currency) body.currency = a.currency;
+        if (a.expectedCloseDate) body.expectedCloseDate = a.expectedCloseDate;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/deals", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "deal_get",
+    {
+      title: "Get deal",
+      description: "Fetch a deal by id.",
+      inputSchema: { id: z.string().regex(dealIdRegex) },
+    },
+    async (a) => {
+      try {
+        return textResult(await callApi(cfg, `/v1/deals/${a.id}`, { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "deal_list",
+    {
+      title: "List deals",
+      description: "List deals with cursor pagination and filters.",
+      inputSchema: {
+        cursor: z.string().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        contactId: z.string().regex(contactIdRegex).optional(),
+        stage: z.string().optional(),
+        status: z.enum(dealStatuses).optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string | number> = {};
+        if (a.cursor) query.cursor = a.cursor;
+        if (a.limit) query.limit = a.limit;
+        if (a.contactId) query.contact_id = a.contactId;
+        if (a.stage) query.stage = a.stage;
+        if (a.status) query.status = a.status;
+        return textResult(await callApi(cfg, "/v1/deals", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "deal_update",
+    {
+      title: "Update deal",
+      description: "Partially update a deal (title, stage, status, value, currency, expectedCloseDate, contact link).",
+      inputSchema: {
+        id: z.string().regex(dealIdRegex),
+        title: z.string().min(1).max(200).optional(),
+        contactId: z.string().regex(contactIdRegex).nullable().optional(),
+        stage: z.string().min(1).max(50).optional(),
+        status: z.enum(dealStatuses).optional(),
+        value: z.number().int().nonnegative().nullable().optional(),
+        currency: z.string().length(3).nullable().optional(),
+        expectedCloseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const patch: Record<string, unknown> = {};
+        for (const f of ["title", "contactId", "stage", "status", "value", "currency", "expectedCloseDate"] as const) {
+          if ((a as Record<string, unknown>)[f] !== undefined) patch[f] = (a as Record<string, unknown>)[f];
+        }
+        const opts: Parameters<typeof callApi>[2] = { method: "PATCH", body: patch };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/deals/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "deal_delete",
+    {
+      title: "Delete deal (destructive)",
+      description: "Hard-delete a deal. Snapshot is kept in the audit log for undo.",
+      inputSchema: {
+        id: z.string().regex(dealIdRegex),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/deals/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Tasks ─────────────────────────────────────────────────
+  server.registerTool(
+    "task_create",
+    {
+      title: "Create task",
+      description: "Create a task. Tied optionally to a contact and/or deal.",
+      inputSchema: {
+        title: z.string().min(1).max(500),
+        description: z.string().max(10_000).optional(),
+        contactId: z.string().regex(contactIdRegex).optional(),
+        dealId: z.string().regex(dealIdRegex).optional(),
+        status: z.enum(taskStatuses).optional(),
+        priority: z.enum(taskPriorities).optional(),
+        dueAt: z.string().datetime().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { title: a.title };
+        for (const f of ["description", "contactId", "dealId", "status", "priority", "dueAt"] as const) {
+          if ((a as Record<string, unknown>)[f] !== undefined) body[f] = (a as Record<string, unknown>)[f];
+        }
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/tasks", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "task_get",
+    { title: "Get task", description: "Fetch a task by id.", inputSchema: { id: z.string().regex(taskIdRegex) } },
+    async (a) => {
+      try {
+        return textResult(await callApi(cfg, `/v1/tasks/${a.id}`, { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "task_list",
+    {
+      title: "List tasks",
+      description: "List tasks (filter by contactId, dealId, status, priority, dueBefore).",
+      inputSchema: {
+        cursor: z.string().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        contactId: z.string().regex(contactIdRegex).optional(),
+        dealId: z.string().regex(dealIdRegex).optional(),
+        status: z.enum(taskStatuses).optional(),
+        priority: z.enum(taskPriorities).optional(),
+        dueBefore: z.string().datetime().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string | number> = {};
+        if (a.cursor) query.cursor = a.cursor;
+        if (a.limit) query.limit = a.limit;
+        if (a.contactId) query.contact_id = a.contactId;
+        if (a.dealId) query.deal_id = a.dealId;
+        if (a.status) query.status = a.status;
+        if (a.priority) query.priority = a.priority;
+        if (a.dueBefore) query.due_before = a.dueBefore;
+        return textResult(await callApi(cfg, "/v1/tasks", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "task_update",
+    {
+      title: "Update task",
+      description: "Partially update a task. Transitioning status to/from 'done' auto-manages completedAt.",
+      inputSchema: {
+        id: z.string().regex(taskIdRegex),
+        title: z.string().min(1).max(500).optional(),
+        description: z.string().max(10_000).nullable().optional(),
+        contactId: z.string().regex(contactIdRegex).nullable().optional(),
+        dealId: z.string().regex(dealIdRegex).nullable().optional(),
+        status: z.enum(taskStatuses).optional(),
+        priority: z.enum(taskPriorities).optional(),
+        dueAt: z.string().datetime().nullable().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const patch: Record<string, unknown> = {};
+        for (const f of ["title", "description", "contactId", "dealId", "status", "priority", "dueAt"] as const) {
+          if ((a as Record<string, unknown>)[f] !== undefined) patch[f] = (a as Record<string, unknown>)[f];
+        }
+        const opts: Parameters<typeof callApi>[2] = { method: "PATCH", body: patch };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/tasks/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "task_delete",
+    {
+      title: "Delete task (destructive)",
+      description: "Hard-delete a task. Snapshot kept for undo.",
+      inputSchema: {
+        id: z.string().regex(taskIdRegex),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/tasks/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Notes ─────────────────────────────────────────────────
+  server.registerTool(
+    "note_create",
+    {
+      title: "Create note",
+      description: "Create a note. Attach optionally to a contact, a deal, or both, or standalone.",
+      inputSchema: {
+        body: z.string().min(1).max(500_000),
+        title: z.string().max(500).optional(),
+        contactId: z.string().regex(contactIdRegex).optional(),
+        dealId: z.string().regex(dealIdRegex).optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { body: a.body };
+        for (const f of ["title", "contactId", "dealId"] as const) {
+          if ((a as Record<string, unknown>)[f] !== undefined) body[f] = (a as Record<string, unknown>)[f];
+        }
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/notes", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "note_get",
+    { title: "Get note", description: "Fetch a note by id.", inputSchema: { id: z.string().regex(noteIdRegex) } },
+    async (a) => {
+      try {
+        return textResult(await callApi(cfg, `/v1/notes/${a.id}`, { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "note_list",
+    {
+      title: "List notes",
+      description: "List notes (filter by contact or deal).",
+      inputSchema: {
+        cursor: z.string().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        contactId: z.string().regex(contactIdRegex).optional(),
+        dealId: z.string().regex(dealIdRegex).optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string | number> = {};
+        if (a.cursor) query.cursor = a.cursor;
+        if (a.limit) query.limit = a.limit;
+        if (a.contactId) query.contact_id = a.contactId;
+        if (a.dealId) query.deal_id = a.dealId;
+        return textResult(await callApi(cfg, "/v1/notes", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "note_update",
+    {
+      title: "Update note",
+      description: "Partially update a note (body, title, contact/deal link).",
+      inputSchema: {
+        id: z.string().regex(noteIdRegex),
+        body: z.string().min(1).max(500_000).optional(),
+        title: z.string().max(500).nullable().optional(),
+        contactId: z.string().regex(contactIdRegex).nullable().optional(),
+        dealId: z.string().regex(dealIdRegex).nullable().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const patch: Record<string, unknown> = {};
+        for (const f of ["body", "title", "contactId", "dealId"] as const) {
+          if ((a as Record<string, unknown>)[f] !== undefined) patch[f] = (a as Record<string, unknown>)[f];
+        }
+        const opts: Parameters<typeof callApi>[2] = { method: "PATCH", body: patch };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/notes/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "note_delete",
+    {
+      title: "Delete note (destructive)",
+      description: "Hard-delete a note. Snapshot kept for undo.",
+      inputSchema: {
+        id: z.string().regex(noteIdRegex),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/notes/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Tags ──────────────────────────────────────────────────
+  server.registerTool(
+    "tag_create",
+    {
+      title: "Create tag",
+      description: "Create a tag (unique name per account, optional hex color).",
+      inputSchema: {
+        name: z.string().min(1).max(50),
+        color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { name: a.name };
+        if (a.color) body.color = a.color;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/tags", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "tag_list",
+    { title: "List tags", description: "List all tags for the account.", inputSchema: {} },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/tags", { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "tag_update",
+    {
+      title: "Update tag",
+      description: "Rename a tag or change its color.",
+      inputSchema: {
+        id: z.string().regex(tagIdRegex),
+        name: z.string().min(1).max(50).optional(),
+        color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const patch: Record<string, unknown> = {};
+        if (a.name !== undefined) patch.name = a.name;
+        if (a.color !== undefined) patch.color = a.color;
+        const opts: Parameters<typeof callApi>[2] = { method: "PATCH", body: patch };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/tags/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "tag_delete",
+    {
+      title: "Delete tag (destructive)",
+      description:
+        "Hard-delete a tag. Cascade-detaches from all contacts. Undo re-creates the tag AND re-attaches to all linked contacts.",
+      inputSchema: {
+        id: z.string().regex(tagIdRegex),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/tags/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "tag_attach",
+    {
+      title: "Attach tag to contact",
+      description: "Attach a tag to a contact. If already attached, returns a no-op with alreadyAttached:true.",
+      inputSchema: {
+        contactId: z.string().regex(contactIdRegex),
+        tagId: z.string().regex(tagIdRegex),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = {
+          method: "POST",
+          body: { contactId: a.contactId, tagId: a.tagId },
+        };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/tags/attach", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "tag_detach",
+    {
+      title: "Detach tag from contact",
+      description: "Detach a tag from a contact.",
+      inputSchema: {
+        contactId: z.string().regex(contactIdRegex),
+        tagId: z.string().regex(tagIdRegex),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = {
+          method: "POST",
+          body: { contactId: a.contactId, tagId: a.tagId },
+        };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/tags/detach", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "tag_list_for_contact",
+    {
+      title: "List tags attached to a contact",
+      description: "Returns the set of tags currently attached to a given contact.",
+      inputSchema: { contactId: z.string().regex(contactIdRegex) },
+    },
+    async (a) => {
+      try {
+        return textResult(await callApi(cfg, `/v1/tags/for-contact/${a.contactId}`, { method: "GET" }));
       } catch (err) {
         return errorResult(err);
       }

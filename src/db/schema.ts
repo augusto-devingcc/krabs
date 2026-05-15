@@ -157,6 +157,120 @@ export const interactions = sqliteTable(
   }),
 );
 
+export const dealStages = ["new", "qualified", "proposal", "negotiation", "closed"] as const;
+export const dealStatuses = ["open", "won", "lost"] as const;
+export type DealStatus = (typeof dealStatuses)[number];
+
+export const deals = sqliteTable(
+  "deals",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    stage: text("stage").notNull().default("new"),
+    status: text("status").notNull().default("open"),
+    value: integer("value"),
+    currency: text("currency"),
+    expectedCloseDate: text("expected_close_date"),
+    customFields: text("custom_fields"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountIdx: index("deals_account_idx").on(t.accountId),
+    contactIdx: index("deals_contact_idx").on(t.contactId),
+    stageIdx: index("deals_account_stage_idx").on(t.accountId, t.stage),
+  }),
+);
+
+export const taskStatuses = ["open", "in_progress", "done", "cancelled"] as const;
+export type TaskStatus = (typeof taskStatuses)[number];
+export const taskPriorities = ["low", "normal", "high"] as const;
+export type TaskPriority = (typeof taskPriorities)[number];
+
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+    dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: text("status").notNull().default("open"),
+    priority: text("priority").notNull().default("normal"),
+    dueAt: text("due_at"),
+    completedAt: text("completed_at"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountStatusIdx: index("tasks_account_status_idx").on(t.accountId, t.status),
+    contactIdx: index("tasks_contact_idx").on(t.contactId),
+    dealIdx: index("tasks_deal_idx").on(t.dealId),
+    dueIdx: index("tasks_due_idx").on(t.accountId, t.dueAt),
+  }),
+);
+
+export const notes = sqliteTable(
+  "notes",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+    dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
+    title: text("title"),
+    body: text("body").notNull(),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountIdx: index("notes_account_idx").on(t.accountId),
+    contactIdx: index("notes_contact_idx").on(t.contactId),
+    dealIdx: index("notes_deal_idx").on(t.dealId),
+  }),
+);
+
+export const tags = sqliteTable(
+  "tags",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountNameIdx: uniqueIndex("tags_account_name_idx").on(t.accountId, t.name),
+  }),
+);
+
+export const contactTags = sqliteTable(
+  "contact_tags",
+  {
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    tagId: text("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    pk: uniqueIndex("contact_tags_pk").on(t.contactId, t.tagId),
+    tagIdx: index("contact_tags_tag_idx").on(t.tagId),
+  }),
+);
+
 export const idempotencyKeys = sqliteTable(
   "idempotency_keys",
   {
@@ -185,3 +299,8 @@ export type IdentityRow = typeof identities.$inferSelect;
 export type AgentActionRow = typeof agentActions.$inferSelect;
 export type IdempotencyKeyRow = typeof idempotencyKeys.$inferSelect;
 export type InteractionRow = typeof interactions.$inferSelect;
+export type DealRow = typeof deals.$inferSelect;
+export type TaskRow = typeof tasks.$inferSelect;
+export type NoteRow = typeof notes.$inferSelect;
+export type TagRow = typeof tags.$inferSelect;
+export type ContactTagRow = typeof contactTags.$inferSelect;

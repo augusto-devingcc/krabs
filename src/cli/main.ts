@@ -8,6 +8,10 @@ import { keyCommand } from "./commands/key.js";
 import { schemaCommand } from "./commands/schema.js";
 import { identityCommand } from "./commands/identity.js";
 import { interactionCommand } from "./commands/interaction.js";
+import { dealCommand } from "./commands/deal.js";
+import { taskCommand } from "./commands/task.js";
+import { noteCommand } from "./commands/note.js";
+import { tagCommand } from "./commands/tag.js";
 import { ApiClientError } from "./client.js";
 import { CliConfigError } from "./config.js";
 import { codeToExit, ExitCode } from "./exit-codes.js";
@@ -27,6 +31,10 @@ program.addCommand(keyCommand());
 program.addCommand(contactCommand());
 program.addCommand(identityCommand());
 program.addCommand(interactionCommand());
+program.addCommand(dealCommand());
+program.addCommand(taskCommand());
+program.addCommand(noteCommand());
+program.addCommand(tagCommand());
 program.addCommand(actionCommand());
 
 async function main() {
