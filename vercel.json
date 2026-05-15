@@ -1,9 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
-  "functions": {
-    "app/api/v1/[...path]/route.ts": {
-      "maxDuration": 30
-    }
-  }
+  "installCommand": "pnpm install --frozen-lockfile --ignore-scripts"
 }
