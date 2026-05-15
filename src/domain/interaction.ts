@@ -207,6 +207,92 @@ export async function listInteractions(
   };
 }
 
+// ───────────────────────────────────────── delete
+
+export type DeleteInteractionResult = {
+  deletedId: string;
+  snapshot: Interaction;
+  agentActionId: string | null;
+  dryRun: boolean;
+  replayed: boolean;
+};
+
+export async function deleteInteraction(
+  ctx: CallerContext,
+  interactionId: string,
+  options: MutationOptions = {},
+): Promise<DeleteInteractionResult> {
+  const { idempotencyKey, intent, dryRun = false } = options;
+
+  if (idempotencyKey && !dryRun) {
+    const cache = await lookupIdempotent<DeleteInteractionResult>(ctx, idempotencyKey, "interaction.delete");
+    if (cache.hit) return { ...cache.body, replayed: true };
+  }
+
+  const row = await db
+    .select()
+    .from(interactions)
+    .where(and(eq(interactions.id, interactionId), eq(interactions.accountId, ctx.accountId)))
+    .limit(1)
+    .then((r) => r[0]);
+  if (!row) {
+    throw new ApiError({ code: "NOT_FOUND", message: `Interaction ${interactionId} not found` });
+  }
+
+  const snapshot = rowToInteraction(row);
+
+  if (dryRun) {
+    return { deletedId: interactionId, snapshot, agentActionId: null, dryRun: true, replayed: false };
+  }
+
+  const now = new Date().toISOString();
+  const actionId = newId("agentAction");
+
+  await db.transaction(async (tx) => {
+    const actionOpts: {
+      ctx: CallerContext;
+      operation: string;
+      targetKind: string;
+      targetId: string;
+      intent?: string;
+      metadata: Record<string, unknown>;
+      createdAt: string;
+    } = {
+      ctx,
+      operation: "interaction.delete",
+      targetKind: "interaction",
+      targetId: interactionId,
+      metadata: { snapshot },
+      createdAt: now,
+    };
+    if (intent) actionOpts.intent = intent;
+    await tx.insert(agentActions).values({ ...buildAction(actionOpts), id: actionId });
+
+    await tx.delete(interactions).where(eq(interactions.id, interactionId));
+
+    if (idempotencyKey) {
+      const body: DeleteInteractionResult = {
+        deletedId: interactionId,
+        snapshot,
+        agentActionId: actionId,
+        dryRun: false,
+        replayed: false,
+      };
+      await tx.insert(idempotencyKeys).values(
+        buildIdempotencyRecord({
+          ctx,
+          key: idempotencyKey,
+          operation: "interaction.delete",
+          responseStatus: 200,
+          responseBody: body,
+        }),
+      );
+    }
+  });
+
+  return { deletedId: interactionId, snapshot, agentActionId: actionId, dryRun: false, replayed: false };
+}
+
 // ───────────────────────────────────────── email ingest
 
 export type IngestEmailResult = {

@@ -1,8 +1,9 @@
-import { and, asc, desc, eq, gt, gte, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, like, or, sql } from "drizzle-orm";
 import { db } from "@/db/client.js";
 import {
   contacts,
   identities,
+  interactions,
   type ContactRow,
   type IdentityRow,
 } from "@/db/schema.js";
@@ -434,7 +435,11 @@ export async function updateContact(
 
 export type DeleteContactResult = {
   deletedId: string;
-  snapshot: { contact: Contact; identities: Identity[] };
+  snapshot: {
+    contact: Contact;
+    identities: Identity[];
+    interactionIds: string[];
+  };
   agentActionId: string | null;
   dryRun: boolean;
   replayed: boolean;
@@ -464,9 +469,14 @@ export async function deleteContact(
   }
 
   const idRows = await db.select().from(identities).where(eq(identities.contactId, contactId));
+  const interactionRows = await db
+    .select({ id: interactions.id })
+    .from(interactions)
+    .where(eq(interactions.contactId, contactId));
   const snapshot = {
     contact: rowToContact(existing),
     identities: idRows.map(rowToIdentity),
+    interactionIds: interactionRows.map((r) => r.id),
   };
 
   if (dryRun) {

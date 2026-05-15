@@ -13,6 +13,7 @@ import {
 } from "./schemas/interaction.js";
 import { accountUpdateInputSchema } from "@/domain/account.js";
 import { apiKeyCreateInputSchema } from "@/domain/api-key.js";
+import { reversibilityOf, type Reversibility } from "@/domain/action.js";
 import { idSchema } from "./ids.js";
 
 /**
@@ -29,7 +30,12 @@ export type OperationDescriptor = {
   idempotent: boolean;
   supportsDryRun: boolean;
   supportsIntent: boolean;
+  reversibility: Reversibility;
 };
+
+function withReversibility(ops: Omit<OperationDescriptor, "reversibility">[]): OperationDescriptor[] {
+  return ops.map((o) => ({ ...o, reversibility: reversibilityOf(o.operation) }));
+}
 
 const contactIdInput = z.object({ id: idSchema("contact") });
 const apiKeyIdInput = z.object({ id: idSchema("apiKey") });
@@ -39,7 +45,7 @@ const mergeInput = z.object({
 });
 
 export function buildOperationCatalog(): OperationDescriptor[] {
-  return [
+  return withReversibility([
     {
       operation: "contact.create",
       description: "Create a new contact. Attaches email/phone Identities automatically.",
@@ -231,7 +237,35 @@ export function buildOperationCatalog(): OperationDescriptor[] {
       supportsDryRun: true,
       supportsIntent: true,
     },
-  ];
+    {
+      operation: "interaction.delete",
+      description: "Hard-delete an interaction. Snapshot kept in the audit log for undo.",
+      inputSchema: zodToJsonSchema(z.object({ id: idSchema("interaction") }), { name: "InteractionDeleteInput" }),
+      destructive: true,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+    {
+      operation: "action.get",
+      description: "Fetch a single audit action by id, including its full metadata (snapshots).",
+      inputSchema: zodToJsonSchema(z.object({ id: idSchema("agentAction") }), { name: "ActionGetInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "action.undo",
+      description:
+        "Reverse a previously-recorded action using the snapshot stored in its metadata. Works on operations marked reversibility:'reversible'. Returns CONFLICT for one-way operations (like contact.merge) or for action.undo itself.",
+      inputSchema: zodToJsonSchema(z.object({ id: idSchema("agentAction") }), { name: "ActionUndoInput" }),
+      destructive: true,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+  ]);
 }
 
 export function describeContract() {
@@ -255,5 +289,6 @@ export function describeContract() {
       ],
     },
     operations: buildOperationCatalog(),
+    reversibilityValues: ["reversible", "one-way", "read-only"],
   };
 }

@@ -124,6 +124,51 @@ export function interactionCommand(): Command {
     );
 
   cmd
+    .command("delete")
+    .description("Hard-delete an interaction (destructive, but undoable via action.undo)")
+    .argument("<id>", "Interaction id (int_...)")
+    .option("--intent <text>")
+    .option("--idempotency-key <key>")
+    .option("--dry-run")
+    .option("--format <format>", "json|table|auto", "auto")
+    .action(
+      async (
+        id: string,
+        opts: { intent?: string; idempotencyKey?: string; dryRun?: boolean; format: OutputFormat },
+      ) => {
+        const cfg = requireConfig();
+        const headers: Record<string, string> = {};
+        if (opts.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
+        if (opts.intent) headers["X-Agent-Intent"] = opts.intent;
+        const reqOpts: {
+          method: "DELETE";
+          headers: Record<string, string>;
+          query?: Record<string, string>;
+        } = { method: "DELETE", headers };
+        if (opts.dryRun) reqOpts.query = { dry_run: "1" };
+        const result = await apiRequest<{
+          deletedId: string;
+          snapshot: Interaction;
+          dryRun: boolean;
+          replayed: boolean;
+          agentActionId: string | null;
+        }>(cfg, `/v1/interactions/${id}`, reqOpts);
+        const fmt = pickFormat(opts.format);
+        emit(result, fmt, () => {
+          const tag = result.dryRun ? "(would delete)" : "(deleted)";
+          return [
+            `${tag} ${result.deletedId}`,
+            `  kind:    ${result.snapshot.kind}`,
+            `  subject: ${result.snapshot.subject ?? "-"}`,
+            result.agentActionId ? `  undo:    socrm action undo ${result.agentActionId}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n");
+        });
+      },
+    );
+
+  cmd
     .command("ingest-email")
     .description(
       "Ingest a pre-parsed email. Body via flag or stdin. If sender is unknown, the contact is auto-created.",

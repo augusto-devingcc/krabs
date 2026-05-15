@@ -108,6 +108,8 @@ contactsRoute.delete("/:id", async (c) => {
 });
 
 // ACTIONS
+import { getAction, undoAction } from "@/domain/action.js";
+
 export const actionsRoute = new Hono();
 actionsRoute.use("*", apiKeyAuth);
 actionsRoute.get("/", async (c) => {
@@ -123,4 +125,25 @@ actionsRoute.get("/", async (c) => {
   if (targetId) opts.targetId = targetId;
   const items = await listActions(auth, opts);
   return c.json(wrap({ items }));
+});
+
+actionsRoute.get("/:id", async (c) => {
+  const auth = c.get("auth");
+  const id = c.req.param("id");
+  if (!idSchema("agentAction").safeParse(id).success) {
+    throw new ApiError({ code: "VALIDATION_FAILED", message: "Invalid action id", field: "id" });
+  }
+  const result = await getAction(auth, id);
+  return c.json(wrap(result));
+});
+
+actionsRoute.post("/:id/undo", async (c) => {
+  const auth = c.get("auth");
+  const id = c.req.param("id");
+  if (!idSchema("agentAction").safeParse(id).success) {
+    throw new ApiError({ code: "VALIDATION_FAILED", message: "Invalid action id", field: "id" });
+  }
+  const opts = readMutationOptions(c);
+  const result = await undoAction(auth, id, opts);
+  return c.json(wrap(result));
 });

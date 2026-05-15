@@ -641,7 +641,76 @@ async function main() {
     },
   );
 
+  server.registerTool(
+    "interaction_delete",
+    {
+      title: "Delete interaction (destructive but reversible)",
+      description:
+        "Hard-delete an interaction. The full row is captured in the action's metadata so action_undo can restore it.",
+      inputSchema: {
+        id: z.string().regex(/^int_[0-9A-HJKMNP-TV-Z]{26}$/),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/interactions/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
   // ── Audit ─────────────────────────────────────────────────
+  server.registerTool(
+    "action_get",
+    {
+      title: "Get audit action",
+      description:
+        "Fetch a single action by id, including its full metadata. Use this to inspect what an earlier mutation did before calling action_undo.",
+      inputSchema: { id: z.string().regex(/^act_[0-9A-HJKMNP-TV-Z]{26}$/) },
+    },
+    async (a) => {
+      try {
+        return textResult(await callApi(cfg, `/v1/actions/${a.id}`, { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "action_undo",
+    {
+      title: "Undo a previous action (destructive)",
+      description:
+        "Reverse a previously-recorded mutation using the snapshot stored in its metadata. Works for: contact.create/update/delete, identity.add/remove, account.update, api_key.create/revoke, interaction.create/delete/ingest_email. Returns CONFLICT for contact.merge (one-way) and action.undo itself. Always supports dryRun:true to preview the reversal.",
+      inputSchema: {
+        id: z.string().regex(/^act_[0-9A-HJKMNP-TV-Z]{26}$/),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body: {} };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/actions/${a.id}/undo`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
   server.registerTool(
     "action_list",
     {

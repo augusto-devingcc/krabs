@@ -11,7 +11,9 @@ import {
   createInteraction,
   listInteractions,
   ingestEmail,
+  deleteInteraction,
 } from "@/domain/interaction.js";
+import { idSchema } from "@/contract/ids.js";
 import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
 
 export const interactionsRoute = new Hono();
@@ -40,6 +42,17 @@ interactionsRoute.post("/", async (c) => {
   const data = parseOrThrow(interactionCreateInputSchema, raw);
   const result = await createInteraction(auth, data, opts);
   return c.json(wrap(result), result.replayed ? 200 : 201);
+});
+
+interactionsRoute.delete("/:id", async (c) => {
+  const auth = c.get("auth");
+  const id = c.req.param("id");
+  if (!idSchema("interaction").safeParse(id).success) {
+    throw new ApiError({ code: "VALIDATION_FAILED", message: "Invalid interaction id", field: "id" });
+  }
+  const opts = readMutationOptions(c);
+  const result = await deleteInteraction(auth, id, opts);
+  return c.json(wrap(result));
 });
 
 interactionsRoute.post("/ingest/email", async (c) => {
