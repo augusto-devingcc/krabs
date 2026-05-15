@@ -3,3 +3,6 @@ export * from "./envelope.js";
 export * from "./ids.js";
 export * from "./schemas/account.js";
 export * from "./schemas/api-key.js";
+export * from "./schemas/contact.js";
+export * from "./schemas/identity.js";
+export * from "./schemas/agent-action.js";

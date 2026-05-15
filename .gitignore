@@ -1,5 +1,6 @@
 node_modules
 dist
+debug-*.mjs
 .env
 .env.local
 *.log

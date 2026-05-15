@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { healthRoute } from "./routes/health.js";
 import { meRoute } from "./routes/me.js";
+import { contactsRoute, actionsRoute } from "./routes/contacts.js";
 import { errorHandler } from "./middleware/error.js";
 
 export function buildApp() {
@@ -10,6 +11,8 @@ export function buildApp() {
 
   app.route("/v1/health", healthRoute);
   app.route("/v1/me", meRoute);
+  app.route("/v1/contacts", contactsRoute);
+  app.route("/v1/actions", actionsRoute);
 
   app.notFound((c) =>
     c.json(
