@@ -1,6 +1,6 @@
 import type { Context } from "hono";
-import { ApiError } from "@/contract/errors.js";
-import type { MutationOptions } from "@/domain/shared.js";
+import { ApiError } from "../contract/errors.js";
+import type { MutationOptions } from "../domain/shared.js";
 
 export function readMutationOptions(c: Context): MutationOptions {
   const opts: MutationOptions = {};

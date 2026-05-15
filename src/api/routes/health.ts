@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { wrap } from "@/contract/envelope.js";
+import { wrap } from "../../contract/envelope.js";
 
 export const healthRoute = new Hono();
 

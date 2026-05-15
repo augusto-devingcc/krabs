@@ -1,14 +1,14 @@
 import { and, asc, eq, gt } from "drizzle-orm";
-import { db } from "@/db/client.js";
-import { agentActions, contacts, deals, notes, type NoteRow } from "@/db/schema.js";
-import { newId } from "@/contract/ids.js";
-import { ApiError } from "@/contract/errors.js";
+import { db } from "../db/client.js";
+import { agentActions, contacts, deals, notes, type NoteRow } from "../db/schema.js";
+import { newId } from "../contract/ids.js";
+import { ApiError } from "../contract/errors.js";
 import type {
   Note,
   NoteCreateInput,
   NoteUpdateInput,
   NoteListFilters,
-} from "@/contract/schemas/note.js";
+} from "../contract/schemas/note.js";
 import {
   buildAction,
   buildIdempotencyRecord,

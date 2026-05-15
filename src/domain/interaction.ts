@@ -1,22 +1,22 @@
 import { and, asc, desc, eq, gt, gte, lte } from "drizzle-orm";
-import { db } from "@/db/client.js";
+import { db } from "../db/client.js";
 import {
   contacts,
   identities,
   interactions,
   type InteractionRow,
   type ContactRow,
-} from "@/db/schema.js";
-import { ApiError } from "@/contract/errors.js";
-import { newId } from "@/contract/ids.js";
+} from "../db/schema.js";
+import { ApiError } from "../contract/errors.js";
+import { newId } from "../contract/ids.js";
 import type {
   Interaction,
   InteractionCreateInput,
   InteractionListFilters,
   EmailIngestInput,
-} from "@/contract/schemas/interaction.js";
-import type { Contact } from "@/contract/schemas/contact.js";
-import type { Identity } from "@/contract/schemas/identity.js";
+} from "../contract/schemas/interaction.js";
+import type { Contact } from "../contract/schemas/contact.js";
+import type { Identity } from "../contract/schemas/identity.js";
 import {
   agentActions,
   idempotencyKeys,

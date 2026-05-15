@@ -10,8 +10,8 @@ import {
   dealStatuses,
   taskStatuses,
   taskPriorities,
-} from "@/db/schema.js";
-import { apiRequest, ApiClientError } from "@/cli/client.js";
+} from "../db/schema.js";
+import { apiRequest, ApiClientError } from "../cli/client.js";
 
 const DEFAULT_API_URL = "http://localhost:3000";
 

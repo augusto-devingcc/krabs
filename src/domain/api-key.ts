@@ -1,10 +1,10 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "@/db/client.js";
-import { agentActions, apiKeys } from "@/db/schema.js";
-import { ApiError } from "@/contract/errors.js";
-import { newId } from "@/contract/ids.js";
-import { generateApiKeyPlaintext, sha256Hex, apiKeyPreview } from "@/lib/hash.js";
+import { db } from "../db/client.js";
+import { agentActions, apiKeys } from "../db/schema.js";
+import { ApiError } from "../contract/errors.js";
+import { newId } from "../contract/ids.js";
+import { generateApiKeyPlaintext, sha256Hex, apiKeyPreview } from "../lib/hash.js";
 import {
   lookupIdempotent,
   buildAction,

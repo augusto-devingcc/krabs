@@ -1,10 +1,10 @@
 import { createMiddleware } from "hono/factory";
 import { and, eq, isNull } from "drizzle-orm";
-import { db } from "@/db/client.js";
-import { apiKeys } from "@/db/schema.js";
-import { ApiError } from "@/contract/errors.js";
-import { sha256Hex } from "@/lib/hash.js";
-import { apiKeyPlaintextRegex } from "@/contract/schemas/api-key.js";
+import { db } from "../../db/client.js";
+import { apiKeys } from "../../db/schema.js";
+import { ApiError } from "../../contract/errors.js";
+import { sha256Hex } from "../../lib/hash.js";
+import { apiKeyPlaintextRegex } from "../../contract/schemas/api-key.js";
 
 export type AuthContext = {
   accountId: string;

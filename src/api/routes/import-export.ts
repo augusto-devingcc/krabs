@@ -1,19 +1,19 @@
 import type { Hono } from "hono";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
 import {
   contactImportCsvInputSchema,
   vcardIngestInputSchema,
   exportAccountFiltersSchema,
-} from "@/contract/schemas/import-export.js";
+} from "../../contract/schemas/import-export.js";
 import {
   importContactsCsv,
   ingestVCard,
   exportAccount,
   exportContactsCsv,
-} from "@/domain/import-export.js";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../domain/import-export.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 /** Adds /import, /ingest/vcard and /export.csv to the contacts router. MUST be called BEFORE /:id routes are registered. */
 export function attachContactsImportExport(contactsRoute: Hono): void {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idSchema } from "../ids.js";
-import { interactionKinds, interactionDirections } from "@/db/schema.js";
+import { interactionKinds, interactionDirections } from "../../db/schema.js";
 
 export const interactionKindSchema = z.enum(interactionKinds);
 export const interactionDirectionSchema = z.enum(interactionDirections);

@@ -1,19 +1,19 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
-import { idSchema } from "@/contract/ids.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
+import { idSchema } from "../../contract/ids.js";
 import {
   identityAddInputSchema,
   identityFindInputSchema,
-} from "@/contract/schemas/identity.js";
+} from "../../contract/schemas/identity.js";
 import {
   addIdentity,
   removeIdentity,
   listIdentities,
   findContactByIdentity,
-} from "@/domain/identity.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../domain/identity.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 export const identitiesRoute = new Hono();
 identitiesRoute.use("*", apiKeyAuth);

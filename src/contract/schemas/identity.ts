@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idSchema } from "../ids.js";
-import { identityKinds } from "@/db/schema.js";
+import { identityKinds } from "../../db/schema.js";
 
 export const identityKindSchema = z.enum(identityKinds);
 

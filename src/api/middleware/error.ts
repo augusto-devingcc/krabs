@@ -1,6 +1,6 @@
 import type { ErrorHandler } from "hono";
-import { ApiError } from "@/contract/errors.js";
-import { logger } from "@/lib/logger.js";
+import { ApiError } from "../../contract/errors.js";
+import { logger } from "../../lib/logger.js";
 
 export const errorHandler: ErrorHandler = (err, c) => {
   if (err instanceof ApiError) {

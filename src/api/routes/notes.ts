@@ -1,15 +1,15 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
-import { idSchema } from "@/contract/ids.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
+import { idSchema } from "../../contract/ids.js";
 import {
   noteCreateInputSchema,
   noteUpdateInputSchema,
   noteListFiltersSchema,
-} from "@/contract/schemas/note.js";
-import { createNote, getNote, listNotes, updateNote, deleteNote } from "@/domain/note.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../contract/schemas/note.js";
+import { createNote, getNote, listNotes, updateNote, deleteNote } from "../../domain/note.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 export const notesRoute = new Hono();
 notesRoute.use("*", apiKeyAuth);

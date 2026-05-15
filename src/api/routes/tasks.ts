@@ -1,15 +1,15 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
-import { idSchema } from "@/contract/ids.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
+import { idSchema } from "../../contract/ids.js";
 import {
   taskCreateInputSchema,
   taskUpdateInputSchema,
   taskListFiltersSchema,
-} from "@/contract/schemas/task.js";
-import { createTask, getTask, listTasks, updateTask, deleteTask } from "@/domain/task.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../contract/schemas/task.js";
+import { createTask, getTask, listTasks, updateTask, deleteTask } from "../../domain/task.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 export const tasksRoute = new Hono();
 tasksRoute.use("*", apiKeyAuth);

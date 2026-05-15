@@ -1,13 +1,13 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
 import {
   contactCreateInputSchema,
   contactUpdateInputSchema,
   contactListFiltersSchema,
-} from "@/contract/schemas/contact.js";
-import { idSchema } from "@/contract/ids.js";
+} from "../../contract/schemas/contact.js";
+import { idSchema } from "../../contract/ids.js";
 import {
   createContact,
   getContact,
@@ -16,9 +16,9 @@ import {
   deleteContact,
   mergeContacts,
   listActions,
-} from "@/domain/contact.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
-import { attachContactsImportExport } from "@/api/routes/import-export.js";
+} from "../../domain/contact.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
+import { attachContactsImportExport } from "../../api/routes/import-export.js";
 
 export const contactsRoute = new Hono();
 contactsRoute.use("*", apiKeyAuth);
@@ -113,7 +113,7 @@ contactsRoute.delete("/:id", async (c) => {
 });
 
 // ACTIONS
-import { getAction, undoAction } from "@/domain/action.js";
+import { getAction, undoAction } from "../../domain/action.js";
 
 export const actionsRoute = new Hono();
 actionsRoute.use("*", apiKeyAuth);

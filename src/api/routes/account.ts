@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
-import { getAccount, updateAccount, accountUpdateInputSchema } from "@/domain/account.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
-import { attachAccountExport } from "@/api/routes/import-export.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
+import { getAccount, updateAccount, accountUpdateInputSchema } from "../../domain/account.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
+import { attachAccountExport } from "../../api/routes/import-export.js";
 
 export const accountRoute = new Hono();
 accountRoute.use("*", apiKeyAuth);

@@ -1,20 +1,20 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
 import {
   interactionCreateInputSchema,
   interactionListFiltersSchema,
   emailIngestInputSchema,
-} from "@/contract/schemas/interaction.js";
+} from "../../contract/schemas/interaction.js";
 import {
   createInteraction,
   listInteractions,
   ingestEmail,
   deleteInteraction,
-} from "@/domain/interaction.js";
-import { idSchema } from "@/contract/ids.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../domain/interaction.js";
+import { idSchema } from "../../contract/ids.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 export const interactionsRoute = new Hono();
 interactionsRoute.use("*", apiKeyAuth);

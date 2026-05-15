@@ -1,21 +1,21 @@
 import { and, asc, desc, eq, gt, gte, inArray, like, or, sql } from "drizzle-orm";
-import { db } from "@/db/client.js";
+import { db } from "../db/client.js";
 import {
   contacts,
   identities,
   interactions,
   type ContactRow,
   type IdentityRow,
-} from "@/db/schema.js";
-import { newId } from "@/contract/ids.js";
-import { ApiError } from "@/contract/errors.js";
+} from "../db/schema.js";
+import { newId } from "../contract/ids.js";
+import { ApiError } from "../contract/errors.js";
 import type {
   Contact,
   ContactCreateInput,
   ContactUpdateInput,
   ContactListFilters,
-} from "@/contract/schemas/contact.js";
-import type { Identity } from "@/contract/schemas/identity.js";
+} from "../contract/schemas/contact.js";
+import type { Identity } from "../contract/schemas/identity.js";
 import {
   agentActions,
   idempotencyKeys,

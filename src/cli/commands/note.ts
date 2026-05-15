@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
-import type { Note } from "@/contract/schemas/note.js";
+import type { Note } from "../../contract/schemas/note.js";
 
 function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {

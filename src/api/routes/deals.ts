@@ -1,15 +1,15 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
-import { idSchema } from "@/contract/ids.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
+import { idSchema } from "../../contract/ids.js";
 import {
   dealCreateInputSchema,
   dealUpdateInputSchema,
   dealListFiltersSchema,
-} from "@/contract/schemas/deal.js";
-import { createDeal, getDeal, listDeals, updateDeal, deleteDeal } from "@/domain/deal.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../contract/schemas/deal.js";
+import { createDeal, getDeal, listDeals, updateDeal, deleteDeal } from "../../domain/deal.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 export const dealsRoute = new Hono();
 dealsRoute.use("*", apiKeyAuth);

@@ -1,5 +1,5 @@
 import { and, asc, eq, gte, inArray } from "drizzle-orm";
-import { db } from "@/db/client.js";
+import { db } from "../db/client.js";
 import {
   accounts,
   agentActions,
@@ -12,18 +12,18 @@ import {
   notes,
   tags,
   tasks,
-} from "@/db/schema.js";
-import { ApiError } from "@/contract/errors.js";
-import { newId } from "@/contract/ids.js";
-import { parseCsv, rowsToRecords, stringifyCsv } from "@/lib/csv.js";
-import { parseVCard, type ParsedVCardIdentity } from "@/lib/vcard.js";
-import type { Contact } from "@/contract/schemas/contact.js";
-import type { Identity } from "@/contract/schemas/identity.js";
+} from "../db/schema.js";
+import { ApiError } from "../contract/errors.js";
+import { newId } from "../contract/ids.js";
+import { parseCsv, rowsToRecords, stringifyCsv } from "../lib/csv.js";
+import { parseVCard, type ParsedVCardIdentity } from "../lib/vcard.js";
+import type { Contact } from "../contract/schemas/contact.js";
+import type { Identity } from "../contract/schemas/identity.js";
 import type {
   ContactImportCsvInput,
   VCardIngestInput,
   ExportAccountFilters,
-} from "@/contract/schemas/import-export.js";
+} from "../contract/schemas/import-export.js";
 import {
   buildAction,
   buildIdempotencyRecord,

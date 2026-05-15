@@ -1,14 +1,14 @@
 import { and, asc, desc, eq, gt, lte } from "drizzle-orm";
-import { db } from "@/db/client.js";
-import { agentActions, contacts, deals, tasks, type TaskRow } from "@/db/schema.js";
-import { newId } from "@/contract/ids.js";
-import { ApiError } from "@/contract/errors.js";
+import { db } from "../db/client.js";
+import { agentActions, contacts, deals, tasks, type TaskRow } from "../db/schema.js";
+import { newId } from "../contract/ids.js";
+import { ApiError } from "../contract/errors.js";
 import type {
   Task,
   TaskCreateInput,
   TaskUpdateInput,
   TaskListFilters,
-} from "@/contract/schemas/task.js";
+} from "../contract/schemas/task.js";
 import {
   buildAction,
   buildIdempotencyRecord,

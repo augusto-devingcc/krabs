@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
-import type { Task } from "@/contract/schemas/task.js";
+import type { Task } from "../../contract/schemas/task.js";
 
 export function taskCommand(): Command {
   const cmd = new Command("task").description("Manage tasks");

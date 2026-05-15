@@ -1,10 +1,10 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/client.js";
-import { contacts, identities, type ContactRow, type IdentityRow } from "@/db/schema.js";
-import { newId } from "@/contract/ids.js";
-import { ApiError } from "@/contract/errors.js";
-import type { Identity, IdentityAddInput } from "@/contract/schemas/identity.js";
-import type { Contact } from "@/contract/schemas/contact.js";
+import { db } from "../db/client.js";
+import { contacts, identities, type ContactRow, type IdentityRow } from "../db/schema.js";
+import { newId } from "../contract/ids.js";
+import { ApiError } from "../contract/errors.js";
+import type { Identity, IdentityAddInput } from "../contract/schemas/identity.js";
+import type { Contact } from "../contract/schemas/contact.js";
 import {
   agentActions,
   idempotencyKeys,

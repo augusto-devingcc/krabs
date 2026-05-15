@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { db, libsql } from "@/db/client.js";
-import { accounts, apiKeys } from "@/db/schema.js";
-import { newId } from "@/contract/ids.js";
-import { generateApiKeyPlaintext, sha256Hex, apiKeyPreview } from "@/lib/hash.js";
+import { db, libsql } from "../db/client.js";
+import { accounts, apiKeys } from "../db/schema.js";
+import { newId } from "../contract/ids.js";
+import { generateApiKeyPlaintext, sha256Hex, apiKeyPreview } from "../lib/hash.js";
 
 async function main() {
   const email = process.argv[2] ?? "dev@socrm.local";

@@ -1,9 +1,9 @@
 import { and, asc, desc, eq, gt } from "drizzle-orm";
-import { db } from "@/db/client.js";
-import { agentActions, contacts, contactTags, tags, type TagRow } from "@/db/schema.js";
-import { newId } from "@/contract/ids.js";
-import { ApiError } from "@/contract/errors.js";
-import type { Tag, TagCreateInput, TagUpdateInput } from "@/contract/schemas/tag.js";
+import { db } from "../db/client.js";
+import { agentActions, contacts, contactTags, tags, type TagRow } from "../db/schema.js";
+import { newId } from "../contract/ids.js";
+import { ApiError } from "../contract/errors.js";
+import type { Tag, TagCreateInput, TagUpdateInput } from "../contract/schemas/tag.js";
 import {
   buildAction,
   buildIdempotencyRecord,

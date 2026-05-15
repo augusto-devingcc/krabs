@@ -36,9 +36,9 @@ import {
   vcardIngestInputSchema,
   exportAccountFiltersSchema,
 } from "./schemas/import-export.js";
-import { accountUpdateInputSchema } from "@/domain/account.js";
-import { apiKeyCreateInputSchema } from "@/domain/api-key.js";
-import { reversibilityOf, type Reversibility } from "@/domain/action.js";
+import { accountUpdateInputSchema } from "../domain/account.js";
+import { apiKeyCreateInputSchema } from "../domain/api-key.js";
+import { reversibilityOf, type Reversibility } from "../domain/action.js";
 import { idSchema } from "./ids.js";
 
 /**

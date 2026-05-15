@@ -1,15 +1,15 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
-import { idSchema } from "@/contract/ids.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
+import { idSchema } from "../../contract/ids.js";
 import {
   apiKeyCreateInputSchema,
   createApiKey,
   listApiKeys,
   revokeApiKey,
-} from "@/domain/api-key.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../domain/api-key.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 export const apiKeysRoute = new Hono();
 apiKeysRoute.use("*", apiKeyAuth);

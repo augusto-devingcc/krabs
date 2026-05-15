@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idSchema } from "../ids.js";
-import { dealStatuses } from "@/db/schema.js";
+import { dealStatuses } from "../../db/schema.js";
 
 export const dealStatusSchema = z.enum(dealStatuses);
 

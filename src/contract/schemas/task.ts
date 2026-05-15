@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idSchema } from "../ids.js";
-import { taskStatuses, taskPriorities } from "@/db/schema.js";
+import { taskStatuses, taskPriorities } from "../../db/schema.js";
 
 export const taskStatusSchema = z.enum(taskStatuses);
 export const taskPrioritySchema = z.enum(taskPriorities);

@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
-import type { AgentAction } from "@/contract/schemas/agent-action.js";
+import type { AgentAction } from "../../contract/schemas/agent-action.js";
 
 type UndoResult = {
   undoneActionId: string;

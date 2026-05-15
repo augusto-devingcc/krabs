@@ -3,8 +3,8 @@ import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
 import { portabilityCommands } from "./portability.js";
-import type { Contact, ContactUpdateInput } from "@/contract/schemas/contact.js";
-import type { Identity } from "@/contract/schemas/identity.js";
+import type { Contact, ContactUpdateInput } from "../../contract/schemas/contact.js";
+import type { Identity } from "../../contract/schemas/identity.js";
 
 type CreateOpts = {
   name: string;

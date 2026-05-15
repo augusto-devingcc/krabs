@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { wrap } from "@/contract/envelope.js";
-import { describeContract } from "@/contract/operations.js";
+import { wrap } from "../../contract/envelope.js";
+import { describeContract } from "../../contract/operations.js";
 
 export const schemaRoute = new Hono();
 

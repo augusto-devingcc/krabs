@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
-import type { Deal } from "@/contract/schemas/deal.js";
+import type { Deal } from "../../contract/schemas/deal.js";
 
 export function dealCommand(): Command {
   const cmd = new Command("deal").description("Manage deals (revenue opportunities)");

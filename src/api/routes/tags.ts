@@ -1,13 +1,13 @@
 import { Hono } from "hono";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
-import { idSchema } from "@/contract/ids.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
+import { idSchema } from "../../contract/ids.js";
 import {
   tagCreateInputSchema,
   tagUpdateInputSchema,
   tagAttachInputSchema,
-} from "@/contract/schemas/tag.js";
+} from "../../contract/schemas/tag.js";
 import {
   createTag,
   getTag,
@@ -17,8 +17,8 @@ import {
   attachTag,
   detachTag,
   listTagsForContact,
-} from "@/domain/tag.js";
-import { readMutationOptions, parseOrThrow } from "@/api/helpers.js";
+} from "../../domain/tag.js";
+import { readMutationOptions, parseOrThrow } from "../../api/helpers.js";
 
 export const tagsRoute = new Hono();
 tagsRoute.use("*", apiKeyAuth);

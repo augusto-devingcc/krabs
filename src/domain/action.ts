@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/client.js";
+import { db } from "../db/client.js";
 import {
   agentActions,
   apiKeys,
@@ -12,16 +12,16 @@ import {
   tasks,
   notes,
   tags,
-} from "@/db/schema.js";
-import { ApiError } from "@/contract/errors.js";
-import { newId } from "@/contract/ids.js";
-import type { Contact } from "@/contract/schemas/contact.js";
-import type { Identity } from "@/contract/schemas/identity.js";
-import type { Interaction } from "@/contract/schemas/interaction.js";
-import type { Deal } from "@/contract/schemas/deal.js";
-import type { Task } from "@/contract/schemas/task.js";
-import type { Note } from "@/contract/schemas/note.js";
-import type { Tag } from "@/contract/schemas/tag.js";
+} from "../db/schema.js";
+import { ApiError } from "../contract/errors.js";
+import { newId } from "../contract/ids.js";
+import type { Contact } from "../contract/schemas/contact.js";
+import type { Identity } from "../contract/schemas/identity.js";
+import type { Interaction } from "../contract/schemas/interaction.js";
+import type { Deal } from "../contract/schemas/deal.js";
+import type { Task } from "../contract/schemas/task.js";
+import type { Note } from "../contract/schemas/note.js";
+import type { Tag } from "../contract/schemas/tag.js";
 import {
   buildAction,
   buildIdempotencyRecord,

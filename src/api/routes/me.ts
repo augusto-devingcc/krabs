@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
-import { db } from "@/db/client.js";
-import { accounts } from "@/db/schema.js";
-import { apiKeyAuth } from "@/api/middleware/auth.js";
-import { wrap } from "@/contract/envelope.js";
-import { ApiError } from "@/contract/errors.js";
+import { db } from "../../db/client.js";
+import { accounts } from "../../db/schema.js";
+import { apiKeyAuth } from "../../api/middleware/auth.js";
+import { wrap } from "../../contract/envelope.js";
+import { ApiError } from "../../contract/errors.js";
 
 export const meRoute = new Hono();
 

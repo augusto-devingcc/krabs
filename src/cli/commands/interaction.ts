@@ -2,9 +2,9 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
-import type { Interaction } from "@/contract/schemas/interaction.js";
-import type { Contact } from "@/contract/schemas/contact.js";
-import type { Identity } from "@/contract/schemas/identity.js";
+import type { Interaction } from "../../contract/schemas/interaction.js";
+import type { Contact } from "../../contract/schemas/contact.js";
+import type { Identity } from "../../contract/schemas/identity.js";
 
 function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {

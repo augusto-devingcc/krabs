@@ -1,14 +1,14 @@
 import { and, asc, desc, eq, gt } from "drizzle-orm";
-import { db } from "@/db/client.js";
-import { agentActions, contacts, deals, type DealRow } from "@/db/schema.js";
-import { newId } from "@/contract/ids.js";
-import { ApiError } from "@/contract/errors.js";
+import { db } from "../db/client.js";
+import { agentActions, contacts, deals, type DealRow } from "../db/schema.js";
+import { newId } from "../contract/ids.js";
+import { ApiError } from "../contract/errors.js";
 import type {
   Deal,
   DealCreateInput,
   DealUpdateInput,
   DealListFilters,
-} from "@/contract/schemas/deal.js";
+} from "../contract/schemas/deal.js";
 import {
   buildAction,
   buildIdempotencyRecord,

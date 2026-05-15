@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "@/db/client.js";
-import { accounts, agentActions } from "@/db/schema.js";
-import { ApiError } from "@/contract/errors.js";
-import { newId } from "@/contract/ids.js";
+import { db } from "../db/client.js";
+import { accounts, agentActions } from "../db/schema.js";
+import { ApiError } from "../contract/errors.js";
+import { newId } from "../contract/ids.js";
 import {
   lookupIdempotent,
   buildAction,

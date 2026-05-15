@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { requireConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
-import type { Tag } from "@/contract/schemas/tag.js";
+import type { Tag } from "../../contract/schemas/tag.js";
 
 export function tagCommand(): Command {
   const cmd = new Command("tag").description("Manage tags and contact tagging");
