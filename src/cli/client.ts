@@ -21,7 +21,7 @@ export class ApiClientError extends Error {
 }
 
 export type RequestOptions = {
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   query?: Record<string, string | number | undefined>;
   body?: unknown;
   headers?: Record<string, string>;

@@ -15,6 +15,13 @@
       "when": 1778862442379,
       "tag": "0001_gray_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1778863995069,
+      "tag": "0002_wandering_ravenous",
+      "breakpoints": true
     }
   ]
 }

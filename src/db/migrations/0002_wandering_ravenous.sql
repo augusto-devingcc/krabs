@@ -1,0 +1,1 @@
+ALTER TABLE `agent_actions` ADD `metadata` text;

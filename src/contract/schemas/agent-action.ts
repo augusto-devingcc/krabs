@@ -2,6 +2,8 @@ import { z } from "zod";
 import { idSchema } from "../ids.js";
 
 export const targetKindSchema = z.enum([
+  "account",
+  "api_key",
   "contact",
   "identity",
   "deal",
@@ -23,6 +25,7 @@ export const agentActionSchema = z.object({
   targetKind: targetKindSchema,
   targetId: z.string(),
   intent: z.string().nullable(),
+  metadata: z.record(z.unknown()).nullable(),
   createdAt: z.string().datetime(),
 });
 

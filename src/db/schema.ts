@@ -107,6 +107,8 @@ export const agentActions = sqliteTable(
     targetKind: text("target_kind").notNull(),
     targetId: text("target_id").notNull(),
     intent: text("intent"),
+    // JSON: structured metadata (e.g. snapshot of deleted entity, merge plan)
+    metadata: text("metadata"),
     createdAt: text("created_at").notNull().default(nowDefault),
   },
   (t) => ({

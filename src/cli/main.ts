@@ -3,6 +3,9 @@ import { Command } from "commander";
 import { authCommand } from "./commands/auth.js";
 import { contactCommand } from "./commands/contact.js";
 import { actionCommand } from "./commands/action.js";
+import { accountCommand } from "./commands/account.js";
+import { keyCommand } from "./commands/key.js";
+import { schemaCommand } from "./commands/schema.js";
 import { ApiClientError } from "./client.js";
 import { CliConfigError } from "./config.js";
 import { codeToExit, ExitCode } from "./exit-codes.js";
@@ -16,6 +19,9 @@ program
   .enablePositionalOptions();
 
 program.addCommand(authCommand());
+program.addCommand(schemaCommand());
+program.addCommand(accountCommand());
+program.addCommand(keyCommand());
 program.addCommand(contactCommand());
 program.addCommand(actionCommand());
 

@@ -2,6 +2,9 @@ import { Hono } from "hono";
 import { healthRoute } from "./routes/health.js";
 import { meRoute } from "./routes/me.js";
 import { contactsRoute, actionsRoute } from "./routes/contacts.js";
+import { accountRoute } from "./routes/account.js";
+import { apiKeysRoute } from "./routes/api-keys.js";
+import { schemaRoute } from "./routes/schema.js";
 import { errorHandler } from "./middleware/error.js";
 
 export function buildApp() {
@@ -10,7 +13,10 @@ export function buildApp() {
   app.onError(errorHandler);
 
   app.route("/v1/health", healthRoute);
+  app.route("/v1/schema", schemaRoute);
   app.route("/v1/me", meRoute);
+  app.route("/v1/account", accountRoute);
+  app.route("/v1/api-keys", apiKeysRoute);
   app.route("/v1/contacts", contactsRoute);
   app.route("/v1/actions", actionsRoute);
 

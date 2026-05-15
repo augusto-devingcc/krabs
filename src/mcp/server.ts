@@ -18,47 +18,11 @@ function getConfig(): { apiUrl: string; token: string } {
   };
 }
 
-const contactCreateInput = {
-  name: z.string().describe("Contact's full name"),
-  email: z.string().email().optional().describe("Primary email"),
-  phone: z.string().optional().describe("Primary phone"),
-  status: z.enum(contactStatuses).optional().describe("Contact status (default: lead)"),
-  intent: z
-    .string()
-    .optional()
-    .describe(
-      "Free-text describing why you are creating this contact. Recorded in the audit log for the human owner to review.",
-    ),
-  idempotencyKey: z
-    .string()
-    .optional()
-    .describe("If you retry this call with the same key, the original result is returned without creating a duplicate."),
-  dryRun: z
-    .boolean()
-    .optional()
-    .describe("If true, the operation is computed but not persisted."),
-};
-
-const contactGetInput = {
-  id: z
-    .string()
-    .regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/)
-    .describe("Contact id, e.g. cnt_01HZ..."),
-};
-
-function textResult(value: unknown): {
-  content: { type: "text"; text: string }[];
-  isError?: boolean;
-} {
-  return {
-    content: [{ type: "text", text: JSON.stringify(value, null, 2) }],
-  };
+function textResult(value: unknown) {
+  return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
 }
 
-function errorResult(err: unknown): {
-  content: { type: "text"; text: string }[];
-  isError: true;
-} {
+function errorResult(err: unknown) {
   let payload: { code: string; message: string; hint?: string; field?: string };
   if (err instanceof ApiClientError) {
     payload = { code: err.code, message: err.message };
@@ -68,51 +32,127 @@ function errorResult(err: unknown): {
     payload = { code: "INTERNAL", message: err instanceof Error ? err.message : String(err) };
   }
   return {
-    content: [{ type: "text", text: JSON.stringify({ error: payload }, null, 2) }],
+    content: [{ type: "text" as const, text: JSON.stringify({ error: payload }, null, 2) }],
     isError: true,
   };
+}
+
+// Common shapes ─────────────────────────────────────────────────
+
+const intentField = z
+  .string()
+  .optional()
+  .describe(
+    "Free-text describing why you are doing this. Recorded in the audit log for the human owner to review later.",
+  );
+
+const idemField = z
+  .string()
+  .optional()
+  .describe("Idempotency key. Retrying with the same key returns the cached response.");
+
+const dryRunField = z
+  .boolean()
+  .optional()
+  .describe("If true, compute the result but do not persist anything.");
+
+const contactStatusField = z.enum(contactStatuses).optional();
+
+async function callApi(
+  cfg: { apiUrl: string; token: string },
+  path: string,
+  reqOpts: {
+    method: "GET" | "POST" | "PATCH" | "DELETE";
+    body?: unknown;
+    query?: Record<string, string | number>;
+    intent?: string;
+    idempotencyKey?: string;
+    dryRun?: boolean;
+  },
+) {
+  const headers: Record<string, string> = {};
+  if (reqOpts.idempotencyKey) headers["Idempotency-Key"] = reqOpts.idempotencyKey;
+  if (reqOpts.intent) headers["X-Agent-Intent"] = reqOpts.intent;
+  const query = { ...(reqOpts.query ?? {}) } as Record<string, string | number>;
+  if (reqOpts.dryRun) query.dry_run = "1";
+  const opts: {
+    method: typeof reqOpts.method;
+    body?: unknown;
+    headers: Record<string, string>;
+    query?: Record<string, string | number>;
+  } = { method: reqOpts.method, headers };
+  if (reqOpts.body !== undefined) opts.body = reqOpts.body;
+  if (Object.keys(query).length > 0) opts.query = query;
+  return apiRequest<unknown>(cfg, path, opts);
 }
 
 async function main() {
   const cfg = getConfig();
 
   const server = new McpServer(
-    { name: "socrm", version: "0.0.1" },
+    { name: "socrm", version: "0.0.2" },
     {
       capabilities: { tools: {} },
-      instructions:
-        "Solo Agentic CRM. Tools mutate the user's CRM data. Every mutation is recorded in the audit log with the API key acting as the actor; pass 'intent' to leave a human-readable note explaining what you were trying to accomplish.",
+      instructions: [
+        "Solo Agentic CRM — full read/write access to the user's CRM.",
+        "Every mutation (including destructive ones like delete and merge) is fully exposed.",
+        "Safety primitives:",
+        "  - Pass `intent` to leave a human-readable explanation in the audit log.",
+        "  - Pass `dryRun: true` on destructive ops to preview what would change.",
+        "  - Pass `idempotencyKey` for safe retries.",
+        "Call `schema_describe` first if you need to discover capabilities.",
+      ].join("\n"),
     },
   );
 
+  // ── Discovery ────────────────────────────────────────────────
+  server.registerTool(
+    "schema_describe",
+    {
+      title: "Describe the contract",
+      description:
+        "Returns the full agent-facing contract: every operation, its input schema, and metadata (destructive? idempotent? supports dry-run?). Use this to bootstrap or audit capabilities.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        const data = await apiRequest<unknown>(cfg, "/v1/schema");
+        return textResult(data);
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Contact CRUD ────────────────────────────────────────────
   server.registerTool(
     "contact_create",
     {
       title: "Create contact",
-      description: "Create a new contact in the CRM. Returns the created contact and any identities (email, phone) attached.",
-      inputSchema: contactCreateInput,
+      description: "Create a new contact. Attaches email/phone Identities automatically.",
+      inputSchema: {
+        name: z.string(),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        status: contactStatusField,
+        customFields: z.record(z.unknown()).optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
     },
-    async (args) => {
+    async (a) => {
       try {
-        const body: Record<string, unknown> = { name: args.name };
-        if (args.email) body.email = args.email;
-        if (args.phone) body.phone = args.phone;
-        if (args.status) body.status = args.status;
-
-        const headers: Record<string, string> = {};
-        if (args.idempotencyKey) headers["Idempotency-Key"] = args.idempotencyKey;
-        if (args.intent) headers["X-Agent-Intent"] = args.intent;
-
-        const reqOpts: {
-          method: "POST";
-          body: unknown;
-          headers: Record<string, string>;
-          query?: Record<string, string>;
-        } = { method: "POST", body, headers };
-        if (args.dryRun) reqOpts.query = { dry_run: "1" };
-
-        const data = await apiRequest<unknown>(cfg, "/v1/contacts", reqOpts);
-        return textResult(data);
+        const body: Record<string, unknown> = { name: a.name };
+        if (a.email) body.email = a.email;
+        if (a.phone) body.phone = a.phone;
+        if (a.status) body.status = a.status;
+        if (a.customFields) body.customFields = a.customFields;
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/contacts", opts));
       } catch (err) {
         return errorResult(err);
       }
@@ -123,19 +163,256 @@ async function main() {
     "contact_get",
     {
       title: "Get contact",
-      description: "Fetch a contact by id, including all attached identities.",
-      inputSchema: contactGetInput,
+      description: "Fetch a contact and its identities by id.",
+      inputSchema: { id: z.string().regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/) },
     },
-    async (args) => {
+    async (a) => {
       try {
-        const data = await apiRequest<unknown>(cfg, `/v1/contacts/${args.id}`);
-        return textResult(data);
+        return textResult(await callApi(cfg, `/v1/contacts/${a.id}`, { method: "GET" }));
       } catch (err) {
         return errorResult(err);
       }
     },
   );
 
+  server.registerTool(
+    "contact_list",
+    {
+      title: "List contacts",
+      description: "List contacts with cursor pagination and filters.",
+      inputSchema: {
+        cursor: z.string().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        status: contactStatusField,
+        q: z.string().min(1).optional(),
+        updatedSince: z.string().datetime().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string | number> = {};
+        if (a.cursor) query.cursor = a.cursor;
+        if (a.limit) query.limit = a.limit;
+        if (a.status) query.status = a.status;
+        if (a.q) query.q = a.q;
+        if (a.updatedSince) query.updated_since = a.updatedSince;
+        return textResult(await callApi(cfg, "/v1/contacts", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "contact_update",
+    {
+      title: "Update contact",
+      description: "Partially update a contact. Changing primaryEmail/phone attaches a new Identity.",
+      inputSchema: {
+        id: z.string().regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/),
+        name: z.string().optional(),
+        primaryEmail: z.string().email().nullable().optional(),
+        primaryPhone: z.string().nullable().optional(),
+        status: contactStatusField,
+        customFields: z.record(z.unknown()).nullable().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const patch: Record<string, unknown> = {};
+        if (a.name !== undefined) patch.name = a.name;
+        if (a.primaryEmail !== undefined) patch.primaryEmail = a.primaryEmail;
+        if (a.primaryPhone !== undefined) patch.primaryPhone = a.primaryPhone;
+        if (a.status) patch.status = a.status;
+        if (a.customFields !== undefined) patch.customFields = a.customFields;
+        const opts: Parameters<typeof callApi>[2] = { method: "PATCH", body: patch };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/contacts/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "contact_delete",
+    {
+      title: "Delete contact (destructive)",
+      description:
+        "Hard-delete a contact (cascades to identities). A snapshot is kept in the audit log so the human owner can review. Pass dryRun:true to preview.",
+      inputSchema: {
+        id: z.string().regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/contacts/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "contact_merge",
+    {
+      title: "Merge contacts (destructive)",
+      description:
+        "Merge mergeId into keepId. Migrates non-conflicting identities and deletes the merge source. Pass dryRun:true to preview the plan.",
+      inputSchema: {
+        keepId: z.string().regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/),
+        mergeId: z.string().regex(/^cnt_[0-9A-HJKMNP-TV-Z]{26}$/),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = {
+          method: "POST",
+          body: { keepId: a.keepId, mergeId: a.mergeId },
+        };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/contacts/merge", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Account ───────────────────────────────────────────────
+  server.registerTool(
+    "account_get",
+    {
+      title: "Get account",
+      description: "Return the current account (the human owner this CRM serves).",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/account", { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "account_update",
+    {
+      title: "Update account",
+      description: "Update account email or name.",
+      inputSchema: {
+        name: z.string().min(1).max(200).nullable().optional(),
+        email: z.string().email().optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const patch: Record<string, unknown> = {};
+        if (a.name !== undefined) patch.name = a.name;
+        if (a.email !== undefined) patch.email = a.email;
+        const opts: Parameters<typeof callApi>[2] = { method: "PATCH", body: patch };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/account", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── API keys ──────────────────────────────────────────────
+  server.registerTool(
+    "api_key_list",
+    {
+      title: "List API keys",
+      description: "List all API keys for this account.",
+      inputSchema: { includeRevoked: z.boolean().optional() },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string> = {};
+        if (a.includeRevoked) query.include_revoked = "1";
+        return textResult(await callApi(cfg, "/v1/api-keys", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "api_key_create",
+    {
+      title: "Create API key",
+      description:
+        "Issue a new API key for another agent or device. The plaintext token is returned once; save it.",
+      inputSchema: {
+        label: z.string().min(1).max(100),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "POST", body: { label: a.label } };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/api-keys", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "api_key_revoke",
+    {
+      title: "Revoke API key (destructive)",
+      description:
+        "Immediately revoke an API key. The owning agent loses access on its next call. Pass dryRun:true to confirm without action.",
+      inputSchema: {
+        id: z.string().regex(/^key_[0-9A-HJKMNP-TV-Z]{26}$/),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const opts: Parameters<typeof callApi>[2] = { method: "DELETE" };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, `/v1/api-keys/${a.id}`, opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── Audit ─────────────────────────────────────────────────
   server.registerTool(
     "action_list",
     {
@@ -148,15 +425,14 @@ async function main() {
         targetId: z.string().optional(),
       },
     },
-    async (args) => {
+    async (a) => {
       try {
         const query: Record<string, string | number> = {};
-        if (args.limit) query.limit = args.limit;
-        if (args.apiKeyId) query.api_key_id = args.apiKeyId;
-        if (args.targetKind) query.target_kind = args.targetKind;
-        if (args.targetId) query.target_id = args.targetId;
-        const data = await apiRequest<unknown>(cfg, "/v1/actions", { query });
-        return textResult(data);
+        if (a.limit) query.limit = a.limit;
+        if (a.apiKeyId) query.api_key_id = a.apiKeyId;
+        if (a.targetKind) query.target_kind = a.targetKind;
+        if (a.targetId) query.target_id = a.targetId;
+        return textResult(await callApi(cfg, "/v1/actions", { method: "GET", query }));
       } catch (err) {
         return errorResult(err);
       }
