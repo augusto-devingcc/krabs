@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
   // keep the API on Node so we keep top-level await + dynamic imports.
   serverExternalPackages: ["@libsql/client", "drizzle-orm"],
 
+  // Force Clerk to be transpiled/bundled by webpack — its ESM dist omits
+  // .js extensions which Node's strict ESM resolver rejects when the file
+  // is read from disk instead of going through the bundler.
+  transpilePackages: ["@clerk/nextjs", "@clerk/shared", "@clerk/backend"],
+
   // The src/ tree uses NodeNext ESM with explicit `.js` import suffixes (so
   // tsx/Node can run it directly).  Webpack maps those `.js` to `.ts/.tsx`
   // via extensionAlias.  Turbopack does not (yet) support the same option,
