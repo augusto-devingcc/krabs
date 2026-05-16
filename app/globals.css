@@ -456,6 +456,57 @@ html, body {
   color: var(--fg); background: var(--bg-subtle); border-color: var(--border-strong);
 }
 
+/* Mobile-only hamburger trigger. Hidden on desktop. */
+.mk-nav__hamburger {
+  display: none;
+  width: 36px; height: 36px;
+  align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--border-light);
+  border-radius: var(--radius-3);
+  color: var(--fg-2); cursor: pointer;
+  transition: color var(--dur-2) var(--ease-out),
+              background var(--dur-2) var(--ease-out),
+              border-color var(--dur-2) var(--ease-out);
+}
+.mk-nav__hamburger:hover {
+  color: var(--fg); background: var(--bg-subtle); border-color: var(--border-strong);
+}
+
+/* Mobile dropdown panel. Pushed below the sticky nav, full-width. */
+.mk-nav__mobile {
+  display: none;
+  position: absolute; left: 0; right: 0; top: 100%;
+  padding: 12px 20px 24px;
+  background: var(--bg); border-bottom: 1px solid var(--border-light);
+  flex-direction: column; gap: 4px;
+  box-shadow: var(--shadow-3);
+}
+.mk-nav__mobile-link {
+  display: block; padding: 12px 8px;
+  font-size: 16px; color: var(--fg);
+  border-radius: var(--radius-3);
+  transition: background var(--dur-2) var(--ease-out);
+}
+.mk-nav__mobile-link:hover { background: var(--bg-muted); }
+.mk-nav__mobile-sep {
+  height: 1px; background: var(--border-light); margin: 8px 0;
+}
+.mk-nav__mobile-cta {
+  align-self: stretch; margin: 8px 0 4px;
+}
+.mk-nav__mobile-theme {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 8px; margin-top: 4px;
+  background: transparent; border: 1px solid var(--border-light);
+  border-radius: var(--radius-3);
+  font-family: var(--font-sans); font-size: 14px; color: var(--fg-2);
+  cursor: pointer;
+}
+.mk-nav__mobile-theme:hover { color: var(--fg); border-color: var(--border-strong); }
+.mk-nav__mobile-theme span:last-child {
+  font-family: var(--font-mono); font-size: 12px; color: var(--fg-3);
+}
+
 /* Hero */
 .mk-hero { position: relative; padding: 80px 32px 96px; overflow: hidden; }
 .mk-hero__bg {
@@ -668,16 +719,19 @@ html, body { -webkit-text-size-adjust: 100%; }
 
 /* ── Nav (mobile) ── */
 @media (max-width: 768px) {
-  .mk-nav__inner { padding: 12px 20px; gap: 16px; }
+  .mk-nav__inner { padding: 12px 20px; gap: 12px; }
+  /* Links + inline theme/sign-in collapse into the hamburger dropdown. */
   .mk-nav__links { display: none; }
-}
-@media (max-width: 480px) {
-  /* Hide sign-in + theme toggle on phone portrait — Clerk's modal lets users
-     switch to sign-in from the Get-started CTA, and the toggle is non-essential. */
   .mk-nav__signin { display: none; }
   .mk-nav__theme { display: none; }
+  .mk-nav__hamburger { display: inline-flex; }
   .mk-nav__right { gap: 8px; }
+  /* Reveal the dropdown when the Nav signals open via data-attr. */
+  .mk-nav[data-menu-open="true"] .mk-nav__mobile { display: flex; }
+}
+@media (max-width: 480px) {
   .mk-nav__inner .mk-btn--sm { font-size: 12px; padding: 0 10px; }
+  .mk-nav__mobile { padding: 10px 16px 20px; }
 }
 
 /* ── Hero (mobile) ── */
