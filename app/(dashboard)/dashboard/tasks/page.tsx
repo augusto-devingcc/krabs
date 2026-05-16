@@ -1,10 +1,26 @@
+import {
+  CheckSquare,
+  Square,
+  CheckSquare2,
+  XSquare,
+  History,
+  Filter,
+  Flame,
+} from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listTasks } from "../../../../src/domain/task.js";
+import { EntityHeader, EntityEmpty, StatusPill } from "@/components/EntityTable";
+import { Button } from "@/components/ui/button";
 import {
-  EntityHeader,
-  EntityEmpty,
-  StatusPill,
-} from "@/components/EntityTable";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/components/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -47,51 +63,50 @@ export default async function TasksPage({
   return (
     <div className="p-8 max-w-5xl">
       <EntityHeader
+        icon={CheckSquare}
         title="tasks"
         description="Things to do. Tied optionally to a contact or deal. Set status=done and your agent stamps completedAt automatically."
         count={items.length}
       />
 
       <form action="/dashboard/tasks" className="mb-6 flex flex-col sm:flex-row gap-2">
-        <select
-          name="status"
-          defaultValue={sp.status ?? ""}
-          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-border-strong)]"
-        >
-          <option value="">all statuses</option>
-          <option value="open">open</option>
-          <option value="in_progress">in_progress</option>
-          <option value="done">done</option>
-          <option value="cancelled">cancelled</option>
-        </select>
-        <select
-          name="priority"
-          defaultValue={sp.priority ?? ""}
-          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-border-strong)]"
-        >
-          <option value="">any priority</option>
-          <option value="high">high</option>
-          <option value="normal">normal</option>
-          <option value="low">low</option>
-        </select>
-        <button
-          type="submit"
-          className="bg-[var(--color-accent)] text-[var(--color-bg)] border border-[var(--color-accent)] px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-accent-hover)] transition-colors"
-        >
-          filter
-        </button>
+        <Select name="status" defaultValue={sp.status || "all"}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="all statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">all statuses</SelectItem>
+            <SelectItem value="open">open</SelectItem>
+            <SelectItem value="in_progress">in_progress</SelectItem>
+            <SelectItem value="done">done</SelectItem>
+            <SelectItem value="cancelled">cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select name="priority" defaultValue={sp.priority || "any"}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="any priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">any priority</SelectItem>
+            <SelectItem value="high">high</SelectItem>
+            <SelectItem value="normal">normal</SelectItem>
+            <SelectItem value="low">low</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button type="submit" variant="outline">
+          Filter <Filter size={16} aria-hidden />
+        </Button>
       </form>
 
       {items.length === 0 ? (
         <EntityEmpty
+          icon={CheckSquare}
           description="No tasks yet. Your agent can add follow-ups, reminders, and to-dos for you."
           prompt='Add a task to follow up with Maria next Tuesday, high priority.'
         />
       ) : (
         <div className="space-y-8">
-          {primary.length > 0 && (
-            <TaskGroup label="active" tasks={primary} />
-          )}
+          {primary.length > 0 && <TaskGroup label="active" tasks={primary} />}
           {secondary.length > 0 && (
             <TaskGroup label="completed" tasks={secondary} muted />
           )}
@@ -113,18 +128,21 @@ function TaskGroup({
   return (
     <section className={muted ? "opacity-70" : ""}>
       <div className="flex items-center gap-2 mb-3">
-        <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg-faint)]">
+        {muted && <History size={14} aria-hidden className="text-muted-foreground" />}
+        <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
           # {label}
         </p>
-        <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-fg-muted)]">
+        <Badge variant="outline" className="font-mono text-[10px]">
           {tasks.length}
-        </span>
+        </Badge>
       </div>
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] overflow-hidden">
-        {tasks.map((t, i) => (
-          <TaskRow key={t.id} task={t} first={i === 0} />
-        ))}
-      </div>
+      <Card className="py-0 gap-0">
+        <CardContent className="px-0">
+          {tasks.map((t, i) => (
+            <TaskRow key={t.id} task={t} first={i === 0} />
+          ))}
+        </CardContent>
+      </Card>
     </section>
   );
 }
@@ -133,41 +151,39 @@ function TaskRow({ task, first }: { task: Task; first: boolean }) {
   const done = task.status === "done";
   const cancelled = task.status === "cancelled";
   const checked = done || cancelled;
+
+  const CheckboxIcon = done ? CheckSquare2 : cancelled ? XSquare : Square;
+
   return (
     <div
-      className={`flex items-start gap-4 px-4 py-3.5 hover:bg-[var(--color-surface-2)] transition-colors ${first ? "" : "border-t border-[var(--color-border)]"}`}
+      className={cn(
+        "flex items-start gap-4 px-4 py-3.5 hover:bg-muted/50 transition-colors",
+        !first && "border-t border-border"
+      )}
     >
-      <div
-        className={`mt-0.5 w-5 h-5 rounded-[4px] border flex items-center justify-center shrink-0 ${
-          checked
-            ? "bg-[var(--color-surface-2)] border-[var(--color-border-strong)]"
-            : "bg-[var(--color-bg)] border-[var(--color-border-strong)]"
-        }`}
+      <CheckboxIcon
+        size={20}
         aria-hidden
-      >
-        {done && (
-          <span className="font-mono text-xs text-[var(--color-fg-muted)]">✓</span>
+        className={cn(
+          "mt-0.5 shrink-0",
+          checked ? "text-muted-foreground" : "text-foreground"
         )}
-        {cancelled && (
-          <span className="font-mono text-xs text-[var(--color-fg-faint)]">×</span>
-        )}
-      </div>
+      />
 
       <div className="flex-1 min-w-0">
         <p
-          className={`text-sm truncate ${
+          className={cn(
+            "text-sm truncate",
             checked
-              ? "line-through text-[var(--color-fg-faint)]"
-              : "text-[var(--color-fg)]"
-          }`}
+              ? "line-through text-muted-foreground"
+              : "text-foreground"
+          )}
           title={task.title}
         >
           {task.title}
         </p>
-        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-[var(--color-fg-faint)]">
-          <span className="text-[var(--color-fg-faint)]">
-            {task.id.slice(0, 10)}…
-          </span>
+        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground">
+          <span>{task.id.slice(0, 10)}…</span>
           {task.dueAt && (
             <>
               <span>·</span>
@@ -184,8 +200,13 @@ function TaskRow({ task, first }: { task: Task; first: boolean }) {
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        <StatusPill status={task.priority} tone="muted" />
-        <StatusPill status={task.status} tone={checked ? "muted" : "default"} />
+        <Badge variant="outline" className="font-mono text-[11px]">
+          {task.priority === "high" && (
+            <Flame size={14} aria-hidden className="text-muted-foreground" />
+          )}
+          {task.priority}
+        </Badge>
+        <StatusPill status={task.status} variant={checked ? "outline" : "secondary"} />
       </div>
     </div>
   );

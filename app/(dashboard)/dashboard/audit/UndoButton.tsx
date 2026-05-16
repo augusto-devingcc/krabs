@@ -1,7 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
+import { Undo2 } from "lucide-react";
 import { undoActionFromWeb } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export function UndoButton({ actionId, operation }: { actionId: string; operation: string }) {
   const [pending, startTransition] = useTransition();
@@ -16,13 +18,16 @@ export function UndoButton({ actionId, operation }: { actionId: string; operatio
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="xs"
       onClick={onClick}
       disabled={pending}
-      className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] disabled:opacity-50 font-mono"
+      className="font-mono"
     >
-      {pending ? "undoing…" : "↺ undo"}
-    </button>
+      <Undo2 size={12} aria-hidden />
+      {pending ? "undoing…" : "undo"}
+    </Button>
   );
 }

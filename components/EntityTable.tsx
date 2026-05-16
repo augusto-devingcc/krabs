@@ -1,31 +1,57 @@
-import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+// Default icon fallbacks used when no icon prop is passed.
+import { Inbox, Sparkles } from "lucide-react";
+import {
+  Table as ShadTable,
+  TableHeader as ShadTableHeader,
+  TableBody as ShadTableBody,
+  TableHead as ShadTableHead,
+  TableRow as ShadTableRow,
+  TableCell as ShadTableCell,
+  TableCaption as ShadTableCaption,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/components/lib/utils";
 
 export function EntityHeader({
   title,
   description,
   count,
   actions,
+  icon: Icon,
 }: {
   title: string;
   description: string;
   count: number;
   actions?: React.ReactNode;
+  icon?: LucideIcon;
 }) {
+  const ResolvedIcon: LucideIcon = Icon ?? Sparkles;
   return (
     <div className="mb-8">
-      <p className="font-mono text-xs uppercase tracking-wider text-[var(--color-fg-faint)] mb-3">
+      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
         # {title}
       </p>
       <div className="flex items-start justify-between gap-4 mb-2">
-        <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
-        {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+        <div className="flex items-center gap-3">
+          <ResolvedIcon
+            size={24}
+            className="text-muted-foreground"
+            aria-hidden
+          />
+          <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
+        </div>
+        {actions && (
+          <div className="flex items-center gap-2 shrink-0">{actions}</div>
+        )}
       </div>
       <div className="mb-3">
-        <span className="inline-block font-mono text-[11px] uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-fg-muted)]">
+        <Badge variant="secondary">
           {count} {count === 1 ? "record" : "records"}
-        </span>
+        </Badge>
       </div>
-      <p className="text-sm text-[var(--color-fg-muted)] max-w-2xl leading-relaxed">
+      <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
         {description}
       </p>
     </div>
@@ -35,45 +61,57 @@ export function EntityHeader({
 export function EntityEmpty({
   prompt,
   description,
+  icon: Icon,
 }: {
   prompt: string;
   description?: string;
+  icon?: LucideIcon;
 }) {
+  const ResolvedIcon: LucideIcon = Icon ?? Inbox;
   return (
-    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] py-12 px-6 text-center">
-      <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg-faint)] mb-4">
-        empty
-      </p>
-      {description && (
-        <p className="text-sm text-[var(--color-fg-muted)] max-w-md mx-auto mb-6 leading-relaxed">
-          {description}
+    <Card>
+      <CardContent className="py-12 text-center flex flex-col items-center">
+        <ResolvedIcon
+          size={48}
+          className="text-muted-foreground mb-4"
+          aria-hidden
+        />
+        <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground mb-4">
+          empty
         </p>
-      )}
-      <div className="inline-block bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-sm)] px-4 py-3 text-left max-w-xl">
-        <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-fg-faint)] mb-1">
-          try asking your agent
-        </p>
-        <code className="font-mono text-sm text-[var(--color-fg)]">
-          <span className="text-[var(--color-fg-muted)]">›</span> {prompt}
-        </code>
-      </div>
-    </div>
+        {description && (
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
+            {description}
+          </p>
+        )}
+        <div className="inline-block bg-muted border-border border rounded-md px-4 py-3 text-left max-w-xl">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            try asking your agent
+          </p>
+          <code className="font-mono text-sm text-foreground">
+            <span className="text-muted-foreground">›</span> {prompt}
+          </code>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
-export function Table({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] overflow-hidden">
-      <table className="w-full text-sm">{children}</table>
-    </div>
-  );
-}
+// Re-export shadcn table primitives under expected names
+export const Table = ShadTable;
+export const TableHeader = ShadTableHeader;
+export const TableBody = ShadTableBody;
+export const TableHead = ShadTableHead;
+export const TableRow = ShadTableRow;
+export const TableCell = ShadTableCell;
+export const TableCaption = ShadTableCaption;
 
+// Legacy helpers — kept as thin wrappers so existing callers keep working.
 export function Th({ children }: { children?: React.ReactNode }) {
   return (
-    <th className="sticky top-0 text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-medium text-[var(--color-fg-faint)] bg-[var(--color-surface-2)] border-b border-[var(--color-border-strong)]">
+    <ShadTableHead className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
       {children}
-    </th>
+    </ShadTableHead>
   );
 }
 
@@ -82,22 +120,33 @@ export function Td({
   mono,
   muted,
   faint,
+  className,
 }: {
   children: React.ReactNode;
   mono?: boolean;
   muted?: boolean;
   faint?: boolean;
+  className?: string;
 }) {
-  const classes = [
-    "px-4 py-3 align-middle",
-    mono ? "font-mono text-xs" : "",
-    faint ? "text-[var(--color-fg-faint)]" : muted ? "text-[var(--color-fg-muted)]" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return <td className={classes}>{children}</td>;
+  return (
+    <ShadTableCell
+      className={cn(
+        "px-4 py-3 align-middle",
+        mono && "font-mono text-xs",
+        (faint || muted) && "text-muted-foreground",
+        className,
+      )}
+    >
+      {children}
+    </ShadTableCell>
+  );
 }
 
+/**
+ * Tr — table row. If `href` is provided, renders as a clickable row.
+ * The href is currently informational; callers should also wrap individual
+ * cell contents in a <Link> for actual navigation.
+ */
 export function Tr({
   children,
   href,
@@ -106,76 +155,54 @@ export function Tr({
   href?: string;
 }) {
   if (href) {
-    return (
-      <tr className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-2)] transition-colors cursor-pointer">
-        <td colSpan={20} className="p-0">
-          <Link href={href} className="block">
-            <table className="w-full">
-              <tbody>
-                <tr>{children}</tr>
-              </tbody>
-            </table>
-          </Link>
-        </td>
-      </tr>
-    );
+    return <RowLink href={href}>{children}</RowLink>;
   }
-  return (
-    <tr className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-2)] transition-colors">
-      {children}
-    </tr>
-  );
+  return <ShadTableRow>{children}</ShadTableRow>;
 }
 
 /**
- * RowLink — a clickable table row helper. Renders a row that visually highlights
- * on hover and navigates to `href`. Uses a real <Link> nested via colSpan to
- * keep the whole row clickable while staying in valid markup.
+ * RowLink — a clickable-styled table row. Renders a TableRow with
+ * cursor-pointer and a muted hover state. Pair with a <Link> in the first
+ * cell to make the row actually navigate.
  */
 export function RowLink({
-  href,
+  href: _href,
   children,
-  cols = 20,
 }: {
   href: string;
   children: React.ReactNode;
   cols?: number;
 }) {
   return (
-    <tr className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-2)] transition-colors cursor-pointer">
-      <td colSpan={cols} className="p-0">
-        <Link href={href} className="block">
-          <table className="w-full">
-            <tbody>
-              <tr>{children}</tr>
-            </tbody>
-          </table>
-        </Link>
-      </td>
-    </tr>
+    <ShadTableRow className="cursor-pointer hover:bg-muted/50">
+      {children}
+    </ShadTableRow>
   );
 }
 
+/**
+ * StatusPill — thin wrapper over shadcn Badge with `variant` instead of the
+ * legacy `tone` prop. Callers can still pass `tone` and it is mapped.
+ */
 export function StatusPill({
   status,
-  tone = "default",
+  variant,
+  tone,
 }: {
   status: string;
+  variant?: "default" | "secondary" | "outline";
   tone?: "muted" | "strong" | "default";
 }) {
-  const tones: Record<string, string> = {
-    default:
-      "bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-fg-muted)]",
-    muted:
-      "bg-transparent border-[var(--color-border)] text-[var(--color-fg-faint)]",
-    strong:
-      "bg-[var(--color-surface-2)] border-[var(--color-border-strong)] text-[var(--color-fg)]",
-  };
+  const resolved: "default" | "secondary" | "outline" =
+    variant ??
+    (tone === "muted"
+      ? "outline"
+      : tone === "strong"
+      ? "default"
+      : "secondary");
   return (
-    <span
-      className={`inline-flex items-center text-[11px] font-mono px-2 py-0.5 rounded border ${tones[tone]}`}
-    >
+    <Badge variant={resolved} className="font-mono text-[11px]">
       {status}
-    </span>
+    </Badge>
   );
 }

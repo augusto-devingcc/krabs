@@ -1,14 +1,25 @@
+import { BadgeDollarSign, Info, Trophy, Layers, Target } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listDeals } from "../../../../src/domain/deal.js";
 import {
   EntityHeader,
   EntityEmpty,
   Table,
-  Th,
-  Td,
-  Tr,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableBody,
+  TableCell,
   StatusPill,
 } from "@/components/EntityTable";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +40,7 @@ export default async function DealsPage() {
   return (
     <div className="p-8 max-w-7xl">
       <EntityHeader
+        icon={BadgeDollarSign}
         title="deals"
         description="Revenue opportunities. Move them through stages — your agent can update fields conversationally."
         count={items.length}
@@ -36,12 +48,14 @@ export default async function DealsPage() {
 
       {items.length === 0 ? (
         <EntityEmpty
+          icon={Target}
           description="No deals yet. Open one with a single message — your agent will pick the stage, value, and links."
           prompt='Open a deal with Acme Corp for $50k annual contract, stage proposal.'
         />
       ) : (
         <>
-          <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg-faint)] mb-3">
+          <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground mb-3">
+            <Info size={14} aria-hidden />
             no drag-and-drop yet — ask your agent to move stages.
           </p>
 
@@ -50,86 +64,95 @@ export default async function DealsPage() {
             {stages.map((stage) => {
               const col = byStage.get(stage) ?? [];
               return (
-                <div
-                  key={stage}
-                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] p-3 min-h-[180px] flex flex-col"
-                >
-                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-[var(--color-border)]">
-                    <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg)]">
+                <Card key={stage} className="min-h-[180px] py-3 gap-3">
+                  <CardHeader className="px-3 pb-2 border-b grid-cols-[1fr_auto]">
+                    <CardTitle className="font-mono text-[11px] uppercase tracking-wider">
                       {stage}
-                    </p>
-                    <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-fg-muted)]">
+                    </CardTitle>
+                    <Badge variant="outline" className="font-mono text-[10px]">
                       {col.length}
-                    </span>
-                  </div>
-                  <div className="space-y-2 flex-1">
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="px-3 flex-1 space-y-2">
                     {col.map((d) => (
-                      <div
+                      <Card
                         key={d.id}
-                        className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-3 text-sm hover:bg-[var(--color-surface-2)] hover:border-[var(--color-border-strong)] transition-colors"
+                        className="py-2 gap-1 shadow-none bg-muted/40 hover:bg-muted transition-colors"
                       >
-                        <p
-                          className="font-mono text-sm font-medium mb-2 truncate text-[var(--color-fg)]"
-                          title={d.title}
-                        >
-                          {d.title}
-                        </p>
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="font-mono text-[var(--color-fg-muted)]">
+                        <CardContent className="px-3">
+                          <p
+                            className="font-mono text-sm font-medium truncate text-foreground"
+                            title={d.title}
+                          >
+                            {d.title}
+                          </p>
+                        </CardContent>
+                        <CardFooter className="px-3 justify-between text-[11px]">
+                          <span className="font-mono text-muted-foreground">
                             {d.value
                               ? `${d.value.toLocaleString()} ${d.currency ?? ""}`.trim()
                               : "—"}
                           </span>
-                          <StatusPill status={d.status} tone="muted" />
-                        </div>
-                      </div>
+                          <StatusPill status={d.status} variant="outline" />
+                        </CardFooter>
+                      </Card>
                     ))}
                     {col.length === 0 && (
-                      <p className="font-mono text-[11px] text-[var(--color-fg-faint)] italic px-1 py-2">
+                      <p className="text-muted-foreground italic font-mono text-[11px] px-1 py-2">
                         empty
                       </p>
                     )}
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
 
-          <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg-faint)] mb-3">
-            # all deals
+          <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground mb-3">
+            <Layers size={14} aria-hidden /> all deals
           </p>
-          <Table>
-            <thead>
-              <tr>
-                <Th>id</Th>
-                <Th>title</Th>
-                <Th>stage</Th>
-                <Th>status</Th>
-                <Th>value</Th>
-                <Th>close date</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((d) => (
-                <Tr key={d.id}>
-                  <Td mono faint>{d.id.slice(0, 12)}…</Td>
-                  <Td>{d.title}</Td>
-                  <Td>
-                    <StatusPill status={d.stage} tone="strong" />
-                  </Td>
-                  <Td>
-                    <StatusPill status={d.status} />
-                  </Td>
-                  <Td mono muted>
-                    {d.value
-                      ? `${d.value.toLocaleString()} ${d.currency ?? ""}`.trim()
-                      : "—"}
-                  </Td>
-                  <Td mono faint>{d.expectedCloseDate ?? "—"}</Td>
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
+          <div className="bg-card border border-border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>id</TableHead>
+                  <TableHead>title</TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Trophy size={14} aria-hidden /> stage
+                    </span>
+                  </TableHead>
+                  <TableHead>status</TableHead>
+                  <TableHead>value</TableHead>
+                  <TableHead>close date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((d) => (
+                  <TableRow key={d.id}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {d.id.slice(0, 12)}…
+                    </TableCell>
+                    <TableCell>{d.title}</TableCell>
+                    <TableCell>
+                      <StatusPill status={d.stage} variant="default" />
+                    </TableCell>
+                    <TableCell>
+                      <StatusPill status={d.status} />
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {d.value
+                        ? `${d.value.toLocaleString()} ${d.currency ?? ""}`.trim()
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {d.expectedCloseDate ?? "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </>
       )}
     </div>

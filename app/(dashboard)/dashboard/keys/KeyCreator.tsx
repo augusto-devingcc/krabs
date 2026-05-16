@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { Check, Code2, Copy, Plus, Sparkles } from "lucide-react";
 import { createKeyAction } from "./actions";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
   const [pending, startTransition] = useTransition();
@@ -31,63 +37,74 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
     setCopied(true);
   }
 
-  const wrapperClass = embedded
-    ? "mb-0"
-    : "bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] p-5 mb-6";
-
-  return (
-    <div className={wrapperClass}>
-      {!embedded && (
-        <p className="font-mono text-xs uppercase tracking-wide text-[var(--color-fg-muted)] mb-3">
-          # new api key
-        </p>
-      )}
-      <form action={onSubmit} className="flex gap-3">
-        <input
-          name="label"
-          placeholder="Claude Desktop on MacBook"
-          required
-          className="flex-1 bg-[var(--color-bg)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-fg)]"
-        />
-        <button
-          type="submit"
-          disabled={pending}
-          className="bg-[var(--color-accent)] text-[var(--color-bg)] px-4 py-2 rounded-[var(--radius-sm)] text-sm font-medium hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
-        >
-          {pending ? "creating…" : "create key"}
-        </button>
+  const formAndResult = (
+    <>
+      <form action={onSubmit} className="flex flex-col sm:flex-row gap-3 items-end">
+        <div className="flex-1 w-full space-y-1.5">
+          <Label htmlFor="key-label" className="text-xs uppercase tracking-wide text-muted-foreground">
+            Label
+          </Label>
+          <Input
+            id="key-label"
+            name="label"
+            placeholder="Claude Desktop on MacBook"
+            required
+          />
+        </div>
+        <Button type="submit" disabled={pending}>
+          {pending ? (
+            <>
+              <Sparkles size={16} aria-hidden className="animate-pulse" />
+              creating…
+            </>
+          ) : (
+            "create key"
+          )}
+        </Button>
       </form>
 
       {err && (
-        <p className="mt-3 text-sm text-[var(--color-danger)] font-mono">✘ {err}</p>
+        <Alert variant="destructive" className="mt-3">
+          <AlertDescription className="font-mono">{err}</AlertDescription>
+        </Alert>
       )}
 
       {created && (
-        <div className="mt-5 bg-[var(--color-surface-2)] border border-[var(--color-fg)] rounded-[var(--radius-md)] p-5">
-          <p className="font-mono text-xs uppercase tracking-wide text-[var(--color-fg-muted)] mb-2">
-            ✓ token created
-          </p>
-          <p className="text-sm mb-4 text-[var(--color-fg)]">
-            <span className="font-mono">{created.label}</span> is ready. Copy this token now —
-            it&apos;s shown <strong>once</strong> and never again.
-          </p>
-          <div className="flex gap-2 items-stretch">
-            <code className="flex-1 font-mono text-sm bg-[var(--color-bg)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] px-4 py-3 overflow-x-auto whitespace-nowrap">
-              {created.token}
-            </code>
-            <button
-              type="button"
-              onClick={onCopy}
-              className="text-xs font-mono px-4 py-3 bg-[var(--color-accent)] text-[var(--color-bg)] rounded-[var(--radius-sm)] hover:bg-[var(--color-accent-hover)] min-w-[100px]"
-            >
-              {copied ? "copied ✓" : "copy"}
-            </button>
-          </div>
-          <details open className="mt-5 text-xs text-[var(--color-fg-muted)] group">
-            <summary className="cursor-pointer font-mono uppercase tracking-wide hover:text-[var(--color-fg)] select-none">
-              › quick start — Claude Desktop config
-            </summary>
-            <pre className="mt-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-4 overflow-x-auto text-[var(--color-fg)]">{`{
+        <Alert className="mt-5 border-border">
+          <Check size={16} aria-hidden />
+          <AlertTitle>Token created</AlertTitle>
+          <AlertDescription>
+            <p className="text-sm mb-3">
+              <span className="font-mono">{created.label}</span> is ready. Copy this token now —
+              it&apos;s shown <strong>once</strong> and never again.
+            </p>
+            <div className="flex gap-2 items-stretch w-full">
+              <code className="flex-1 font-mono text-sm bg-background border border-border rounded-md px-4 py-3 overflow-x-auto whitespace-nowrap">
+                {created.token}
+              </code>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onCopy}
+                className="min-w-[100px]"
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} aria-hidden /> copied
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} aria-hidden /> copy
+                  </>
+                )}
+              </Button>
+            </div>
+            <details open className="mt-4 text-xs text-muted-foreground group">
+              <summary className="cursor-pointer font-mono uppercase tracking-wide hover:text-foreground select-none inline-flex items-center gap-2">
+                <Code2 size={14} aria-hidden />
+                quick start — Claude Desktop config
+              </summary>
+              <pre className="mt-3 bg-background border border-border rounded-md p-4 overflow-x-auto text-foreground">{`{
   "mcpServers": {
     "socrm": {
       "command": "node",
@@ -99,9 +116,29 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
     }
   }
 }`}</pre>
-          </details>
-        </div>
+            </details>
+          </AlertDescription>
+        </Alert>
       )}
-    </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div>{formAndResult}</div>;
+  }
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Plus size={20} className="text-muted-foreground" aria-hidden />
+          <CardTitle>New API key</CardTitle>
+        </div>
+        <CardDescription>
+          Name it for the agent or device using it — the audit log will show this label.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>{formAndResult}</CardContent>
+    </Card>
   );
 }

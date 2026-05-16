@@ -1,7 +1,18 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check, Info } from "lucide-react";
 import { requestUpgradeAction } from "./actions";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Plan = "solo" | "pro";
 
@@ -26,12 +37,11 @@ export function PricingGrid({ plans }: { plans: PlanSpec[] }) {
         ))}
       </div>
       {message && (
-        <div
-          role="status"
-          className="mt-6 bg-[var(--color-surface-2)] border border-[var(--color-border-strong)] rounded-[var(--radius-md)] px-4 py-3 text-sm text-[var(--color-fg)] font-mono"
-        >
-          <span className="text-[var(--color-fg-muted)]">›</span> {message}
-        </div>
+        <Alert className="mt-6">
+          <Info size={16} aria-hidden />
+          <AlertTitle>Upgrade coming soon</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       )}
     </>
   );
@@ -45,45 +55,49 @@ function PlanCard({
   onMessage: (m: string) => void;
 }) {
   const isHighlight = !!plan.highlight;
-  const borderClass = isHighlight
-    ? "border-2 border-[var(--color-fg)]"
-    : "border border-[var(--color-border)]";
-  const padding = isHighlight ? "p-7" : "p-6";
 
   return (
-    <div
-      className={`bg-[var(--color-surface)] ${borderClass} ${padding} rounded-[var(--radius-md)] flex flex-col`}
-    >
-      <p className="font-mono text-xs uppercase tracking-wide text-[var(--color-fg-muted)] mb-3">
-        {plan.name}
-      </p>
-      <p className="mb-5">
-        <span className="text-4xl font-medium tabular-nums">{plan.price}</span>
-        {plan.id !== "free" && (
-          <span className="text-sm text-[var(--color-fg-muted)] ml-1">/mo</span>
-        )}
-      </p>
-      <ul className="space-y-2 text-sm flex-1 mb-6">
-        {plan.features.map((f) => (
-          <li key={f} className="flex gap-2">
-            <span className="text-[var(--color-fg-muted)] font-mono">›</span>
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-      {plan.current ? (
-        <span className="text-center text-xs font-mono uppercase tracking-wide text-[var(--color-fg-muted)] py-2.5 border border-[var(--color-border)] rounded-[var(--radius-sm)]">
-          current plan
-        </span>
-      ) : plan.cta ? (
-        <UpgradeButton
-          plan={plan.cta.plan}
-          label={plan.cta.label}
-          variant={plan.cta.variant}
-          onMessage={onMessage}
-        />
-      ) : null}
-    </div>
+    <Card className={isHighlight ? "border-2 border-foreground" : ""}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+            {plan.name}
+          </CardTitle>
+          {isHighlight && <Badge>Popular</Badge>}
+          {plan.current && <Badge variant="secondary">Current plan</Badge>}
+        </div>
+        <p>
+          <span className="text-4xl font-medium tabular-nums">{plan.price}</span>
+          {plan.id !== "free" && (
+            <span className="text-sm text-muted-foreground ml-1">/mo</span>
+          )}
+        </p>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <ul className="space-y-2 text-sm">
+          {plan.features.map((f) => (
+            <li key={f} className="flex gap-2 items-start">
+              <Check size={16} aria-hidden className="text-primary mt-0.5 shrink-0" />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+      <CardFooter>
+        {plan.current ? (
+          <div className="w-full text-center text-xs font-mono uppercase tracking-wide text-muted-foreground py-2.5 border border-border rounded-md">
+            current plan
+          </div>
+        ) : plan.cta ? (
+          <UpgradeButton
+            plan={plan.cta.plan}
+            label={plan.cta.label}
+            variant={plan.cta.variant}
+            onMessage={onMessage}
+          />
+        ) : null}
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -107,19 +121,15 @@ function UpgradeButton({
     });
   }
 
-  const cls =
-    variant === "primary"
-      ? "bg-[var(--color-accent)] text-[var(--color-bg)] hover:bg-[var(--color-accent-hover)]"
-      : "border border-[var(--color-border-strong)] text-[var(--color-fg)] hover:border-[var(--color-fg)]";
-
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
       disabled={pending}
-      className={`w-full text-center text-sm font-medium py-2.5 rounded-[var(--radius-sm)] disabled:opacity-50 ${cls}`}
+      variant={variant === "primary" ? "default" : "outline"}
+      className="w-full"
     >
       {pending ? "requesting…" : label}
-    </button>
+    </Button>
   );
 }

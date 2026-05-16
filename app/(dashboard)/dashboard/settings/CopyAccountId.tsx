@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function CopyAccountId({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -13,17 +15,27 @@ export function CopyAccountId({ value }: { value: string }) {
 
   return (
     <span className="inline-flex items-center gap-2">
-      <code className="font-mono text-xs text-[var(--color-fg)]">{value}</code>
-      <button
+      <code className="font-mono text-xs text-foreground">{value}</code>
+      <Button
         type="button"
+        variant="outline"
+        size="xs"
         onClick={() => {
           navigator.clipboard.writeText(value);
           setCopied(true);
         }}
-        className="font-mono text-[10px] uppercase tracking-wide px-1.5 py-0.5 border border-[var(--color-border-strong)] rounded text-[var(--color-fg-muted)] hover:border-[var(--color-fg)] hover:text-[var(--color-fg)]"
+        className="font-mono uppercase tracking-wide"
       >
-        {copied ? "copied ✓" : "copy"}
-      </button>
+        {copied ? (
+          <>
+            <Check size={12} aria-hidden /> copied
+          </>
+        ) : (
+          <>
+            <Copy size={12} aria-hidden /> copy
+          </>
+        )}
+      </Button>
     </span>
   );
 }

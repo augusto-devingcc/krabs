@@ -1,14 +1,27 @@
+import Link from "next/link";
+import { Users, Search, Filter, ArrowRight, Mail, Phone } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listContacts } from "../../../../src/domain/contact.js";
 import {
   EntityHeader,
   EntityEmpty,
   Table,
-  Th,
-  Td,
-  Tr,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableBody,
+  TableCell,
   StatusPill,
 } from "@/components/EntityTable";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +69,7 @@ export default async function ContactsPage({
   return (
     <div className="p-8 max-w-6xl">
       <EntityHeader
+        icon={Users}
         title="contacts"
         description="People you and your agents talk to. Multi-channel identity supported — same person on email + WhatsApp + Telegram is one contact."
         count={items.length}
@@ -66,86 +80,105 @@ export default async function ContactsPage({
         className="mb-6 flex flex-col sm:flex-row gap-2"
       >
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-[var(--color-fg-faint)] text-sm pointer-events-none">
-            ›
-          </span>
-          <input
+          <Search
+            size={16}
+            aria-hidden
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          />
+          <Input
             name="q"
             defaultValue={sp.q ?? ""}
             placeholder="search by name, email, phone…"
-            className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] pl-8 pr-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-border-strong)] placeholder:text-[var(--color-fg-faint)]"
+            className="pl-9"
           />
         </div>
-        <select
-          name="status"
-          defaultValue={sp.status ?? ""}
-          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-border-strong)]"
-        >
-          <option value="">all statuses</option>
-          <option value="lead">lead</option>
-          <option value="prospect">prospect</option>
-          <option value="customer">customer</option>
-          <option value="archived">archived</option>
-        </select>
-        <select
-          name="limit"
-          defaultValue={String(limit)}
-          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-border-strong)]"
-        >
-          <option value="25">25 / page</option>
-          <option value="50">50 / page</option>
-          <option value="100">100 / page</option>
-        </select>
-        <button
-          type="submit"
-          className="bg-[var(--color-accent)] text-[var(--color-bg)] border border-[var(--color-accent)] px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium hover:bg-[var(--color-accent-hover)] transition-colors"
-        >
-          filter
-        </button>
+        <Select name="status" defaultValue={sp.status || "all"}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="all statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">all statuses</SelectItem>
+            <SelectItem value="lead">lead</SelectItem>
+            <SelectItem value="prospect">prospect</SelectItem>
+            <SelectItem value="customer">customer</SelectItem>
+            <SelectItem value="archived">archived</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select name="limit" defaultValue={String(limit)}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="50 / page" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="25">25 / page</SelectItem>
+            <SelectItem value="50">50 / page</SelectItem>
+            <SelectItem value="100">100 / page</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button type="submit" variant="outline">
+          Filter <Filter size={16} aria-hidden />
+        </Button>
       </form>
 
       {items.length === 0 ? (
         <EntityEmpty
+          icon={Users}
           description="No contacts match these filters. Add your first one with a single message."
           prompt='Add Maria López (maria@example.com) to my CRM and tag her as warm-lead.'
         />
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th>id</Th>
-              <Th>name</Th>
-              <Th>email</Th>
-              <Th>phone</Th>
-              <Th>status</Th>
-              <Th>updated</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((c) => (
-              <Tr key={c.id}>
-                <Td mono faint>{c.id.slice(0, 12)}…</Td>
-                <Td>{c.name}</Td>
-                <Td mono muted>{c.primaryEmail ?? "—"}</Td>
-                <Td mono muted>{c.primaryPhone ?? "—"}</Td>
-                <Td>
-                  <StatusPill status={c.status} />
-                </Td>
-                <Td faint>{rel(c.updatedAt)}</Td>
-              </Tr>
-            ))}
-          </tbody>
-        </Table>
+        <div className="bg-card border border-border rounded-md overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>id</TableHead>
+                <TableHead>name</TableHead>
+                <TableHead>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Mail size={14} aria-hidden /> email
+                  </span>
+                </TableHead>
+                <TableHead>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Phone size={14} aria-hidden /> phone
+                  </span>
+                </TableHead>
+                <TableHead>status</TableHead>
+                <TableHead>updated</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((c) => (
+                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {c.id.slice(0, 12)}…
+                  </TableCell>
+                  <TableCell>{c.name}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {c.primaryEmail ?? "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {c.primaryPhone ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={c.status} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">
+                    {rel(c.updatedAt)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {nextHref && (
         <div className="mt-6 flex justify-center">
-          <a
-            href={nextHref}
-            className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider px-4 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-2)] transition-colors"
-          >
-            next page →
-          </a>
+          <Button asChild variant="ghost">
+            <Link href={nextHref}>
+              Next page <ArrowRight size={16} aria-hidden />
+            </Link>
+          </Button>
         </div>
       )}
     </div>

@@ -1,5 +1,7 @@
+import { ChevronDown, HelpCircle, Shield } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { PricingGrid } from "./UpgradeButtons";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -8,12 +10,12 @@ export default async function BillingPage() {
 
   return (
     <div className="p-8 max-w-5xl">
-      <p className="font-mono text-xs uppercase tracking-wide text-[var(--color-fg-muted)] mb-2">
+      <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground mb-2">
         # billing
       </p>
       <h1 className="text-3xl font-medium mb-2">Pick your plan</h1>
-      <p className="text-[var(--color-fg-muted)] mb-8 max-w-2xl">
-        You&apos;re currently on the <strong className="text-[var(--color-fg)]">Free</strong>{" "}
+      <p className="text-muted-foreground mb-8 max-w-2xl">
+        You&apos;re currently on the <strong className="text-foreground">Free</strong>{" "}
         plan. Pay only when you actually use socrm in production.
       </p>
 
@@ -62,26 +64,35 @@ export default async function BillingPage() {
       />
 
       <div className="mt-10">
-        <p className="font-mono text-xs uppercase tracking-wide text-[var(--color-fg-muted)] mb-3">
+        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground mb-3">
           # faq
         </p>
-        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] divide-y divide-[var(--color-border)]">
-          <FaqItem
-            q="Can I change plans anytime?"
-            a="Yes — upgrades take effect immediately and downgrades take effect at the end of your current billing period. Polar handles proration automatically."
-          />
-          <FaqItem
-            q="Is there a free trial?"
-            a="The free tier is the trial — keep using it as long as you fit inside its limits. There's no clock."
-          />
-          <FaqItem
-            q="Where does my data live?"
-            a="Turso (libSQL) in us-east-1. Each account is a logical tenant inside a shared database. Export your data anytime from the settings page."
-          />
-        </div>
+        <Card className="p-0 gap-0 overflow-hidden">
+          <CardHeader className="px-5 py-3 border-b">
+            <div className="flex items-center gap-2">
+              <HelpCircle size={20} className="text-muted-foreground" aria-hidden />
+              <CardTitle>Frequently asked</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 divide-y divide-border">
+            <FaqItem
+              q="Can I change plans anytime?"
+              a="Yes — upgrades take effect immediately and downgrades take effect at the end of your current billing period. Polar handles proration automatically."
+            />
+            <FaqItem
+              q="Is there a free trial?"
+              a="The free tier is the trial — keep using it as long as you fit inside its limits. There's no clock."
+            />
+            <FaqItem
+              q="Where does my data live?"
+              a="Turso (libSQL) in us-east-1. Each account is a logical tenant inside a shared database. Export your data anytime from the settings page."
+            />
+          </CardContent>
+        </Card>
       </div>
 
-      <p className="text-xs text-[var(--color-fg-faint)] mt-6">
+      <p className="inline-flex items-center gap-2 text-xs text-muted-foreground mt-6">
+        <Shield size={14} aria-hidden />
         Billing is processed by Polar (Merchant of Record). Cancel anytime.
       </p>
     </div>
@@ -91,13 +102,15 @@ export default async function BillingPage() {
 function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <details className="group">
-      <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between text-sm font-medium hover:bg-[var(--color-surface-2)] select-none">
+      <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between text-sm font-medium hover:bg-muted/50 select-none">
         <span>{q}</span>
-        <span className="font-mono text-[var(--color-fg-muted)] transition-transform group-open:rotate-90">
-          ›
-        </span>
+        <ChevronDown
+          size={16}
+          aria-hidden
+          className="text-muted-foreground transition-transform group-open:rotate-180"
+        />
       </summary>
-      <p className="px-5 pb-4 text-sm text-[var(--color-fg-muted)] leading-relaxed">{a}</p>
+      <p className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">{a}</p>
     </details>
   );
 }

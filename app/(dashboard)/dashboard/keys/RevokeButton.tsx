@@ -1,7 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
+import { Trash2 } from "lucide-react";
 import { revokeKeyAction } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export function RevokeButton({ keyId, label }: { keyId: string; label: string }) {
   const [pending, startTransition] = useTransition();
@@ -18,13 +20,16 @@ export function RevokeButton({ keyId, label }: { keyId: string; label: string })
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       onClick={onClick}
       disabled={pending}
-      className="text-xs text-[var(--color-danger)] hover:text-[var(--color-danger-hover)] disabled:opacity-50"
+      className="text-destructive hover:text-destructive"
     >
+      <Trash2 size={14} aria-hidden />
       {pending ? "revoking…" : "revoke"}
-    </button>
+    </Button>
   );
 }
