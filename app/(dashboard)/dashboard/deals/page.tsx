@@ -1,6 +1,14 @@
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listDeals } from "../../../../src/domain/deal.js";
-import { EntityHeader, Table, Th, Td, StatusPill } from "@/components/EntityTable";
+import {
+  EntityHeader,
+  EntityEmpty,
+  Table,
+  Th,
+  Td,
+  Tr,
+  StatusPill,
+} from "@/components/EntityTable";
 
 export const dynamic = "force-dynamic";
 
@@ -24,49 +32,71 @@ export default async function DealsPage() {
         title="deals"
         description="Revenue opportunities. Move them through stages — your agent can update fields conversationally."
         count={items.length}
-        examplePrompt='"Open a deal with Acme Corp for $50k annual contract, stage proposal."'
       />
 
-      {/* Kanban board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-10">
-        {stages.map((stage) => {
-          const col = byStage.get(stage) ?? [];
-          return (
-            <div key={stage} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] p-3 min-h-[160px]">
-              <div className="flex items-baseline justify-between mb-3">
-                <p className="font-mono text-xs uppercase tracking-wide text-[var(--color-fg-muted)]">
-                  {stage}
-                </p>
-                <span className="font-mono text-xs text-[var(--color-fg-faint)]">{col.length}</span>
-              </div>
-              <div className="space-y-2">
-                {col.map((d) => (
-                  <div
-                    key={d.id}
-                    className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-3 text-sm"
-                  >
-                    <p className="font-medium mb-1 truncate" title={d.title}>{d.title}</p>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-mono text-[var(--color-fg-muted)]">
-                        {d.value ? `${d.value.toLocaleString()} ${d.currency ?? ""}` : "—"}
-                      </span>
-                      <StatusPill status={d.status} />
-                    </div>
-                  </div>
-                ))}
-                {col.length === 0 && (
-                  <p className="text-xs text-[var(--color-fg-faint)] italic">empty</p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {items.length > 0 && (
+      {items.length === 0 ? (
+        <EntityEmpty
+          description="No deals yet. Open one with a single message — your agent will pick the stage, value, and links."
+          prompt='Open a deal with Acme Corp for $50k annual contract, stage proposal.'
+        />
+      ) : (
         <>
-          <p className="font-mono text-xs uppercase tracking-wide text-[var(--color-fg-muted)] mb-3">
-            # all deals (flat view)
+          <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg-faint)] mb-3">
+            no drag-and-drop yet — ask your agent to move stages.
+          </p>
+
+          {/* Kanban board */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-10">
+            {stages.map((stage) => {
+              const col = byStage.get(stage) ?? [];
+              return (
+                <div
+                  key={stage}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] p-3 min-h-[180px] flex flex-col"
+                >
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-[var(--color-border)]">
+                    <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg)]">
+                      {stage}
+                    </p>
+                    <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-fg-muted)]">
+                      {col.length}
+                    </span>
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    {col.map((d) => (
+                      <div
+                        key={d.id}
+                        className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-3 text-sm hover:bg-[var(--color-surface-2)] hover:border-[var(--color-border-strong)] transition-colors"
+                      >
+                        <p
+                          className="font-mono text-sm font-medium mb-2 truncate text-[var(--color-fg)]"
+                          title={d.title}
+                        >
+                          {d.title}
+                        </p>
+                        <div className="flex justify-between items-center text-[11px]">
+                          <span className="font-mono text-[var(--color-fg-muted)]">
+                            {d.value
+                              ? `${d.value.toLocaleString()} ${d.currency ?? ""}`.trim()
+                              : "—"}
+                          </span>
+                          <StatusPill status={d.status} tone="muted" />
+                        </div>
+                      </div>
+                    ))}
+                    {col.length === 0 && (
+                      <p className="font-mono text-[11px] text-[var(--color-fg-faint)] italic px-1 py-2">
+                        empty
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-fg-faint)] mb-3">
+            # all deals
           </p>
           <Table>
             <thead>
@@ -81,14 +111,22 @@ export default async function DealsPage() {
             </thead>
             <tbody>
               {items.map((d) => (
-                <tr key={d.id} className="border-t border-[var(--color-border)]">
-                  <Td mono muted>{d.id.slice(0, 12)}…</Td>
+                <Tr key={d.id}>
+                  <Td mono faint>{d.id.slice(0, 12)}…</Td>
                   <Td>{d.title}</Td>
-                  <Td><StatusPill status={d.stage} /></Td>
-                  <Td><StatusPill status={d.status} /></Td>
-                  <Td mono>{d.value ? `${d.value.toLocaleString()} ${d.currency ?? ""}` : "—"}</Td>
-                  <Td muted>{d.expectedCloseDate ?? "—"}</Td>
-                </tr>
+                  <Td>
+                    <StatusPill status={d.stage} tone="strong" />
+                  </Td>
+                  <Td>
+                    <StatusPill status={d.status} />
+                  </Td>
+                  <Td mono muted>
+                    {d.value
+                      ? `${d.value.toLocaleString()} ${d.currency ?? ""}`.trim()
+                      : "—"}
+                  </Td>
+                  <Td mono faint>{d.expectedCloseDate ?? "—"}</Td>
+                </Tr>
               ))}
             </tbody>
           </Table>

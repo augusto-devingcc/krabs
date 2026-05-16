@@ -1,29 +1,31 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────────
- * Brand tokens — "terminal modern".
+ * Brand tokens — strict monochrome (Linear / Vercel inspired).
  * Dark mode is the default; light mode is a polite fallback.
- * Override values per-theme below.
+ * No accent color. Black, white, gray. That is the entire palette.
  * ───────────────────────────────────────────────────────────────── */
 
 @theme {
   /* Surface */
   --color-bg: #0a0a0a;
-  --color-surface: #141414;
-  --color-surface-2: #1c1c1c;
-  --color-border: #27272a;
-  --color-border-strong: #3f3f46;
+  --color-surface: #111111;
+  --color-surface-2: #1a1a1a;
+  --color-border: #262626;
+  --color-border-strong: #3f3f3f;
 
   /* Text */
-  --color-fg: #f5f5f4;
-  --color-fg-muted: #a1a1aa;
-  --color-fg-faint: #71717a;
+  --color-fg: #fafafa;
+  --color-fg-muted: #a3a3a3;
+  --color-fg-faint: #737373;
 
-  /* Accents */
-  --color-accent: #4ade80;        /* terminal green */
-  --color-accent-hover: #22c55e;
-  --color-accent-faint: #14532d;
-  --color-danger: #f87171;        /* coral, not aggressive red */
+  /* Accents — monochrome only. Primary CTA is white-on-dark. */
+  --color-accent: #fafafa;
+  --color-accent-hover: #e5e5e5;
+  --color-accent-faint: #1a1a1a;
+
+  /* Destructive copy only — never primary CTAs. */
+  --color-danger: #f87171;
   --color-danger-hover: #ef4444;
   --color-warning: #fbbf24;
 
@@ -31,26 +33,26 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Sizing */
+  /* Sizing — sharp corners. */
   --radius-sm: 4px;
-  --radius: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius: 5px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
 }
 
 /* Light mode — opt-in via .light class on <html>.  Dark is default. */
 .light {
-  --color-bg: #fafafa;
-  --color-surface: #ffffff;
+  --color-bg: #ffffff;
+  --color-surface: #fafafa;
   --color-surface-2: #f4f4f5;
   --color-border: #e4e4e7;
   --color-border-strong: #d4d4d8;
-  --color-fg: #18181b;
+  --color-fg: #0a0a0a;
   --color-fg-muted: #52525b;
   --color-fg-faint: #71717a;
-  --color-accent: #16a34a;
-  --color-accent-hover: #15803d;
-  --color-accent-faint: #bbf7d0;
+  --color-accent: #0a0a0a;
+  --color-accent-hover: #262626;
+  --color-accent-faint: #f4f4f5;
 }
 
 /* Base reset / page-level defaults */
@@ -58,13 +60,13 @@ html, body {
   background-color: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
-  font-feature-settings: "ss01", "cv11"; /* small subtle tweaks Geist supports */
+  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background-color: var(--color-accent);
+  background-color: var(--color-fg);
   color: var(--color-bg);
 }
 
@@ -97,6 +99,6 @@ html, body {
   content: "|";
   animation: term-spin 0.6s steps(4, end) infinite;
   display: inline-block;
-  color: var(--color-accent);
+  color: var(--color-fg);
   font-family: var(--font-mono);
 }

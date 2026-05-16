@@ -4,14 +4,11 @@
  */
 export const BRAND = {
   name: "socrm",
-  tagline: "A CRM your agents can fully drive.",
+  headline: "The default backend for AI agents running businesses.",
+  tagline: "One contract. Three transports. Total agent control.",
   description:
-    "Multi-tenant CRM built for solopreneurs in the AI era. Three transports, one contract, total agent control with an actionable audit log.",
+    "Multi-tenant CRM built for solopreneurs whose agents do the work. CLI, MCP, and HTTP equally first-class.",
   domain: "socrm.dev",
-  email: {
-    support: "support@socrm.dev",
-    security: "security@socrm.dev",
-  },
+  email: { support: "support@socrm.dev", security: "security@socrm.dev" },
 } as const;
-
 export type Brand = typeof BRAND;

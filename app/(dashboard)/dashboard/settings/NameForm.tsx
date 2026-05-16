@@ -28,7 +28,7 @@ export function NameForm({ initial }: { initial: string }) {
           name="name"
           defaultValue={initial}
           placeholder="optional"
-          className="w-full max-w-md bg-[var(--color-bg)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-accent)]"
+          className="w-full max-w-md bg-[var(--color-bg)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-fg)]"
         />
       </div>
       <div className="flex items-center gap-3">
@@ -39,7 +39,7 @@ export function NameForm({ initial }: { initial: string }) {
         >
           {pending ? "saving…" : "save"}
         </button>
-        {ok && <span className="text-sm text-[var(--color-accent)]">✓ saved</span>}
+        {ok && <span className="text-sm text-[var(--color-fg)]">✓ saved</span>}
         {err && <span className="text-sm text-[var(--color-danger)]">✘ {err}</span>}
       </div>
     </form>
