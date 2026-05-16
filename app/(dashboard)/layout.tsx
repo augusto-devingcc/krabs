@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { resolveAccountForClerkUser } from "../../src/domain/clerk-sync.js";
+import { getDashboardContext } from "../../src/lib/web/dashboard-ctx.js";
 import { Sidebar } from "@/components/sidebar";
 
 export default async function DashboardLayout({
@@ -8,20 +6,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-
-  const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress;
-  if (!email) redirect("/sign-in");
-
-  // Ensure our internal account row exists for this Clerk user.
-  await resolveAccountForClerkUser({
-    clerkUserId: userId,
-    email,
-    name: user.firstName ?? user.fullName ?? null,
-  });
-
+  // Resolves Clerk auth, syncs/creates the account row, and provisions
+  // a "Web Dashboard" API key on first signup. Throws/redirects on auth
+  // failure — child pages can assume an authenticated context exists.
+  await getDashboardContext();
   return (
     <div className="min-h-screen flex">
       <Sidebar />

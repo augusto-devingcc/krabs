@@ -14,6 +14,7 @@ const nav = [
   { href: "/dashboard/tags", label: "tags" },
   { href: "/dashboard/audit", label: "audit log" },
   { href: "/dashboard/keys", label: "api keys" },
+  { href: "/dashboard/billing", label: "billing" },
   { href: "/dashboard/settings", label: "settings" },
 ];
 
