@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "description": "Solo Agentic CRM — multi-tenant CRM for solopreneurs and their agents",
-  "type": "module",
   "packageManager": "pnpm@11.1.2",
   "engines": {
     "node": ">=22"
