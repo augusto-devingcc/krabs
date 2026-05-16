@@ -17,6 +17,8 @@ import { invoicesRoute } from "./routes/invoices.js";
 import { expensesRoute } from "./routes/expenses.js";
 import { financeRoute } from "./routes/finance.js";
 import { authDeviceRoute } from "./routes/auth-device.js";
+import { integrationsStripeRoute } from "./routes/integrations-stripe.js";
+import { webhookStripeRoute } from "./routes/webhook-stripe.js";
 import { errorHandler } from "./middleware/error.js";
 
 export function buildApp() {
@@ -44,6 +46,11 @@ export function buildApp() {
   app.route("/v1/invoices", invoicesRoute);
   app.route("/v1/expenses", expensesRoute);
   app.route("/v1/finance", financeRoute);
+  // Webhook mounted FIRST so its specific /:accountId/webhook route wins before
+  // the auth-gated sub-app's "*" middleware claims the path. Stripe authenticates
+  // via signature, not a krabs API key.
+  app.route("/v1/integrations/stripe", webhookStripeRoute);
+  app.route("/v1/integrations/stripe", integrationsStripeRoute);
   app.route("/v1/actions", actionsRoute);
 
   app.notFound((c) =>
