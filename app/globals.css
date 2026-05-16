@@ -1,46 +1,42 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: shadcn primitives use `dark:` modifiers expecting
+   the `.dark` class somewhere up the tree.  Without this custom-variant, the
+   modifier would fall back to `prefers-color-scheme`. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ─────────────────────────────────────────────────────────────────
- * Brand tokens — strict monochrome (Linear / Vercel inspired).
- * Dark mode is the default; light mode is a polite fallback.
- * No accent color. Black, white, gray. That is the entire palette.
+ * Landing / docs / sign-in / sign-up tokens (legacy custom names).
+ * These power the `bg-[var(--color-*)]` arbitrary-value classes in
+ * app/page.tsx and other public surfaces.  Do not touch unless you
+ * are refactoring the landing.
  * ───────────────────────────────────────────────────────────────── */
 
 @theme {
-  /* Surface */
   --color-bg: #0a0a0a;
   --color-surface: #111111;
   --color-surface-2: #1a1a1a;
   --color-border: #262626;
   --color-border-strong: #3f3f3f;
-
-  /* Text */
   --color-fg: #fafafa;
   --color-fg-muted: #a3a3a3;
   --color-fg-faint: #737373;
-
-  /* Accents — monochrome only. Primary CTA is white-on-dark. */
   --color-accent: #fafafa;
   --color-accent-hover: #e5e5e5;
   --color-accent-faint: #1a1a1a;
-
-  /* Destructive copy only — never primary CTAs. */
   --color-danger: #f87171;
   --color-danger-hover: #ef4444;
   --color-warning: #fbbf24;
 
-  /* Typography (the Geist fonts get injected as CSS vars from next/font) */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Sizing — sharp corners. */
   --radius-sm: 4px;
   --radius: 5px;
   --radius-md: 6px;
   --radius-lg: 6px;
 }
 
-/* Light mode — opt-in via .light class on <html>.  Dark is default. */
 .light {
   --color-bg: #ffffff;
   --color-surface: #fafafa;
@@ -55,7 +51,123 @@
   --color-accent-faint: #f4f4f5;
 }
 
-/* Base reset / page-level defaults */
+/* ─────────────────────────────────────────────────────────────────
+ * Dashboard theme — shadcn / neutral preset (OKLCH).
+ *
+ * The tokens below are defined ONLY inside `.app-shell`, the class
+ * wrapped around the dashboard route group.  Outside that scope they
+ * are undefined, so the public surfaces are unaffected.
+ *
+ * `@theme inline` maps the Tailwind class names (`bg-primary`,
+ * `bg-card`, `border-border`, …) to these scoped vars without adding
+ * them to `:root`, which is how the scoping is preserved.
+ * ───────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Dashboard — dark mode is the default UX. */
+.app-shell {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  --radius: 0.625rem;
+
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+/* Dashboard light mode (opt-in: <div class="app-shell light">) */
+.app-shell.light {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* Base reset / page-level defaults (landing + docs + sign-in inherit) */
 html, body {
   background-color: var(--color-bg);
   color: var(--color-fg);
