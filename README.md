@@ -1,9 +1,8 @@
 <p align="center">
-  <img src="public/brand/logo-wordmark.svg" alt="krabs.dev" height="40" />
-</p>
-
-<p align="center">
-  <strong>The default backend for AI agents running businesses.</strong>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/repo-banner-dark.svg">
+    <img src="public/brand/repo-banner.svg" alt="krabs.dev — the default backend for AI agents running businesses" />
+  </picture>
 </p>
 
 <p align="center">
@@ -17,6 +16,7 @@
   <img alt="license" src="https://img.shields.io/badge/license-MIT-black" />
   <img alt="node" src="https://img.shields.io/badge/node-22+-black" />
   <img alt="status" src="https://img.shields.io/badge/status-v0.x-orange" />
+  <a href="https://github.com/augusto-devingcc/krabs/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/augusto-devingcc/krabs?style=flat&color=black" /></a>
 </p>
 
 ---
@@ -40,6 +40,39 @@ krabs assumes the operator is a model. Endpoints are verb-noun (`contact.upsert`
 | `HTTP` | `api.krabs.dev` | everything else — n8n, cron, your own UI |
 
 The same operation. The same response shape. The same object graph behind it.
+
+```mermaid
+flowchart LR
+    subgraph clients["Clients"]
+        direction TB
+        cli["CLI<br/><code>krabs</code>"]
+        mcp["MCP host<br/>Claude · Cursor"]
+        http["HTTP<br/>n8n · curl · your app"]
+    end
+
+    api["Hono API<br/><code>/v1/*</code>"]
+
+    subgraph core["krabs core"]
+        direction TB
+        domain["Domain<br/>contacts · deals · tasks · ..."]
+        audit["Audit log<br/>append-only"]
+    end
+
+    db[("libSQL<br/>Turso or local SQLite")]
+
+    cli -- "krabs_sk_..." --> api
+    mcp -- "bearer" --> api
+    http -- "bearer" --> api
+    api --> domain
+    domain --> db
+    domain -. "every mutation" .-> audit
+    audit --> db
+
+    classDef edge fill:#fafafa,stroke:#e4e4e7,color:#0a0a0b;
+    classDef hi fill:#ff5c2b,stroke:#c3320b,color:#fff;
+    class api hi;
+    class clients,core edge;
+```
 
 ## Quickstart (hosted)
 
@@ -81,6 +114,27 @@ krabs makes five guarantees on every operation:
 5. **Reversible audit.** Every write lands in an append-only log. Destructive writes return an `undo_token` valid for 24 hours.
 
 Full machine-readable schema: [api.krabs.dev/v1/schema](https://api.krabs.dev/v1/schema).
+
+## What it looks like
+
+<p align="center">
+  <img src="public/brand/screenshots/landing.png" alt="krabs.dev landing — hero, three transports, feature grid, closing CTA" width="720" />
+</p>
+
+<p align="center">
+  <em>The landing at <a href="https://krabs.dev">krabs.dev</a> — terminal-style hero, three doors / same primitives, feature grid, install CTA.</em>
+</p>
+
+<table>
+  <tr>
+    <td><img src="public/brand/screenshots/docs-skill.png" alt="docs page — agent skill" /></td>
+    <td><img src="public/brand/screenshots/self-host.png" alt="self-host mode page" /></td>
+  </tr>
+  <tr>
+    <td><em>Docs: <a href="https://krabs.dev/docs/skill">/docs/skill</a></em></td>
+    <td><em>Self-host info page (no Clerk required)</em></td>
+  </tr>
+</table>
 
 ## Tech stack
 
