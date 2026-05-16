@@ -121,7 +121,7 @@ function Hero() {
           <Link href="/sign-up" className="mk-btn mk-btn--primary mk-btn--lg">
             Start free
           </Link>
-          <Link href="/v1/schema" className="mk-btn mk-btn--secondary mk-btn--lg">
+          <Link href="/docs/contract" className="mk-btn mk-btn--secondary mk-btn--lg">
             View the contract <span style={{ marginLeft: 4 }}>→</span>
           </Link>
         </div>

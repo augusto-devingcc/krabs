@@ -23,7 +23,7 @@ export function DocsTopNav() {
           <Link href="/docs" className="on">
             Guide
           </Link>
-          <Link href="/v1/schema">API</Link>
+          <Link href="/docs/contract">API</Link>
           <Link href="/changelog">Changelog</Link>
         </div>
         <div className="dn__right">
