@@ -1,5 +1,6 @@
 import { getDashboardContext } from "../../src/lib/web/dashboard-ctx.js";
 import { Sidebar } from "@/components/sidebar";
+import { Topbar } from "@/components/dashboard/Topbar";
 
 export default async function DashboardLayout({
   children,
@@ -11,11 +12,14 @@ export default async function DashboardLayout({
   // failure — child pages can assume an authenticated context exists.
   await getDashboardContext();
   return (
-    // Light mode is default (Krabs design system). Dark mode opt-in via
-    // theme toggle (TODO). Sidebar lives on bg-subtle, content on bg.
-    <div className="min-h-screen flex bg-background text-foreground">
+    // Designer's app shell: .app > sidebar + .main (topbar + content).
+    // Pages still handle their own internal padding/max-width.
+    <div className="app min-h-screen flex bg-background text-foreground">
       <Sidebar />
-      <main className="flex-1 overflow-x-auto">{children}</main>
+      <div className="main">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
     </div>
   );
 }

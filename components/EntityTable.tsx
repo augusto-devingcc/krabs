@@ -1,15 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  Table as ShadTable,
-  TableHeader as ShadTableHeader,
-  TableBody as ShadTableBody,
-  TableHead as ShadTableHead,
-  TableRow as ShadTableRow,
-  TableCell as ShadTableCell,
-  TableCaption as ShadTableCaption,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/lib/utils";
 
 export function EntityHeader({
@@ -17,41 +6,38 @@ export function EntityHeader({
   description,
   count,
   actions,
-  eyebrow,
 }: {
   title: string;
-  description: string;
+  description?: string;
   count: number;
   actions?: React.ReactNode;
+  // legacy props — kept in signature so callers compile unchanged.
   eyebrow?: string;
-  // icon kept in signature for callers that still pass it; unused.
   icon?: LucideIcon;
 }) {
-  const resolvedEyebrow = (eyebrow ?? `crm · ${title}`).toLowerCase();
   return (
-    <div className="mb-8 flex items-start justify-between gap-6">
-      <div className="min-w-0">
-        <p className="k-eyebrow mb-2">{resolvedEyebrow}</p>
-        <h1 className="k-h2 mb-2 capitalize">{title}</h1>
-        <p className="k-body-sm text-muted-foreground max-w-2xl">
+    <>
+      <div className="center__head">
+        <h2 className="center__h capitalize">
+          {title}
+          <span className="center__count">{count}</span>
+        </h2>
+        {actions && (
+          <div className="flex items-center gap-2 shrink-0">{actions}</div>
+        )}
+      </div>
+      {description && (
+        <p className="k-body-sm text-muted-foreground max-w-2xl -mt-5 mb-7">
           {description}
         </p>
-        <div className="mt-3 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-          <span>{count}</span>
-          <span>{count === 1 ? "record" : "records"}</span>
-        </div>
-      </div>
-      {actions && (
-        <div className="flex items-center gap-2 shrink-0">{actions}</div>
       )}
-    </div>
+    </>
   );
 }
 
 export function EntityEmpty({
   prompt,
   description,
-  // icon kept in signature for back-compat; not rendered.
   icon: _Icon,
 }: {
   prompt: string;
@@ -59,45 +45,84 @@ export function EntityEmpty({
   icon?: LucideIcon;
 }) {
   return (
-    <Card
-      className="border-border"
-      style={{ boxShadow: "var(--shadow-1)" }}
-    >
-      <CardContent className="py-10">
-        <p className="k-eyebrow mb-3">empty</p>
-        {description && (
-          <p className="k-body-sm text-muted-foreground max-w-xl mb-5">
-            {description}
-          </p>
-        )}
-        <div className="inline-block max-w-full">
-          <p className="k-eyebrow mb-1.5">try asking your agent</p>
-          <code className="font-mono text-sm text-foreground inline-block border border-border rounded-md bg-muted px-3 py-2">
-            <span className="text-muted-foreground select-none">$ </span>
-            {prompt}
-          </code>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="border border-border rounded-md bg-card p-6">
+      <p className="k-eyebrow mb-3">empty</p>
+      {description && (
+        <p className="k-body-sm text-muted-foreground max-w-xl mb-5">
+          {description}
+        </p>
+      )}
+      <div className="inline-block max-w-full">
+        <p className="k-eyebrow mb-1.5">try asking your agent</p>
+        <code className="font-mono text-sm text-foreground inline-block border border-border rounded-md bg-muted px-3 py-2">
+          <span className="text-muted-foreground select-none">$ </span>
+          {prompt}
+        </code>
+      </div>
+    </div>
   );
 }
 
-// Re-export shadcn table primitives under expected names
-export const Table = ShadTable;
-export const TableHeader = ShadTableHeader;
-export const TableBody = ShadTableBody;
-export const TableHead = ShadTableHead;
-export const TableRow = ShadTableRow;
-export const TableCell = ShadTableCell;
-export const TableCaption = ShadTableCaption;
+// Table primitives rendered with the designer's `.dt__table` class.
+// API mirrors shadcn's Table so existing callers compile unchanged.
+type DivProps = React.HTMLAttributes<HTMLDivElement>;
+type TableProps = React.TableHTMLAttributes<HTMLTableElement>;
+type SectionProps = React.HTMLAttributes<HTMLTableSectionElement>;
+type RowProps = React.HTMLAttributes<HTMLTableRowElement>;
+type CellProps = React.TdHTMLAttributes<HTMLTableCellElement>;
+type HeadProps = React.ThHTMLAttributes<HTMLTableCellElement>;
+
+export function Table({ className, children, ...rest }: TableProps) {
+  return (
+    <table className={cn("dt__table", className)} {...rest}>
+      {children}
+    </table>
+  );
+}
+
+export function TableHeader({ children, ...rest }: SectionProps) {
+  return <thead {...rest}>{children}</thead>;
+}
+
+export function TableBody({ children, ...rest }: SectionProps) {
+  return <tbody {...rest}>{children}</tbody>;
+}
+
+export function TableRow({ className, children, ...rest }: RowProps) {
+  return (
+    <tr className={className} {...rest}>
+      {children}
+    </tr>
+  );
+}
+
+export function TableHead({ className, children, ...rest }: HeadProps) {
+  return (
+    <th className={className} {...rest}>
+      {children}
+    </th>
+  );
+}
+
+export function TableCell({ className, children, ...rest }: CellProps) {
+  return (
+    <td className={className} {...rest}>
+      {children}
+    </td>
+  );
+}
+
+export function TableCaption({ className, children, ...rest }: React.HTMLAttributes<HTMLTableCaptionElement>) {
+  return (
+    <caption className={cn("text-muted-foreground text-xs py-2", className)} {...rest}>
+      {children}
+    </caption>
+  );
+}
 
 // Legacy helpers — kept as thin wrappers so existing callers keep working.
 export function Th({ children }: { children?: React.ReactNode }) {
-  return (
-    <ShadTableHead className="k-eyebrow font-medium">
-      {children}
-    </ShadTableHead>
-  );
+  return <th>{children}</th>;
 }
 
 export function Td({
@@ -114,16 +139,15 @@ export function Td({
   className?: string;
 }) {
   return (
-    <ShadTableCell
+    <td
       className={cn(
-        "px-4 py-3 align-middle",
         mono && "font-mono text-xs",
         (faint || muted) && "text-muted-foreground",
         className,
       )}
     >
       {children}
-    </ShadTableCell>
+    </td>
   );
 }
 
@@ -134,10 +158,8 @@ export function Tr({
   children: React.ReactNode;
   href?: string;
 }) {
-  if (href) {
-    return <RowLink href={href}>{children}</RowLink>;
-  }
-  return <ShadTableRow>{children}</ShadTableRow>;
+  if (href) return <RowLink href={href}>{children}</RowLink>;
+  return <tr>{children}</tr>;
 }
 
 export function RowLink({
@@ -148,17 +170,23 @@ export function RowLink({
   children: React.ReactNode;
   cols?: number;
 }) {
+  return <tr className="cursor-pointer">{children}</tr>;
+}
+
+// Wrapper div so callers can keep `<Card>...<Table/>...</Card>` style markup
+// while we render the table directly with the designer's class.
+export function TableShell({ className, children, ...rest }: DivProps) {
   return (
-    <ShadTableRow className="cursor-pointer hover:bg-muted/50">
+    <div className={cn("w-full", className)} {...rest}>
       {children}
-    </ShadTableRow>
+    </div>
   );
 }
 
 /**
- * StatusPill — uses Badge with tone-mapped classes. Coral is reserved for the
- * single "primary/active" status; everything else is neutral. Callers can
- * pass an explicit tone via `pillTone`, otherwise we infer from the status.
+ * StatusPill — uses the designer's `.k-badge` primitive. Coral is reserved
+ * for the single "primary/active" status; everything else is neutral. Callers
+ * can pass an explicit tone via `pillTone`, otherwise we infer from the status.
  */
 export function StatusPill({
   status,
@@ -171,46 +199,17 @@ export function StatusPill({
   tone?: "muted" | "strong" | "default";
   pillTone?: "neutral" | "accent" | "success" | "warning" | "danger";
 }) {
-  const inferred = pillTone ?? inferTone(status);
-  const klass = TONE_CLASSES[inferred];
-  // Map legacy variant/tone to a visual fallback if pillTone wasn't passed.
+  let resolved = pillTone ?? inferTone(status);
   if (!pillTone && (variant === "default" || tone === "strong")) {
-    // Strong/default callers used to render the active item — escalate to accent.
-    return (
-      <Badge
-        variant="outline"
-        className={cn(
-          "font-mono text-[11px] uppercase tracking-wide border-transparent",
-          TONE_CLASSES.accent,
-        )}
-      >
-        {status}
-      </Badge>
-    );
+    resolved = "accent";
   }
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "font-mono text-[11px] uppercase tracking-wide border-transparent",
-        klass,
-      )}
-    >
+    <span className={`k-badge k-badge--${resolved}`}>
+      {resolved === "accent" && <span className="k-badge__dot" />}
       {status}
-    </Badge>
+    </span>
   );
 }
-
-const TONE_CLASSES: Record<
-  "neutral" | "accent" | "success" | "warning" | "danger",
-  string
-> = {
-  neutral: "bg-muted text-muted-foreground",
-  accent: "bg-coral-50 text-coral-700 dark:bg-coral-900/30 dark:text-coral-300",
-  success: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  warning: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  danger: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-};
 
 function inferTone(
   status: string,

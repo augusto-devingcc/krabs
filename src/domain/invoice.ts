@@ -31,6 +31,10 @@ export const invoiceCreateInputSchema = z.object({
   dueAt: z.string().datetime().optional(),
   note: z.string().max(2000).optional(),
   customFields: z.record(z.unknown()).optional(),
+  // Optional provider mirror ids. Populated by integrations (e.g. Stripe webhooks)
+  // so the row can be re-located on later events without a separate UPDATE.
+  stripeInvoiceId: z.string().max(255).optional(),
+  stripeChargeId: z.string().max(255).optional(),
 });
 
 export const invoiceUpdateInputSchema = z.object({
@@ -75,6 +79,8 @@ export type Invoice = {
   paidAt: string | null;
   voidedAt: string | null;
   note: string | null;
+  stripeInvoiceId: string | null;
+  stripeChargeId: string | null;
   customFields: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
@@ -96,6 +102,8 @@ function rowToInvoice(row: InvoiceRow): Invoice {
     paidAt: row.paidAt,
     voidedAt: row.voidedAt,
     note: row.note,
+    stripeInvoiceId: row.stripeInvoiceId,
+    stripeChargeId: row.stripeChargeId,
     customFields: row.customFields
       ? (JSON.parse(row.customFields) as Record<string, unknown>)
       : null,
@@ -176,6 +184,8 @@ export async function createInvoice(
     paidAt: null,
     voidedAt: null,
     note: parsed.note ?? null,
+    stripeInvoiceId: parsed.stripeInvoiceId ?? null,
+    stripeChargeId: parsed.stripeChargeId ?? null,
     customFields: parsed.customFields ?? null,
     createdAt: now,
     updatedAt: now,
@@ -200,6 +210,8 @@ export async function createInvoice(
       paidAt: planned.paidAt,
       voidedAt: planned.voidedAt,
       note: planned.note,
+      stripeInvoiceId: planned.stripeInvoiceId,
+      stripeChargeId: planned.stripeChargeId,
       customFields: planned.customFields ? JSON.stringify(planned.customFields) : null,
       createdAt: planned.createdAt,
       updatedAt: planned.updatedAt,

@@ -255,7 +255,7 @@ function ClosingCTA() {
   };
 
   return (
-    <section className="mk-cta" id="pricing">
+    <section className="mk-cta" id="install">
       <div className="mk-cta__inner">
         <div className="mk-eyebrow">install</div>
         <h2 className="mk-cta__h">Start in 5 minutes.</h2>

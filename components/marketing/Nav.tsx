@@ -10,7 +10,7 @@ import { useMarketingTheme } from "./theme-context";
 const NAV_LINKS: Array<{ label: string; href: string }> = [
   { label: "Product", href: "/#features" },
   { label: "Docs", href: "/docs" },
-  { label: "Pricing", href: "/#pricing" },
+  { label: "Pricing", href: "/pricing" },
   { label: "Changelog", href: "/changelog" },
 ];
 

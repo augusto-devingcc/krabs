@@ -15,7 +15,7 @@ const FOOTER_COLS: Array<{
       { label: "MCP", href: "/#features" },
       { label: "CLI", href: "/#features" },
       { label: "HTTP API", href: "/#features" },
-      { label: "Pricing", href: "/#pricing" },
+      { label: "Pricing", href: "/pricing" },
       { label: "Status", href: "/status" },
     ],
   },
@@ -42,7 +42,7 @@ const FOOTER_COLS: Array<{
   {
     head: "resources",
     links: [
-      { label: "Pricing", href: "/#pricing" },
+      { label: "Pricing", href: "/pricing" },
       { label: "Changelog", href: "/changelog" },
       { label: "Contact", href: `mailto:${BRAND.email.support}` },
       { label: "Sign in", href: "/sign-in" },

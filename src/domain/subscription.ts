@@ -36,6 +36,9 @@ export const subscriptionCreateInputSchema = z
     status: z.enum(subscriptionStatuses).default("active"),
     startedAt: z.string().datetime().optional(),
     customFields: z.record(z.unknown()).optional(),
+    // Optional provider mirror id. Populated by integrations (e.g. Stripe webhooks)
+    // so the row can be re-located on later events without a separate UPDATE.
+    stripeSubscriptionId: z.string().max(255).optional(),
   })
   .superRefine((val, ctx) => {
     if (val.billingCycle === "custom_days" && !val.customCycleDays) {
@@ -89,6 +92,7 @@ export type Subscription = {
   canceledAt: string | null;
   cancelAt: string | null;
   cancelReason: string | null;
+  stripeSubscriptionId: string | null;
   customFields: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
@@ -112,6 +116,7 @@ function rowToSubscription(row: SubscriptionRow): Subscription {
     canceledAt: row.canceledAt,
     cancelAt: row.cancelAt,
     cancelReason: row.cancelReason,
+    stripeSubscriptionId: row.stripeSubscriptionId,
     customFields: row.customFields
       ? (JSON.parse(row.customFields) as Record<string, unknown>)
       : null,
@@ -186,6 +191,7 @@ export async function createSubscription(
     canceledAt: null,
     cancelAt: null,
     cancelReason: null,
+    stripeSubscriptionId: parsed.stripeSubscriptionId ?? null,
     customFields: parsed.customFields ?? null,
     createdAt: now,
     updatedAt: now,
@@ -212,6 +218,7 @@ export async function createSubscription(
       canceledAt: planned.canceledAt,
       cancelAt: planned.cancelAt,
       cancelReason: planned.cancelReason,
+      stripeSubscriptionId: planned.stripeSubscriptionId,
       customFields: planned.customFields ? JSON.stringify(planned.customFields) : null,
       createdAt: planned.createdAt,
       updatedAt: planned.updatedAt,
