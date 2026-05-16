@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -11,6 +11,16 @@ export const metadata: Metadata = {
   description: BRAND.description,
   metadataBase: new URL(`https://${BRAND.domain}`),
   icons: { icon: "/favicon.svg" },
+};
+
+// iOS Safari colors the status bar / browser chrome with `theme-color`.
+// Without this, the OS chrome defaults to white and bleeds through the
+// nav's translucent backdrop-filter blur in dark mode.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

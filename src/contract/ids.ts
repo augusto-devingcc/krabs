@@ -20,6 +20,7 @@ const prefixes = {
   subscription: "sub",
   invoice: "inv",
   expense: "exp",
+  integration: "intg",
 } as const;
 
 export type EntityKind = keyof typeof prefixes;

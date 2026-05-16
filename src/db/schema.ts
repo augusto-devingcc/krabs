@@ -52,6 +52,8 @@ export const contacts = sqliteTable(
     primaryEmail: text("primary_email"),
     primaryPhone: text("primary_phone"),
     status: text("status").notNull().default("lead"),
+    // External provider IDs — populated when an integration mirrors the entity.
+    stripeCustomerId: text("stripe_customer_id"),
     // JSON object as TEXT
     customFields: text("custom_fields"),
     createdAt: text("created_at").notNull().default(nowDefault),
@@ -60,6 +62,10 @@ export const contacts = sqliteTable(
   (t) => ({
     accountIdx: index("contacts_account_idx").on(t.accountId),
     accountEmailIdx: index("contacts_account_email_idx").on(t.accountId, t.primaryEmail),
+    stripeCustomerIdx: index("contacts_stripe_customer_idx").on(
+      t.accountId,
+      t.stripeCustomerId,
+    ),
   }),
 );
 
@@ -376,6 +382,8 @@ export const subscriptions = sqliteTable(
     canceledAt: text("canceled_at"),
     cancelAt: text("cancel_at"),
     cancelReason: text("cancel_reason"),
+    // Mirror id from the upstream integration (e.g. Stripe sub_XXX).
+    stripeSubscriptionId: text("stripe_subscription_id"),
     customFields: text("custom_fields"),
     createdAt: text("created_at").notNull().default(nowDefault),
     updatedAt: text("updated_at").notNull().default(nowDefault),
@@ -385,6 +393,7 @@ export const subscriptions = sqliteTable(
     contactIdx: index("subs_contact_idx").on(t.contactId),
     productIdx: index("subs_product_idx").on(t.productId),
     periodEndIdx: index("subs_period_end_idx").on(t.accountId, t.currentPeriodEnd),
+    stripeSubIdx: index("subs_stripe_id_idx").on(t.accountId, t.stripeSubscriptionId),
   }),
 );
 
@@ -421,6 +430,8 @@ export const invoices = sqliteTable(
     paidAt: text("paid_at"),
     voidedAt: text("voided_at"),
     note: text("note"),
+    stripeInvoiceId: text("stripe_invoice_id"),
+    stripeChargeId: text("stripe_charge_id"),
     customFields: text("custom_fields"),
     createdAt: text("created_at").notNull().default(nowDefault),
     updatedAt: text("updated_at").notNull().default(nowDefault),
@@ -432,6 +443,7 @@ export const invoices = sqliteTable(
     dealIdx: index("invoices_deal_idx").on(t.dealId),
     issuedIdx: index("invoices_account_issued_idx").on(t.accountId, t.issuedAt),
     numberIdx: uniqueIndex("invoices_account_number_idx").on(t.accountId, t.number),
+    stripeInvoiceIdx: index("invoices_stripe_id_idx").on(t.accountId, t.stripeInvoiceId),
   }),
 );
 
@@ -489,6 +501,84 @@ export type ProductRow = typeof products.$inferSelect;
 export type SubscriptionRow = typeof subscriptions.$inferSelect;
 export type InvoiceRow = typeof invoices.$inferSelect;
 export type ExpenseRow = typeof expenses.$inferSelect;
+
+// ─────────────────────────────────────────────────────────────────
+// Integrations (Phase B): external service connections per account.
+// Credentials are encrypted at rest (AES-256-GCM, KRABS_CRED_ENCRYPTION_KEY).
+// stripe_events is a dedup ledger — Stripe redelivers events for ~3 days on
+// any non-2xx response, so the webhook handler must short-circuit on repeats.
+// ─────────────────────────────────────────────────────────────────
+
+export const integrationProviders = ["stripe"] as const;
+export type IntegrationProvider = (typeof integrationProviders)[number];
+
+export const integrationStatuses = ["active", "disconnected", "error"] as const;
+export type IntegrationStatus = (typeof integrationStatuses)[number];
+
+export const integrations = sqliteTable(
+  "integrations",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    displayName: text("display_name").notNull(),
+    // Encrypted blobs — AES-256-GCM ciphertext, base64-encoded with iv prefix.
+    // Never log, never return in API responses.
+    secretKeyEncrypted: text("secret_key_encrypted").notNull(),
+    webhookSecretEncrypted: text("webhook_secret_encrypted"),
+    // Provider's id for the webhook endpoint we created (e.g. we_XXX in Stripe).
+    // Used to delete the endpoint cleanly on disconnect.
+    webhookEndpointId: text("webhook_endpoint_id"),
+    // Provider's account id (Stripe acct_XXX, etc.) — useful for routing and
+    // for the dashboard to display "Connected to Acme LLC's Stripe account".
+    providerAccountId: text("provider_account_id"),
+    status: text("status").notNull().default("active"),
+    lastSyncedAt: text("last_synced_at"),
+    lastErrorMessage: text("last_error_message"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountProviderIdx: uniqueIndex("integrations_account_provider_idx").on(
+      t.accountId,
+      t.provider,
+    ),
+    statusIdx: index("integrations_status_idx").on(t.status),
+  }),
+);
+
+export const stripeEvents = sqliteTable(
+  "stripe_events",
+  {
+    // The Stripe event id (evt_XXX) is the primary key — natural dedup.
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    integrationId: text("integration_id")
+      .notNull()
+      .references(() => integrations.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    receivedAt: text("received_at").notNull().default(nowDefault),
+    processedAt: text("processed_at"),
+    // Raw event payload, kept for replay/debug. Capped via cron later.
+    payload: text("payload").notNull(),
+    errorMessage: text("error_message"),
+    retries: integer("retries").notNull().default(0),
+  },
+  (t) => ({
+    accountReceivedIdx: index("stripe_events_account_received_idx").on(
+      t.accountId,
+      t.receivedAt,
+    ),
+    typeIdx: index("stripe_events_type_idx").on(t.type),
+  }),
+);
+
+export type IntegrationRow = typeof integrations.$inferSelect;
+export type StripeEventRow = typeof stripeEvents.$inferSelect;
 
 export const deviceAuthorizationStatuses = ["pending", "approved", "denied", "expired"] as const;
 export type DeviceAuthorizationStatus = (typeof deviceAuthorizationStatuses)[number];

@@ -56,6 +56,12 @@ export function MarketingNav() {
             </Link>
           ))}
         </div>
+        <Link
+          href="/sign-up"
+          className="mk-btn mk-btn--primary mk-btn--sm mk-nav__cta-mobile"
+        >
+          Get started <span style={{ opacity: 0.8, marginLeft: 2 }}>→</span>
+        </Link>
         <div className="mk-nav__right">
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
           <Link href="/sign-in" className="mk-nav__signin">

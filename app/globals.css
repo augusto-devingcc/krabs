@@ -25,6 +25,11 @@
  * ───────────────────────────────────────────────────────────────── */
 
 :root {
+  /* Tell the UA to render unstyled chrome (scrollbars, form controls,
+     iOS browser chrome) using the light palette by default. The .dark
+     block below flips this to dark. */
+  color-scheme: light;
+
   /* ---------- Neutral ramp (light) ---------- */
   --neutral-0:   #ffffff;
   --neutral-50:  #fafafa;
@@ -172,6 +177,8 @@
  * ───────────────────────────────────────────────────────────────── */
 .dark,
 [data-theme="dark"] {
+  color-scheme: dark;
+
   --bg:          #0a0a0b;
   --bg-subtle:   #0f0f10;
   --bg-muted:    #16161a;
@@ -418,13 +425,16 @@ html, body {
 /* Nav */
 .mk-nav {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);
+  /* High opacity so iOS Safari's white browser chrome / status bar can't
+     bleed through the backdrop-filter blur before the page scrolls.
+     The previous 0.85/0.80 left a visible seam in mobile dark mode. */
+  background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-light);
   transition: background var(--dur-2) var(--ease-out),
               border-color var(--dur-2) var(--ease-out);
 }
 .dark .mk-nav,
-[data-theme="dark"] .mk-nav { background: rgba(10, 10, 11, 0.80); }
+[data-theme="dark"] .mk-nav { background: rgba(10, 10, 11, 0.96); }
 .mk-nav__inner {
   max-width: 1200px; margin: 0 auto; padding: 14px 32px;
   display: flex; align-items: center; gap: 32px;
@@ -437,6 +447,7 @@ html, body {
 }
 .mk-nav__links a:hover { color: var(--fg); }
 .mk-nav__right { display: flex; align-items: center; gap: 14px; }
+.mk-nav__cta-mobile { display: none; }
 .mk-nav__signin {
   font-size: 13px; color: var(--fg-2);
   transition: color var(--dur-2) var(--ease-out);
@@ -719,13 +730,27 @@ html, body { -webkit-text-size-adjust: 100%; }
 
 /* ── Nav (mobile) ── */
 @media (max-width: 768px) {
-  .mk-nav__inner { padding: 12px 20px; gap: 12px; }
+  /* 3-zone grid: brand (left) | CTA (center) | hamburger (right). */
+  .mk-nav__inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  .mk-nav__brand { justify-self: start; }
   /* Links + inline theme/sign-in collapse into the hamburger dropdown. */
   .mk-nav__links { display: none; }
   .mk-nav__signin { display: none; }
   .mk-nav__theme { display: none; }
+  .mk-nav__cta-mobile {
+    display: inline-flex;
+    justify-self: center;
+  }
+  /* Hide the desktop CTA from mk-nav__right on mobile — only mobile CTA shows. */
+  .mk-nav__right > .mk-btn--primary { display: none; }
   .mk-nav__hamburger { display: inline-flex; }
-  .mk-nav__right { gap: 8px; }
+  .mk-nav__right { justify-self: end; gap: 0; }
   /* Reveal the dropdown when the Nav signals open via data-attr. */
   .mk-nav[data-menu-open="true"] .mk-nav__mobile { display: flex; }
 }
