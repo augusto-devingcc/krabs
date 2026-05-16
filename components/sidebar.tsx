@@ -15,6 +15,7 @@ import {
   KeyRound,
   CreditCard,
   Settings,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand.js";
@@ -35,6 +36,7 @@ const sections: NavSection[] = [
     items: [
       { href: "/dashboard/contacts", label: "Contacts", icon: Users },
       { href: "/dashboard/deals", label: "Deals", icon: BadgeDollarSign },
+      { href: "/dashboard/finance", label: "Money", icon: Wallet },
       { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare },
       { href: "/dashboard/notes", label: "Notes", icon: StickyNote },
       { href: "/dashboard/tags", label: "Tags", icon: Tag },

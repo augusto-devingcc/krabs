@@ -11,6 +11,11 @@ import { dealsRoute } from "./routes/deals.js";
 import { tasksRoute } from "./routes/tasks.js";
 import { notesRoute } from "./routes/notes.js";
 import { tagsRoute } from "./routes/tags.js";
+import { productsRoute } from "./routes/products.js";
+import { subscriptionsRoute } from "./routes/subscriptions.js";
+import { invoicesRoute } from "./routes/invoices.js";
+import { expensesRoute } from "./routes/expenses.js";
+import { financeRoute } from "./routes/finance.js";
 import { authDeviceRoute } from "./routes/auth-device.js";
 import { errorHandler } from "./middleware/error.js";
 
@@ -34,6 +39,11 @@ export function buildApp() {
   app.route("/v1/tasks", tasksRoute);
   app.route("/v1/notes", notesRoute);
   app.route("/v1/tags", tagsRoute);
+  app.route("/v1/products", productsRoute);
+  app.route("/v1/subscriptions", subscriptionsRoute);
+  app.route("/v1/invoices", invoicesRoute);
+  app.route("/v1/expenses", expensesRoute);
+  app.route("/v1/finance", financeRoute);
   app.route("/v1/actions", actionsRoute);
 
   app.notFound((c) =>

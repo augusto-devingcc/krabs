@@ -12,4 +12,7 @@ export const apiKeySchema = z.object({
 export type ApiKey = z.infer<typeof apiKeySchema>;
 
 export const apiKeyPlaintextPrefix = "krabs_sk_" as const;
-export const apiKeyPlaintextRegex = /^krabs_sk_[A-Za-z0-9_-]{32,}$/;
+// Accept both new (krabs_sk_) and legacy (crm_live_) prefixes — tokens issued
+// before the 2026-05 rebrand still hash-match in the DB and shouldn't be
+// invalidated just by shape. Only `krabs_sk_` is generated going forward.
+export const apiKeyPlaintextRegex = /^(?:krabs_sk_|crm_live_)[A-Za-z0-9_-]{32,}$/;

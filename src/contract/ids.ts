@@ -16,6 +16,10 @@ const prefixes = {
   note: "not",
   tag: "tag",
   deviceAuth: "dev",
+  product: "prd",
+  subscription: "sub",
+  invoice: "inv",
+  expense: "exp",
 } as const;
 
 export type EntityKind = keyof typeof prefixes;

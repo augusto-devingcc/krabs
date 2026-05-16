@@ -50,6 +50,13 @@
       "when": 1778945670995,
       "tag": "0006_legal_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1778956855593,
+      "tag": "0007_slow_dracula",
+      "breakpoints": true
     }
   ]
 }

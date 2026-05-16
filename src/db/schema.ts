@@ -299,6 +299,197 @@ export const idempotencyKeys = sqliteTable(
   }),
 );
 
+// ─────────────────────────────────────────────────────────────────
+// Financial primitives (Phase A): products, subscriptions, invoices, expenses.
+// All money is stored as integer cents to avoid float drift. Currency defaults
+// to USD per row but is overridable. MRR is denormalized on subscriptions for
+// O(1) aggregate queries.
+// ─────────────────────────────────────────────────────────────────
+
+export const productKinds = ["saas", "service", "retainer", "product", "other"] as const;
+export type ProductKind = (typeof productKinds)[number];
+
+export const pricingModels = ["one_time", "recurring", "per_unit", "tiered"] as const;
+export type PricingModel = (typeof pricingModels)[number];
+
+export const billingCycles = ["monthly", "quarterly", "yearly", "custom_days"] as const;
+export type BillingCycle = (typeof billingCycles)[number];
+
+export const productStatuses = ["active", "archived"] as const;
+export type ProductStatus = (typeof productStatuses)[number];
+
+export const products = sqliteTable(
+  "products",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: text("kind").notNull().default("saas"),
+    pricingModel: text("pricing_model").notNull().default("recurring"),
+    unitAmountCents: integer("unit_amount_cents").notNull(),
+    currency: text("currency").notNull().default("USD"),
+    billingCycle: text("billing_cycle"),
+    customCycleDays: integer("custom_cycle_days"),
+    status: text("status").notNull().default("active"),
+    customFields: text("custom_fields"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountIdx: index("products_account_idx").on(t.accountId),
+    accountStatusIdx: index("products_account_status_idx").on(t.accountId, t.status),
+  }),
+);
+
+export const subscriptionStatuses = [
+  "trialing",
+  "active",
+  "paused",
+  "canceled",
+  "expired",
+] as const;
+export type SubscriptionStatus = (typeof subscriptionStatuses)[number];
+
+export const subscriptions = sqliteTable(
+  "subscriptions",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    productId: text("product_id").references(() => products.id, { onDelete: "set null" }),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull().default("USD"),
+    billingCycle: text("billing_cycle").notNull(),
+    customCycleDays: integer("custom_cycle_days"),
+    // MRR normalized to monthly cents — denormalized for fast SUM aggregates.
+    mrrCents: integer("mrr_cents").notNull(),
+    status: text("status").notNull().default("active"),
+    startedAt: text("started_at").notNull(),
+    currentPeriodStart: text("current_period_start").notNull(),
+    currentPeriodEnd: text("current_period_end").notNull(),
+    canceledAt: text("canceled_at"),
+    cancelAt: text("cancel_at"),
+    cancelReason: text("cancel_reason"),
+    customFields: text("custom_fields"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountStatusIdx: index("subs_account_status_idx").on(t.accountId, t.status),
+    contactIdx: index("subs_contact_idx").on(t.contactId),
+    productIdx: index("subs_product_idx").on(t.productId),
+    periodEndIdx: index("subs_period_end_idx").on(t.accountId, t.currentPeriodEnd),
+  }),
+);
+
+export const invoiceStatuses = [
+  "draft",
+  "sent",
+  "paid",
+  "overdue",
+  "void",
+  "refunded",
+] as const;
+export type InvoiceStatus = (typeof invoiceStatuses)[number];
+
+export const invoices = sqliteTable(
+  "invoices",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    subscriptionId: text("subscription_id").references(() => subscriptions.id, {
+      onDelete: "set null",
+    }),
+    dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
+    number: text("number").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull().default("USD"),
+    status: text("status").notNull().default("draft"),
+    issuedAt: text("issued_at").notNull(),
+    dueAt: text("due_at"),
+    paidAt: text("paid_at"),
+    voidedAt: text("voided_at"),
+    note: text("note"),
+    customFields: text("custom_fields"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountStatusIdx: index("invoices_account_status_idx").on(t.accountId, t.status),
+    contactIdx: index("invoices_contact_idx").on(t.contactId),
+    subscriptionIdx: index("invoices_subscription_idx").on(t.subscriptionId),
+    dealIdx: index("invoices_deal_idx").on(t.dealId),
+    issuedIdx: index("invoices_account_issued_idx").on(t.accountId, t.issuedAt),
+    numberIdx: uniqueIndex("invoices_account_number_idx").on(t.accountId, t.number),
+  }),
+);
+
+export const expenseCategories = [
+  "ads",
+  "infra",
+  "contractor",
+  "software",
+  "tax",
+  "fees",
+  "salary",
+  "office",
+  "travel",
+  "other",
+] as const;
+export type ExpenseCategory = (typeof expenseCategories)[number];
+
+export const expenseSources = [
+  "manual",
+  "stripe",
+  "bank",
+  "google_ads",
+  "meta_ads",
+  "other",
+] as const;
+export type ExpenseSource = (typeof expenseSources)[number];
+
+export const expenses = sqliteTable(
+  "expenses",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull().default("USD"),
+    category: text("category").notNull(),
+    vendor: text("vendor"),
+    description: text("description"),
+    occurredAt: text("occurred_at").notNull(),
+    source: text("source").notNull().default("manual"),
+    // Used to dedup imports from external sources (stripe charge id, ads transaction id…).
+    sourceRef: text("source_ref"),
+    customFields: text("custom_fields"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountOccurredIdx: index("expenses_account_occurred_idx").on(t.accountId, t.occurredAt),
+    accountCategoryIdx: index("expenses_account_category_idx").on(t.accountId, t.category),
+    sourceRefIdx: uniqueIndex("expenses_source_ref_idx").on(t.accountId, t.source, t.sourceRef),
+  }),
+);
+
+export type ProductRow = typeof products.$inferSelect;
+export type SubscriptionRow = typeof subscriptions.$inferSelect;
+export type InvoiceRow = typeof invoices.$inferSelect;
+export type ExpenseRow = typeof expenses.$inferSelect;
+
 export const deviceAuthorizationStatuses = ["pending", "approved", "denied", "expired"] as const;
 export type DeviceAuthorizationStatus = (typeof deviceAuthorizationStatuses)[number];
 
