@@ -81,7 +81,7 @@ export function Sidebar() {
             <p className="px-5 mb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
               {section.title}
             </p>
-            <ul className="px-2 space-y-px">
+            <ul className="flex flex-col gap-px px-2">
               {section.items.map((item) => {
                 const active = isActive(pathname, item.href);
                 const Icon = item.icon;

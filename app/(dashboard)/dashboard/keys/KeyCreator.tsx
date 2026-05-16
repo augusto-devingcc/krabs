@@ -40,7 +40,7 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
   const formAndResult = (
     <>
       <form action={onSubmit} className="flex flex-col sm:flex-row gap-3 items-end">
-        <div className="flex-1 w-full space-y-1.5">
+        <div className="flex flex-col gap-1.5 flex-1 w-full">
           <Label htmlFor="key-label" className="text-xs uppercase tracking-wide text-muted-foreground">
             Label
           </Label>
@@ -52,14 +52,8 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
           />
         </div>
         <Button type="submit" disabled={pending}>
-          {pending ? (
-            <>
-              <Sparkles size={16} aria-hidden className="animate-pulse" />
-              creating…
-            </>
-          ) : (
-            "create key"
-          )}
+          {pending && <Sparkles data-icon="inline-start" aria-hidden className="animate-pulse" />}
+          {pending ? "creating…" : "create key"}
         </Button>
       </form>
 
@@ -89,14 +83,11 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
                 className="min-w-[100px]"
               >
                 {copied ? (
-                  <>
-                    <Check size={16} aria-hidden /> copied
-                  </>
+                  <Check data-icon="inline-start" aria-hidden />
                 ) : (
-                  <>
-                    <Copy size={16} aria-hidden /> copy
-                  </>
+                  <Copy data-icon="inline-start" aria-hidden />
                 )}
+                {copied ? "copied" : "copy"}
               </Button>
             </div>
             <details open className="mt-4 text-xs text-muted-foreground group">

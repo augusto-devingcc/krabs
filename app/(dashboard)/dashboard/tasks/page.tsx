@@ -105,7 +105,7 @@ export default async function TasksPage({
           prompt='Add a task to follow up with Maria next Tuesday, high priority.'
         />
       ) : (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
           {primary.length > 0 && <TaskGroup label="active" tasks={primary} />}
           {secondary.length > 0 && (
             <TaskGroup label="completed" tasks={secondary} muted />

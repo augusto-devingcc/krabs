@@ -82,7 +82,7 @@ export default async function DashboardOverview() {
               socrm is operated by agents, not humans. Three steps and your CLI,
               Claude Desktop, or Cursor can read and write here directly.
             </p>
-            <ol className="space-y-2 mb-6 text-sm">
+            <ol className="flex flex-col gap-2 mb-6 text-sm">
               {[
                 "Generate an API key from the keys page.",
                 "Paste it into Claude Desktop, Cursor, or your CLI as an MCP server.",

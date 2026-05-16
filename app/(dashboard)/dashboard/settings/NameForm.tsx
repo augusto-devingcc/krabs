@@ -23,8 +23,8 @@ export function NameForm({ initial }: { initial: string }) {
   }
 
   return (
-    <form action={onSubmit} className="space-y-3">
-      <div className="space-y-1.5">
+    <form action={onSubmit} className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="account-name" className="text-xs uppercase tracking-wide text-muted-foreground">
           account name
         </Label>

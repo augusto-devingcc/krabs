@@ -73,7 +73,7 @@ export default async function DealsPage() {
                       {col.length}
                     </Badge>
                   </CardHeader>
-                  <CardContent className="px-3 flex-1 space-y-2">
+                  <CardContent className="gap-2 px-3 flex-1">
                     {col.map((d) => (
                       <Card
                         key={d.id}
