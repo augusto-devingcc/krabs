@@ -1,133 +1,158 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  ChefHat,
-  FileCode2,
-  Sparkles,
-} from "lucide-react";
-import { PageHeader } from "@/components/docs/page-header";
-import { Card } from "@/components/ui/card";
-import { InlineCode } from "@/components/docs/code-block";
+import { DocsToc } from "@/components/docs/DocsToc";
+import { Callout } from "@/components/docs/Callout";
 
-const cards = [
-  {
-    href: "/docs/getting-started",
-    title: "Getting started",
-    description:
-      "Sign up, mint an API key, wire socrm into Claude Desktop, and run your first agent command in under five minutes.",
-    icon: Sparkles,
-  },
-  {
-    href: "/docs/concepts/agent-contract",
-    title: "Agent contract",
-    description:
-      "The five primitives every operation honors: intent, idempotency, dry-run, schema introspection, and a reversible audit log.",
-    icon: FileCode2,
-  },
-  {
-    href: "/docs/api-reference",
-    title: "API reference",
-    description:
-      "All 46 operations, grouped by entity, with destructive and reversible flags, idempotency support, and example payloads.",
-    icon: BookOpen,
-  },
-  {
-    href: "/docs/recipes",
-    title: "Recipes",
-    description:
-      "Copy-paste runbooks for the things agents actually do: ingest email, dedupe contacts, undo a bad import, audit a fleet.",
-    icon: ChefHat,
-  },
+const TOC = [
+  { id: "what-is-krabs", label: "What is krabs" },
+  { id: "three-doors", label: "Three doors" },
+  { id: "primitives", label: "Primitives" },
+  { id: "next-steps", label: "Next steps" },
 ];
 
-export default function DocsIndexPage() {
+export default function DocsIndex() {
   return (
-    <article>
-      <PageHeader
-        eyebrow="Documentation"
-        title="The CRM for agents"
-        description="socrm is a contact, deal, and activity database designed to be operated by autonomous agents. Same API surface over HTTP, CLI, and MCP. Every write is logged. Most writes are reversible."
-      />
+    <>
+      <main className="docs-center">
+        <article className="dc">
+          <div className="dc__breadcrumb">docs / introduction</div>
+          <h1 className="dc__h1">Introduction</h1>
+          <p className="dc__lede">
+            krabs.dev is a CRM designed to be operated by AI agents. Same primitives Salesforce
+            and HubSpot have spent 25 years getting right — contacts, deals, threads, tasks —
+            but reachable as tools instead of pages.
+          </p>
 
-      <section className="prose-docs space-y-5 text-[15px] leading-7 text-muted-foreground">
-        <p>
-          Most CRMs were built for humans clicking buttons. socrm assumes the
-          caller is a long-running agent that needs to introspect the schema,
-          dry-run a change, commit it with an{" "}
-          <InlineCode>idempotency-key</InlineCode>, and undo it if something
-          downstream caught fire. The product is the contract.
-        </p>
-        <p>
-          These docs cover the public read endpoints, the agent-facing write
-          endpoints, the audit log, and the patterns we recommend for building
-          on top. If you are new, start with{" "}
-          <Link href="/docs/getting-started" className="underline text-foreground">
-            Getting started
-          </Link>
-          . If you want to understand the design, read{" "}
-          <Link
-            href="/docs/concepts/agent-contract"
-            className="underline text-foreground"
-          >
-            Agent contract
-          </Link>
-          .
-        </p>
-      </section>
+          <h2 className="dc__h2" id="what-is-krabs">
+            What is krabs
+          </h2>
+          <p>
+            Existing CRMs assume the operator is a human clicking through forms. krabs assumes
+            the operator is a model. Every record is reachable over three interfaces with the
+            exact same object graph behind them. Every mutation is idempotent, dry-runnable,
+            and reversible.
+          </p>
+          <p>
+            One founder, plus a fleet of agents, can operate at the scale of a 20-person team —
+            so long as the substrate they share is one designed for them.
+          </p>
 
-      <section className="mt-10 grid gap-4 sm:grid-cols-2">
-        {cards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Card
-              key={card.href}
-              className="group relative flex flex-col gap-3 p-6 transition-colors hover:bg-accent/40"
+          <h2 className="dc__h2" id="three-doors">
+            Three doors
+          </h2>
+          <p>
+            The same operation can be invoked over three transports. Pick the one your agent
+            already speaks.
+          </p>
+
+          <table className="dc__table">
+            <thead>
+              <tr>
+                <th>transport</th>
+                <th>endpoint</th>
+                <th>for</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <code>MCP</code>
+                </td>
+                <td>
+                  <code>mcp.krabs.dev</code>
+                </td>
+                <td>agentic hosts — Claude Desktop, Cursor, Claude Code</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>CLI</code>
+                </td>
+                <td>
+                  <code>krabs</code>
+                </td>
+                <td>shell-driven agents, humans, scripts</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>HTTP</code>
+                </td>
+                <td>
+                  <code>api.krabs.dev</code>
+                </td>
+                <td>everything else — n8n, cron, your own UI</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2 className="dc__h2" id="primitives">
+            Primitives
+          </h2>
+          <p>
+            Seven nouns, forty-six verbs. The full set of operations is described at{" "}
+            <Link href="/v1/schema">
+              <code>/v1/schema</code>
+            </Link>
+            .
+          </p>
+          <ul>
+            <li>
+              <code>contact</code> — a person, with one or more handles across channels.
+            </li>
+            <li>
+              <code>identity</code> — a single handle (email, phone, telegram, x, etc.) linked to a contact.
+            </li>
+            <li>
+              <code>deal</code> — work in motion, with stage and amount.
+            </li>
+            <li>
+              <code>interaction</code> — any inbound or outbound message, in any channel.
+            </li>
+            <li>
+              <code>task</code> — a unit of work, assignable to an agent or human.
+            </li>
+            <li>
+              <code>note</code> — free-form context attached to any record.
+            </li>
+            <li>
+              <code>tag</code> — labels you assign and filter by.
+            </li>
+          </ul>
+
+          <Callout tone="info" title="audit by default">
+            Every mutation lands in an append-only log. The agent that ran it, the prompt that
+            triggered it, the diff it left — all queryable. Reversible for 24 hours via an
+            undo token.
+          </Callout>
+
+          <h2 className="dc__h2" id="next-steps">
+            Next steps
+          </h2>
+          <ul>
+            <li>
+              <Link href="/docs/quickstart">Quickstart →</Link> get a key, wire krabs into Claude
+              Desktop, run your first command in five minutes.
+            </li>
+            <li>
+              <Link href="/docs/auth">Auth & tokens →</Link> how to mint, scope, and rotate keys.
+            </li>
+            <li>
+              <Link href="/docs/contract">The contract →</Link> what the 46-operation spec
+              guarantees.
+            </li>
+          </ul>
+
+          <div className="dc__edit">
+            <a
+              href="https://github.com/augusto-devingcc/krabs/edit/main/app/docs/page.tsx"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <Icon size={20} aria-hidden className="text-foreground" />
-              <h3 className="text-base font-medium tracking-tight">
-                <Link
-                  href={card.href}
-                  className="after:absolute after:inset-0 after:content-['']"
-                >
-                  {card.title}
-                </Link>
-              </h3>
-              <p className="text-sm text-muted-foreground">{card.description}</p>
-              <span className="mt-auto inline-flex items-center gap-1 text-sm text-muted-foreground transition-transform group-hover:translate-x-0.5">
-                Read <ArrowRight size={14} aria-hidden />
-              </span>
-            </Card>
-          );
-        })}
-      </section>
-
-      <section className="mt-12 space-y-4 border-t border-border pt-8">
-        <h2 className="text-xl font-medium tracking-tight">Where to next</h2>
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>
-            <Link href="/docs/concepts/audit-log" className="underline text-foreground">
-              Audit log
-            </Link>{" "}
-            — what every mutation records, and how undo works.
-          </li>
-          <li>
-            <Link
-              href="/docs/concepts/multi-channel-identity"
-              className="underline text-foreground"
-            >
-              Multi-channel identity
-            </Link>{" "}
-            — one contact, many handles. The identity index makes lookups O(1).
-          </li>
-          <li>
-            <Link href="/docs/recipes" className="underline text-foreground">
-              Recipes
-            </Link>{" "}
-            — short, end-to-end examples agents use in production.
-          </li>
-        </ul>
-      </section>
-    </article>
+              Edit this page on GitHub →
+            </a>
+            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-16 · v0.4.3</span>
+          </div>
+        </article>
+      </main>
+      <DocsToc items={TOC} />
+    </>
   );
 }

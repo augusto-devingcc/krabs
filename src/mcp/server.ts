@@ -13,15 +13,15 @@ import {
 } from "../db/schema.js";
 import { apiRequest, ApiClientError } from "../cli/client.js";
 
-const DEFAULT_API_URL = "http://localhost:3000";
+const DEFAULT_API_URL = "https://api.krabs.dev";
 
 function getConfig(): { apiUrl: string; token: string } {
-  const token = process.env.SOCRM_API_KEY;
+  const token = process.env.KRABS_API_KEY;
   if (!token) {
-    throw new Error("SOCRM_API_KEY environment variable is required");
+    throw new Error("KRABS_API_KEY environment variable is required");
   }
   return {
-    apiUrl: process.env.SOCRM_API_URL ?? DEFAULT_API_URL,
+    apiUrl: process.env.KRABS_API_URL ?? DEFAULT_API_URL,
     token,
   };
 }
@@ -98,11 +98,11 @@ async function main() {
   const cfg = getConfig();
 
   const server = new McpServer(
-    { name: "socrm", version: "0.0.2" },
+    { name: "krabs", version: "0.0.2" },
     {
       capabilities: { tools: {} },
       instructions: [
-        "Solo Agentic CRM — full read/write access to the user's CRM.",
+        "krabs.dev — full read/write access to the user's CRM.",
         "Every mutation (including destructive ones like delete and merge) is fully exposed.",
         "Safety primitives:",
         "  - Pass `intent` to leave a human-readable explanation in the audit log.",
@@ -1470,6 +1470,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  process.stderr.write(`socrm-mcp fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(`krabs-mcp fatal: ${err instanceof Error ? err.message : String(err)}\n`);
   process.exit(1);
 });

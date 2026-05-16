@@ -299,6 +299,37 @@ export const idempotencyKeys = sqliteTable(
   }),
 );
 
+export const deviceAuthorizationStatuses = ["pending", "approved", "denied", "expired"] as const;
+export type DeviceAuthorizationStatus = (typeof deviceAuthorizationStatuses)[number];
+
+export const deviceAuthorizations = sqliteTable(
+  "device_authorizations",
+  {
+    id: text("id").primaryKey(),
+    deviceCode: text("device_code").notNull().unique(),
+    userCode: text("user_code").notNull().unique(),
+    // Null until approved (we don't know which account until human approves).
+    accountId: text("account_id").references(() => accounts.id, { onDelete: "cascade" }),
+    // pending | approved | denied | expired
+    status: text("status").notNull().default("pending"),
+    // JSON: { clientName, userAgent, ip } — what the agent told us about itself.
+    clientMeta: text("client_meta"),
+    // The api_key row created on approval. Null while pending/denied/expired.
+    approvedApiKeyId: text("approved_api_key_id").references(() => apiKeys.id, {
+      onDelete: "set null",
+    }),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    expiresAt: text("expires_at").notNull(),
+    approvedAt: text("approved_at"),
+  },
+  (t) => ({
+    statusIdx: index("device_authorizations_status_idx").on(t.status),
+    expiresIdx: index("device_authorizations_expires_idx").on(t.expiresAt),
+  }),
+);
+
+export type DeviceAuthorizationRow = typeof deviceAuthorizations.$inferSelect;
+
 export type AccountRow = typeof accounts.$inferSelect;
 export type ApiKeyRow = typeof apiKeys.$inferSelect;
 export type ContactRow = typeof contacts.$inferSelect;

@@ -1,18 +1,5 @@
 import Link from "next/link";
-import {
-  Activity,
-  ArrowRight,
-  AtSign,
-  BadgeDollarSign,
-  CheckSquare,
-  History,
-  KeyRound,
-  MessageSquare,
-  StickyNote,
-  Tag,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getDashboardContext } from "../../../src/lib/web/dashboard-ctx.js";
 import { listActions } from "../../../src/domain/contact.js";
 import { getAccountCounts } from "../../../src/domain/counts.js";
@@ -39,47 +26,32 @@ export default async function DashboardOverview() {
 
   return (
     <div className="p-8 max-w-6xl">
-      {/* Page header */}
-      <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground mb-2">
-        # overview
-      </p>
-      <h1 className="text-3xl font-medium tracking-tight mb-2">
-        Welcome{clerkName ? `, ${clerkName}` : ""}.
-      </h1>
-      <p className="text-muted-foreground mb-10 max-w-2xl">
-        socrm is operated by your agents. This page summarises what they&apos;ve
-        done.
-      </p>
+      <div className="mb-10">
+        <p className="k-eyebrow mb-2">crm · overview</p>
+        <h1 className="k-h2 mb-2">
+          Welcome{clerkName ? `, ${clerkName}` : ""}.
+        </h1>
+        <p className="k-body-sm text-muted-foreground max-w-2xl">
+          krabs is operated by your agents. This page summarises what they&apos;ve
+          done.
+        </p>
+      </div>
 
-      {/* Empty-state: connect your first agent */}
       {isEmpty && (
         <Card
-          className="mb-10 border-foreground"
+          className="mb-10 border-border rounded-xl"
+          style={{ boxShadow: "var(--shadow-1)" }}
           aria-labelledby="connect-agent-heading"
         >
           <CardHeader>
-            <div className="flex items-center gap-2.5">
-              <KeyRound
-                aria-hidden
-                size={20}
-                className="text-foreground"
-              />
-              <div>
-                <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                  # get started
-                </p>
-                <h2
-                  id="connect-agent-heading"
-                  className="text-xl font-medium tracking-tight leading-none"
-                >
-                  Connect your first agent.
-                </h2>
-              </div>
-            </div>
+            <p className="k-eyebrow mb-1">get started</p>
+            <h2 id="connect-agent-heading" className="k-h3">
+              Connect your first agent.
+            </h2>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-5 max-w-xl">
-              socrm is operated by agents, not humans. Three steps and your CLI,
+            <p className="k-body-sm text-muted-foreground mb-5 max-w-xl">
+              krabs is operated by agents, not humans. Three steps and your CLI,
               Claude Desktop, or Cursor can read and write here directly.
             </p>
             <ol className="flex flex-col gap-2 mb-6 text-sm">
@@ -109,84 +81,57 @@ export default async function DashboardOverview() {
         </Card>
       )}
 
-      {/* Primary counts row */}
-      <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground mb-3">
-        # entities
-      </p>
+      <p className="k-eyebrow mb-3">entities</p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <StatPrimary
           href="/dashboard/contacts"
           label="contacts"
           n={counts.contacts}
-          icon={Users}
         />
         <StatPrimary
           href="/dashboard/deals"
           label="deals"
           n={counts.deals}
-          icon={BadgeDollarSign}
         />
         <StatPrimary
           href="/dashboard/tasks"
           label="tasks"
           n={counts.tasks}
-          icon={CheckSquare}
         />
         <StatPrimary
           href="/dashboard/notes"
           label="notes"
           n={counts.notes}
-          icon={StickyNote}
         />
       </div>
 
-      {/* Secondary counts row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-12">
-        <StatCompact
-          href="/dashboard/tags"
-          label="tags"
-          n={counts.tags}
-          icon={Tag}
-        />
+        <StatCompact href="/dashboard/tags" label="tags" n={counts.tags} />
         <StatCompact
           href="/dashboard/contacts"
           label="identities"
           n={counts.identities}
-          icon={AtSign}
         />
-        <StatCompact
-          label="interactions"
-          n={counts.interactions}
-          icon={MessageSquare}
-        />
+        <StatCompact label="interactions" n={counts.interactions} />
         <StatCompact
           href="/dashboard/audit"
           label="actions"
           n={counts.actions}
-          icon={History}
         />
         <StatCompact
           href="/dashboard/keys"
           label="api keys"
           n={counts.apiKeys}
-          icon={KeyRound}
         />
       </div>
 
-      {/* Recent activity, terminal-style inside a card */}
-      <Card className="py-0 gap-0 mb-10 overflow-hidden">
-        <CardHeader className="px-4 py-3 border-b">
+      <Card
+        className="py-0 gap-0 mb-10 overflow-hidden border-border rounded-xl"
+        style={{ boxShadow: "var(--shadow-1)" }}
+      >
+        <CardHeader className="px-4 py-3 border-b border-border">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Activity
-                aria-hidden
-                size={16}
-                className="text-muted-foreground"
-              />
-              <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-                recent activity
-              </span>
-            </div>
+            <span className="k-eyebrow">recent activity</span>
             <Link
               href="/dashboard/audit"
               className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
@@ -198,7 +143,7 @@ export default async function DashboardOverview() {
         </CardHeader>
         <CardContent className="px-0 font-mono text-xs">
           {recent.length === 0 ? (
-            <div className="px-4 py-8 text-center text-muted-foreground">
+            <div className="px-4 py-10 text-center text-muted-foreground">
               (no activity yet — your agents will fill this column)
             </div>
           ) : (
@@ -209,7 +154,7 @@ export default async function DashboardOverview() {
                 return (
                   <li
                     key={a.id}
-                    className="px-4 py-2 grid grid-cols-[64px_minmax(0,180px)_minmax(0,1fr)_auto] gap-3 items-baseline"
+                    className="px-4 py-2 grid grid-cols-[64px_minmax(0,180px)_minmax(0,1fr)_auto] gap-3 items-baseline hover:bg-muted/50 transition-colors"
                   >
                     <span className="text-muted-foreground">{time}</span>
                     <span className="text-foreground truncate">
@@ -233,7 +178,6 @@ export default async function DashboardOverview() {
         </CardContent>
       </Card>
 
-      {/* Account id, muted, bottom — with tooltip */}
       <AccountIdTooltip accountId={account.id} />
     </div>
   );
@@ -243,30 +187,20 @@ function StatPrimary({
   href,
   label,
   n,
-  icon: Icon,
 }: {
   href?: string;
   label: string;
   n: number;
-  icon: LucideIcon;
 }) {
   const card = (
     <Card
-      className={`py-0 gap-0 transition-colors ${
-        href ? "hover:bg-accent/50 cursor-pointer" : ""
+      className={`py-0 gap-0 border-border rounded-xl transition-colors ${
+        href ? "hover:bg-muted/50 cursor-pointer" : ""
       }`}
+      style={{ boxShadow: "var(--shadow-1)" }}
     >
       <CardHeader className="px-5 pt-5 pb-1">
-        <div className="flex items-center gap-2">
-          <Icon
-            aria-hidden
-            size={14}
-            className="text-muted-foreground"
-          />
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-        </div>
+        <p className="k-eyebrow">{label}</p>
       </CardHeader>
       <CardContent className="px-5 pb-5">
         <p className="text-3xl font-medium tabular-nums tracking-tight text-foreground">
@@ -288,30 +222,19 @@ function StatCompact({
   href,
   label,
   n,
-  icon: Icon,
 }: {
   href?: string;
   label: string;
   n: number;
-  icon: LucideIcon;
 }) {
   const card = (
     <Card
-      className={`py-0 gap-0 transition-colors ${
-        href ? "hover:bg-accent/50 cursor-pointer" : ""
+      className={`py-0 gap-0 border-border rounded-xl transition-colors ${
+        href ? "hover:bg-muted/50 cursor-pointer" : ""
       }`}
     >
       <CardHeader className="px-4 pt-3 pb-0.5">
-        <div className="flex items-center gap-1.5">
-          <Icon
-            aria-hidden
-            size={12}
-            className="text-muted-foreground"
-          />
-          <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-        </div>
+        <p className="k-eyebrow">{label}</p>
       </CardHeader>
       <CardContent className="px-4 pb-3">
         <p className="text-lg font-medium tabular-nums text-muted-foreground">
@@ -328,3 +251,4 @@ function StatCompact({
     card
   );
 }
+

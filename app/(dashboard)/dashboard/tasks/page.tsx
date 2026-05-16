@@ -1,11 +1,8 @@
 import {
-  CheckSquare,
   Square,
   CheckSquare2,
   XSquare,
-  History,
   Filter,
-  Flame,
 } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listTasks } from "../../../../src/domain/task.js";
@@ -18,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/lib/utils";
 
@@ -63,13 +59,15 @@ export default async function TasksPage({
   return (
     <div className="p-8 max-w-5xl">
       <EntityHeader
-        icon={CheckSquare}
         title="tasks"
         description="Things to do. Tied optionally to a contact or deal. Set status=done and your agent stamps completedAt automatically."
         count={items.length}
       />
 
-      <form action="/dashboard/tasks" className="mb-6 flex flex-col sm:flex-row gap-2">
+      <form
+        action="/dashboard/tasks"
+        className="mb-6 flex flex-col sm:flex-row gap-2"
+      >
         <Select name="status" defaultValue={sp.status || "all"}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="all statuses" />
@@ -94,13 +92,13 @@ export default async function TasksPage({
           </SelectContent>
         </Select>
         <Button type="submit" variant="outline">
-          Filter <Filter size={16} aria-hidden />
+          <Filter size={16} aria-hidden />
+          Filter
         </Button>
       </form>
 
       {items.length === 0 ? (
         <EntityEmpty
-          icon={CheckSquare}
           description="No tasks yet. Your agent can add follow-ups, reminders, and to-dos for you."
           prompt='Add a task to follow up with Maria next Tuesday, high priority.'
         />
@@ -128,15 +126,15 @@ function TaskGroup({
   return (
     <section className={muted ? "opacity-70" : ""}>
       <div className="flex items-center gap-2 mb-3">
-        {muted && <History size={14} aria-hidden className="text-muted-foreground" />}
-        <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-          # {label}
-        </p>
-        <Badge variant="outline" className="font-mono text-[10px]">
+        <p className="k-eyebrow">{label}</p>
+        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
           {tasks.length}
-        </Badge>
+        </span>
       </div>
-      <Card className="py-0 gap-0">
+      <Card
+        className="py-0 gap-0 border-border rounded-xl overflow-hidden"
+        style={{ boxShadow: "var(--shadow-1)" }}
+      >
         <CardContent className="px-0">
           {tasks.map((t, i) => (
             <TaskRow key={t.id} task={t} first={i === 0} />
@@ -162,7 +160,7 @@ function TaskRow({ task, first }: { task: Task; first: boolean }) {
       )}
     >
       <CheckboxIcon
-        size={20}
+        size={18}
         aria-hidden
         className={cn(
           "mt-0.5 shrink-0",
@@ -200,13 +198,17 @@ function TaskRow({ task, first }: { task: Task; first: boolean }) {
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        <Badge variant="outline" className="font-mono text-[11px]">
-          {task.priority === "high" && (
-            <Flame size={14} aria-hidden className="text-muted-foreground" />
-          )}
-          {task.priority}
-        </Badge>
-        <StatusPill status={task.status} variant={checked ? "outline" : "secondary"} />
+        <StatusPill
+          status={task.priority}
+          pillTone={
+            task.priority === "high"
+              ? "warning"
+              : task.priority === "low"
+              ? "neutral"
+              : "neutral"
+          }
+        />
+        <StatusPill status={task.status} />
       </div>
     </div>
   );

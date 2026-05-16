@@ -43,6 +43,13 @@
       "when": 1778889245520,
       "tag": "0005_wooden_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1778945670995,
+      "tag": "0006_legal_yellow_claw",
+      "breakpoints": true
     }
   ]
 }

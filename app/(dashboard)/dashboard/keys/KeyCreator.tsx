@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Check, Code2, Copy, Plus, Sparkles } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { createKeyAction } from "./actions";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
   const [pending, startTransition] = useTransition();
-  const [created, setCreated] = useState<{ token: string; label: string } | null>(null);
+  const [created, setCreated] = useState<{ token: string; label: string } | null>(
+    null,
+  );
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -39,10 +41,13 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
 
   const formAndResult = (
     <>
-      <form action={onSubmit} className="flex flex-col sm:flex-row gap-3 items-end">
+      <form
+        action={onSubmit}
+        className="flex flex-col sm:flex-row gap-3 items-end"
+      >
         <div className="flex flex-col gap-1.5 flex-1 w-full">
-          <Label htmlFor="key-label" className="text-xs uppercase tracking-wide text-muted-foreground">
-            Label
+          <Label htmlFor="key-label" className="k-eyebrow">
+            label
           </Label>
           <Input
             id="key-label"
@@ -52,8 +57,7 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
           />
         </div>
         <Button type="submit" disabled={pending}>
-          {pending && <Sparkles data-icon="inline-start" aria-hidden className="animate-pulse" />}
-          {pending ? "creating…" : "create key"}
+          {pending ? "Creating…" : "Create key"}
         </Button>
       </form>
 
@@ -69,8 +73,9 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
           <AlertTitle>Token created</AlertTitle>
           <AlertDescription>
             <p className="text-sm mb-3">
-              <span className="font-mono">{created.label}</span> is ready. Copy this token now —
-              it&apos;s shown <strong>once</strong> and never again.
+              <span className="font-mono">{created.label}</span> is ready. Copy
+              this token now — it&apos;s shown <strong>once</strong> and never
+              again.
             </p>
             <div className="flex gap-2 items-stretch w-full">
               <code className="flex-1 font-mono text-sm bg-background border border-border rounded-md px-4 py-3 overflow-x-auto whitespace-nowrap">
@@ -91,19 +96,14 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
               </Button>
             </div>
             <details open className="mt-4 text-xs text-muted-foreground group">
-              <summary className="cursor-pointer font-mono uppercase tracking-wide hover:text-foreground select-none inline-flex items-center gap-2">
-                <Code2 size={14} aria-hidden />
+              <summary className="cursor-pointer k-eyebrow hover:text-foreground select-none">
                 quick start — Claude Desktop config
               </summary>
               <pre className="mt-3 bg-background border border-border rounded-md p-4 overflow-x-auto text-foreground">{`{
   "mcpServers": {
-    "socrm": {
-      "command": "node",
-      "args": ["/path/to/socrm-mcp"],
-      "env": {
-        "SOCRM_API_KEY": "${created.token}",
-        "SOCRM_API_URL": "https://solo-agentic-crm.vercel.app"
-      }
+    "krabs": {
+      "url": "https://mcp.krabs.dev",
+      "auth": { "type": "bearer", "token": "${created.token}" }
     }
   }
 }`}</pre>
@@ -119,17 +119,19 @@ export function KeyCreator({ embedded = false }: { embedded?: boolean }) {
   }
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Plus size={20} className="text-muted-foreground" aria-hidden />
-          <CardTitle>New API key</CardTitle>
-        </div>
-        <CardDescription>
-          Name it for the agent or device using it — the audit log will show this label.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>{formAndResult}</CardContent>
+    <Card
+      className="mb-6 border-border rounded-xl"
+      style={{ boxShadow: "var(--shadow-1)" }}
+    >
+      <CardContent className="py-6">
+        <p className="k-eyebrow mb-1">new key</p>
+        <h2 className="k-h4 mb-1">Create an API key</h2>
+        <p className="k-body-sm text-muted-foreground mb-5">
+          Name it for the agent or device using it — the audit log will show
+          this label.
+        </p>
+        {formAndResult}
+      </CardContent>
     </Card>
   );
 }

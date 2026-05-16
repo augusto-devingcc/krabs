@@ -15,6 +15,7 @@ const prefixes = {
   task: "tsk",
   note: "not",
   tag: "tag",
+  deviceAuth: "dev",
 } as const;
 
 export type EntityKind = keyof typeof prefixes;

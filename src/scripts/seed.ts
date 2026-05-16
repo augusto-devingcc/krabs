@@ -5,7 +5,7 @@ import { newId } from "../contract/ids.js";
 import { generateApiKeyPlaintext, sha256Hex, apiKeyPreview } from "../lib/hash.js";
 
 async function main() {
-  const email = process.argv[2] ?? "dev@socrm.local";
+  const email = process.argv[2] ?? "dev@krabs.local";
   const label = process.argv[3] ?? "seed";
 
   const accountId = newId("account");

@@ -1,5 +1,4 @@
 import NextLink from "next/link";
-import { StickyNote, Link as LinkIcon, User, Briefcase } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listNotes } from "../../../../src/domain/note.js";
 import { EntityHeader, EntityEmpty } from "@/components/EntityTable";
@@ -20,7 +19,6 @@ export default async function NotesPage() {
   return (
     <div className="p-8 max-w-5xl">
       <EntityHeader
-        icon={StickyNote}
         title="notes"
         description="Free-form scratchpad. Markdown-ish. Tied to a contact or deal optionally — your agent often writes meeting notes here."
         count={items.length}
@@ -28,28 +26,29 @@ export default async function NotesPage() {
 
       {items.length === 0 ? (
         <EntityEmpty
-          icon={StickyNote}
           description="No notes yet. Capture meeting context, decisions, or anything worth remembering — agents read these."
           prompt='Take a note on Acme deal: Decision-maker is Pedro; budget signed off; demo next Wed.'
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map((n) => (
-            <Card key={n.id} className="hover:border-foreground/20 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between gap-3 text-[11px] font-mono">
-                <span className="text-muted-foreground uppercase tracking-wider">
+            <Card
+              key={n.id}
+              className="border-border rounded-xl transition-colors hover:bg-muted/30"
+              style={{ boxShadow: "var(--shadow-1)" }}
+            >
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <span className="font-mono text-xs text-muted-foreground">
                   {n.id.slice(0, 10)}…
                 </span>
-                <time className="text-muted-foreground font-mono text-[11px]">
+                <time className="font-mono text-xs text-muted-foreground">
                   {rel(n.createdAt)}
                 </time>
               </CardHeader>
 
               {n.title && (
                 <CardContent>
-                  <CardTitle className="text-xl font-medium tracking-tight leading-snug">
-                    {n.title}
-                  </CardTitle>
+                  <CardTitle className="k-h4 leading-snug">{n.title}</CardTitle>
                 </CardContent>
               )}
 
@@ -69,24 +68,24 @@ export default async function NotesPage() {
               </CardContent>
 
               {(n.contactId || n.dealId) && (
-                <CardFooter className="border-t pt-6 flex flex-wrap gap-2 text-[11px] font-mono">
+                <CardFooter className="border-t border-border pt-4 flex flex-wrap gap-2">
                   {n.contactId && (
                     <NextLink
                       href={`/dashboard/contacts?q=${encodeURIComponent(n.contactId)}`}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-muted text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-muted font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
                     >
-                      <LinkIcon size={14} aria-hidden />
-                      <User size={14} aria-hidden />
+                      <span>contact</span>
+                      <span>·</span>
                       <span>{n.contactId.slice(0, 10)}…</span>
                     </NextLink>
                   )}
                   {n.dealId && (
                     <NextLink
                       href={`/dashboard/deals`}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-muted text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-muted font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
                     >
-                      <LinkIcon size={14} aria-hidden />
-                      <Briefcase size={14} aria-hidden />
+                      <span>deal</span>
+                      <span>·</span>
                       <span>{n.dealId.slice(0, 10)}…</span>
                     </NextLink>
                   )}

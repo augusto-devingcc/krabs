@@ -1,0 +1,166 @@
+import Link from "next/link";
+import { DocsToc } from "@/components/docs/DocsToc";
+import { Callout } from "@/components/docs/Callout";
+import { BRAND } from "@/lib/brand.js";
+
+const TOC = [
+  { id: "install", label: "Install" },
+  { id: "mint-a-key", label: "Mint a key" },
+  { id: "wire-claude-desktop", label: "Wire Claude Desktop" },
+  { id: "your-first-call", label: "Your first call" },
+  { id: "next-steps", label: "Next steps" },
+];
+
+export default function QuickstartPage() {
+  return (
+    <>
+      <main className="docs-center">
+        <article className="dc">
+          <div className="dc__breadcrumb">docs / quickstart</div>
+          <h1 className="dc__h1">Quickstart</h1>
+          <p className="dc__lede">
+            Sign up, mint a key, wire {BRAND.name} into your agent of choice, run your first call.
+            About five minutes.
+          </p>
+
+          <h2 className="dc__h2" id="install">
+            Install
+          </h2>
+          <p>
+            The <code>{BRAND.name}</code> CLI ships through Homebrew and npm. Pick whichever you
+            already use — both install the same binary.
+          </p>
+          <pre className="dc__code">{`# Homebrew (recommended on macOS / linux)
+brew install augusto-devingcc/krabs/krabs
+
+# npm (cross-platform)
+npm install -g krabs-cli`}</pre>
+          <p>
+            The Homebrew command auto-registers the <code>augusto-devingcc/krabs</code> tap — no separate{" "}
+            <code>brew tap</code> step is needed. Then log in:
+          </p>
+          <pre className="dc__code">{`krabs auth login`}</pre>
+          <p>
+            <code>krabs auth login</code> opens a browser at <code>{BRAND.app}</code>, completes
+            OAuth, and writes a token to <code>~/.config/krabs/config.json</code>. See the{" "}
+            <Link href="/docs/install">install guide</Link> for pnpm dlx, uninstall, and
+            troubleshooting.
+          </p>
+
+          <Callout tone="info" title="free tier">
+            500 ops per month are free, no credit card. Usage rolls over to paid only when you
+            attach a card from the dashboard.
+          </Callout>
+
+          <h2 className="dc__h2" id="mint-a-key">
+            Mint a key
+          </h2>
+          <p>
+            On signup the dashboard auto-provisions a key labeled <code>Web Dashboard</code> bound
+            to your browser session. For anything else — an agent, a script, a deployed worker —
+            create a scoped key at <Link href="/dashboard/keys"><code>/dashboard/keys</code></Link>.
+          </p>
+          <p>
+            Tokens look like this:
+          </p>
+          <pre className="dc__code">{`krabs_sk_4n7q2vh3jpz9w8x1y0c5b6d4f8g2k1m3`}</pre>
+          <p>
+            The full token is shown <strong>once</strong> at creation. We store only a hash. If you
+            lose it, rotate.
+          </p>
+
+          <h2 className="dc__h2" id="wire-claude-desktop">
+            Wire Claude Desktop
+          </h2>
+          <p>
+            Open <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> and
+            add the {BRAND.name} server under <code>mcpServers</code>.
+          </p>
+          <pre className="dc__code">{`{
+  "mcpServers": {
+    "krabs": {
+      "transport": "https",
+      "url": "https://${BRAND.mcp}",
+      "auth": {
+        "type": "bearer",
+        "token": "krabs_sk_…"
+      }
+    }
+  }
+}`}</pre>
+          <p>
+            Restart Claude Desktop. The {BRAND.name} tools appear in the tool drawer; the agent can
+            now reach every operation listed in the contract.
+          </p>
+
+          <h2 className="dc__h2" id="your-first-call">
+            Your first call
+          </h2>
+          <p>
+            Three transports, one operation. Each of the following creates the same contact.
+          </p>
+          <p>
+            <strong>MCP</strong> — ask the agent in natural language; the host invokes the tool:
+          </p>
+          <pre className="dc__code">{`tool: contact.upsert
+args: {
+  "identity": { "kind": "email", "value": "ada@lovelace.dev" },
+  "first_name": "Ada",
+  "last_name": "Lovelace"
+}`}</pre>
+          <p>
+            <strong>CLI</strong>:
+          </p>
+          <pre className="dc__code">{`krabs contact upsert \\
+  --email ada@lovelace.dev \\
+  --first-name Ada \\
+  --last-name Lovelace`}</pre>
+          <p>
+            <strong>HTTP</strong>:
+          </p>
+          <pre className="dc__code">{`curl https://${BRAND.api}/v1/contact.upsert \\
+  -H "Authorization: Bearer $KRABS_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "identity": { "kind": "email", "value": "ada@lovelace.dev" },
+    "first_name": "Ada",
+    "last_name": "Lovelace"
+  }'`}</pre>
+          <p>
+            All three return the same JSON: a <code>contact</code> object with a stable id.
+          </p>
+
+          <h2 className="dc__h2" id="next-steps">
+            Next steps
+          </h2>
+          <ul>
+            <li>
+              <Link href="/docs/auth">Auth & tokens →</Link> scopes, rotation, and how revocation
+              behaves under load.
+            </li>
+            <li>
+              <Link href="/docs/contract">The contract →</Link> the five properties every
+              operation honors.
+            </li>
+            <li>
+              <Link href="/docs/runs">Runs & SSE →</Link> group calls into a session and stream
+              them live.
+            </li>
+          </ul>
+
+          <div className="dc__edit">
+            <a
+              href="https://github.com/augusto-devingcc/krabs/edit/main/app/docs/quickstart/page.tsx"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Edit this page on GitHub →
+            </a>
+            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-16 · v0.4.3</span>
+          </div>
+        </article>
+      </main>
+      <DocsToc items={TOC} />
+    </>
+  );
+}

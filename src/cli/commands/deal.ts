@@ -157,7 +157,7 @@ export function dealCommand(): Command {
         reqOpts,
       );
       emit(r, pickFormat(opts.format), () =>
-        `${r.dryRun ? "(would delete)" : "(deleted)"} ${r.deletedId}${r.agentActionId ? `\n  undo: socrm action undo ${r.agentActionId}` : ""}`,
+        `${r.dryRun ? "(would delete)" : "(deleted)"} ${r.deletedId}${r.agentActionId ? `\n  undo: krabs action undo ${r.agentActionId}` : ""}`,
       );
     });
 

@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.github
+data
+dist
+*.log
+.env
+.env.local
+.env.production.local
+cli/dist
+cli/node_modules
+public/_next

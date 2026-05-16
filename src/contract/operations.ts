@@ -549,7 +549,7 @@ export function describeContract() {
   return {
     schemaVersion: "1",
     contract: {
-      authentication: "Bearer API key (Authorization: Bearer crm_live_...)",
+      authentication: "Bearer API key (Authorization: Bearer krabs_sk_...)",
       envelope: { successKey: "data", errorKey: "error" },
       idempotencyHeader: "Idempotency-Key",
       intentHeader: "X-Agent-Intent",

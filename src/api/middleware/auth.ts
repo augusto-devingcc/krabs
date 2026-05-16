@@ -23,7 +23,7 @@ export const apiKeyAuth = createMiddleware(async (c, next) => {
     throw new ApiError({
       code: "UNAUTHENTICATED",
       message: "Missing Authorization header",
-      hint: "Send 'Authorization: Bearer crm_live_…'",
+      hint: "Send 'Authorization: Bearer krabs_sk_…'",
     });
   }
 

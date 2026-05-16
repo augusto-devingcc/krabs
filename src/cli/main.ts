@@ -19,8 +19,8 @@ import { codeToExit, ExitCode } from "./exit-codes.js";
 const program = new Command();
 
 program
-  .name("socrm")
-  .description("Solo Agentic CRM — CLI for solopreneurs and their agents")
+  .name("krabs")
+  .description("krabs.dev — CRM for AI agents")
   .version("0.0.1")
   .enablePositionalOptions();
 

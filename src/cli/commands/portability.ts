@@ -61,7 +61,7 @@ export function portabilityCommands(): {
         const lines = [
           `${tag} ${r.totalRows} rows: ${r.created} created, ${r.linked} linked, ${r.skipped} skipped, ${r.errors} errors`,
         ];
-        if (r.agentActionId) lines.push(`  undo: socrm action undo ${r.agentActionId}`);
+        if (r.agentActionId) lines.push(`  undo: krabs action undo ${r.agentActionId}`);
         return lines.join("\n");
       });
     });
@@ -107,7 +107,7 @@ export function portabilityCommands(): {
         return [
           `${tag} ${r.contact.id} (${r.contact.name})`,
           `  added identities: ${r.addedIdentityIds.length}`,
-          r.agentActionId ? `  undo: socrm action undo ${r.agentActionId}` : "",
+          r.agentActionId ? `  undo: krabs action undo ${r.agentActionId}` : "",
         ]
           .filter(Boolean)
           .join("\n");

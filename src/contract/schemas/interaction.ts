@@ -45,7 +45,7 @@ export const interactionListFiltersSchema = z.object({
 export type InteractionListFilters = z.infer<typeof interactionListFiltersSchema>;
 
 // Email ingest — pre-parsed JSON shape. The caller (agent or upstream
-// pipeline) extracts these fields from a raw .eml; socrm stays focused on
+// pipeline) extracts these fields from a raw .eml; krabs stays focused on
 // data, not on MIME parsing.
 export const emailIngestInputSchema = z.object({
   from: z.object({

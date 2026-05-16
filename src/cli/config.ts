@@ -7,17 +7,17 @@ export type CliConfig = {
   token: string;
 };
 
-const DEFAULT_API_URL = "http://localhost:3000";
+const DEFAULT_API_URL = "https://api.krabs.dev";
 
 function configPath(): string {
   const xdg = process.env.XDG_CONFIG_HOME;
   const base = xdg ?? join(homedir(), ".config");
-  return join(base, "socrm", "config.json");
+  return join(base, "krabs", "config.json");
 }
 
 export function readConfig(): Partial<CliConfig> {
-  const envUrl = process.env.SOCRM_API_URL;
-  const envToken = process.env.SOCRM_API_KEY;
+  const envUrl = process.env.KRABS_API_URL;
+  const envToken = process.env.KRABS_API_KEY;
 
   if (envToken) {
     return { apiUrl: envUrl ?? DEFAULT_API_URL, token: envToken };
@@ -51,11 +51,29 @@ export function writeConfig(cfg: CliConfig): string {
   return path;
 }
 
+export function clearConfig(): string {
+  const path = configPath();
+  const existing = readConfig();
+  const apiUrl = existing.apiUrl ?? DEFAULT_API_URL;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify({ apiUrl }, null, 2), "utf8");
+  try {
+    chmodSync(path, 0o600);
+  } catch {
+    /* best effort */
+  }
+  return path;
+}
+
+export function configFilePath(): string {
+  return configPath();
+}
+
 export function requireConfig(): CliConfig {
   const cfg = readConfig();
   if (!cfg.token) {
     throw new CliConfigError(
-      "Not authenticated. Run 'socrm auth login --token <crm_live_...>' or set SOCRM_API_KEY.",
+      "Not authenticated. Run `krabs auth login` or set KRABS_API_KEY.",
     );
   }
   return { apiUrl: cfg.apiUrl ?? DEFAULT_API_URL, token: cfg.token };

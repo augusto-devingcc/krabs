@@ -5,14 +5,13 @@ export function sha256Hex(input: string): string {
 }
 
 /**
- * Generate a new API key plaintext: `crm_live_` + 40 url-safe chars (~240 bits).
+ * Generate a new API key plaintext: `krabs_sk_` + 40 url-safe chars (~240 bits).
  */
 export function generateApiKeyPlaintext(): string {
   const random = randomBytes(30).toString("base64url");
-  return `crm_live_${random}`;
+  return `krabs_sk_${random}`;
 }
 
 export function apiKeyPreview(plaintext: string): string {
-  // "crm_live_abc123…" — first 12 chars after prefix
   return `${plaintext.slice(0, 16)}…`;
 }

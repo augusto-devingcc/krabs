@@ -7,6 +7,6 @@ export async function requestUpgradeAction(
   void plan;
   return {
     ok: false,
-    message: "Polar checkout coming soon — email support@socrm.dev to upgrade today.",
+    message: "Polar checkout coming soon — email support@krabs.dev to upgrade today.",
   };
 }

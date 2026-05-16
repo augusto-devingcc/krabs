@@ -7,9 +7,10 @@ import { BRAND } from "@/lib/brand.js";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: BRAND.name, template: `%s — ${BRAND.name}` },
+  title: { default: BRAND.productName, template: `%s — ${BRAND.productName}` },
   description: BRAND.description,
   metadataBase: new URL(`https://${BRAND.domain}`),
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -17,19 +18,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider
       appearance={{
         variables: {
-          colorPrimary: "#fafafa",
-          colorBackground: "#0a0a0a",
-          colorText: "#fafafa",
-          colorTextSecondary: "#a3a3a3",
-          colorInputBackground: "#111111",
-          colorInputText: "#fafafa",
-          colorNeutral: "#a3a3a3",
-          borderRadius: "5px",
+          colorPrimary: "#ff5c2b",
+          colorBackground: "#ffffff",
+          colorText: "#0a0a0b",
+          colorTextSecondary: "#71717a",
+          colorInputBackground: "#ffffff",
+          colorInputText: "#0a0a0b",
+          colorNeutral: "#71717a",
+          borderRadius: "6px",
           fontFamily: "var(--font-geist-sans)",
         },
         elements: {
           card: "bg-card border border-border",
-          formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90",
+          formButtonPrimary:
+            "bg-primary text-primary-foreground hover:bg-coral-600 active:bg-coral-700",
         },
       }}
     >

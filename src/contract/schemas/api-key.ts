@@ -11,5 +11,5 @@ export const apiKeySchema = z.object({
 
 export type ApiKey = z.infer<typeof apiKeySchema>;
 
-export const apiKeyPlaintextPrefix = "crm_live_" as const;
-export const apiKeyPlaintextRegex = /^crm_live_[A-Za-z0-9_-]{32,}$/;
+export const apiKeyPlaintextPrefix = "krabs_sk_" as const;
+export const apiKeyPlaintextRegex = /^krabs_sk_[A-Za-z0-9_-]{32,}$/;

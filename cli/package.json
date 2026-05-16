@@ -1,0 +1,32 @@
+{
+  "name": "krabs-cli",
+  "version": "0.1.0",
+  "description": "Command-line interface for krabs.dev — a CRM for AI agents.",
+  "type": "module",
+  "bin": { "krabs": "./dist/index.js" },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["krabs", "crm", "agent", "mcp", "cli"],
+  "license": "MIT",
+  "homepage": "https://krabs.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/augusto-devingcc/krabs.git",
+    "directory": "cli"
+  },
+  "engines": { "node": ">=18.0.0" },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

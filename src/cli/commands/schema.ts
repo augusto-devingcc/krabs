@@ -3,7 +3,7 @@ import { readConfig } from "../config.js";
 import { apiRequest } from "../client.js";
 import { emit, pickFormat, pad, type OutputFormat } from "../output.js";
 
-const DEFAULT_API_URL = "http://localhost:3000";
+const DEFAULT_API_URL = "https://api.krabs.dev";
 
 type OpDescriptor = {
   operation: string;

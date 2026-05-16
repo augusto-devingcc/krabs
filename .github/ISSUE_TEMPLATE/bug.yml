@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in krabs is broken or behaving unexpectedly.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: textarea
+    id: what-broke
+    attributes:
+      label: What broke
+      description: A clear, concise description of the problem.
+      placeholder: When I run `krabs contacts create`, the CLI exits with code 1.
+    validations:
+      required: true
+
+  - type: input
+    id: what-ran
+    attributes:
+      label: What you ran
+      description: The exact CLI command, HTTP request, or MCP tool name that triggered the problem.
+      placeholder: krabs contacts create --name "Acme"
+
+  - type: textarea
+    id: what-got
+    attributes:
+      label: What you got
+      description: The actual output, error message, or behavior.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What you expected
+      description: What you thought should happen instead.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: krabs version
+      description: Output of `krabs --version`.
+      placeholder: 0.4.3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: How are you running krabs?
+      options:
+        - hosted
+        - self-hosted
+        - local dev
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Any relevant log output, stack traces, or request IDs. Redact secrets.
+      render: shell

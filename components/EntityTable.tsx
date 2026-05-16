@@ -1,6 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-// Default icon fallbacks used when no icon prop is passed.
-import { Inbox, Sparkles } from "lucide-react";
 import {
   Table as ShadTable,
   TableHeader as ShadTableHeader,
@@ -19,41 +17,33 @@ export function EntityHeader({
   description,
   count,
   actions,
-  icon: Icon,
+  eyebrow,
 }: {
   title: string;
   description: string;
   count: number;
   actions?: React.ReactNode;
+  eyebrow?: string;
+  // icon kept in signature for callers that still pass it; unused.
   icon?: LucideIcon;
 }) {
-  const ResolvedIcon: LucideIcon = Icon ?? Sparkles;
+  const resolvedEyebrow = (eyebrow ?? `crm · ${title}`).toLowerCase();
   return (
-    <div className="mb-8">
-      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
-        # {title}
-      </p>
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <div className="flex items-center gap-3">
-          <ResolvedIcon
-            size={24}
-            className="text-muted-foreground"
-            aria-hidden
-          />
-          <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
+    <div className="mb-8 flex items-start justify-between gap-6">
+      <div className="min-w-0">
+        <p className="k-eyebrow mb-2">{resolvedEyebrow}</p>
+        <h1 className="k-h2 mb-2 capitalize">{title}</h1>
+        <p className="k-body-sm text-muted-foreground max-w-2xl">
+          {description}
+        </p>
+        <div className="mt-3 flex items-center gap-2 font-mono text-xs text-muted-foreground">
+          <span>{count}</span>
+          <span>{count === 1 ? "record" : "records"}</span>
         </div>
-        {actions && (
-          <div className="flex items-center gap-2 shrink-0">{actions}</div>
-        )}
       </div>
-      <div className="mb-3">
-        <Badge variant="secondary">
-          {count} {count === 1 ? "record" : "records"}
-        </Badge>
-      </div>
-      <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-        {description}
-      </p>
+      {actions && (
+        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+      )}
     </div>
   );
 }
@@ -61,35 +51,30 @@ export function EntityHeader({
 export function EntityEmpty({
   prompt,
   description,
-  icon: Icon,
+  // icon kept in signature for back-compat; not rendered.
+  icon: _Icon,
 }: {
   prompt: string;
   description?: string;
   icon?: LucideIcon;
 }) {
-  const ResolvedIcon: LucideIcon = Icon ?? Inbox;
   return (
-    <Card>
-      <CardContent className="py-12 text-center flex flex-col items-center">
-        <ResolvedIcon
-          size={48}
-          className="text-muted-foreground mb-4"
-          aria-hidden
-        />
-        <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground mb-4">
-          empty
-        </p>
+    <Card
+      className="border-border"
+      style={{ boxShadow: "var(--shadow-1)" }}
+    >
+      <CardContent className="py-10">
+        <p className="k-eyebrow mb-3">empty</p>
         {description && (
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
+          <p className="k-body-sm text-muted-foreground max-w-xl mb-5">
             {description}
           </p>
         )}
-        <div className="inline-block bg-muted border-border border rounded-md px-4 py-3 text-left max-w-xl">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            try asking your agent
-          </p>
-          <code className="font-mono text-sm text-foreground">
-            <span className="text-muted-foreground">›</span> {prompt}
+        <div className="inline-block max-w-full">
+          <p className="k-eyebrow mb-1.5">try asking your agent</p>
+          <code className="font-mono text-sm text-foreground inline-block border border-border rounded-md bg-muted px-3 py-2">
+            <span className="text-muted-foreground select-none">$ </span>
+            {prompt}
           </code>
         </div>
       </CardContent>
@@ -109,7 +94,7 @@ export const TableCaption = ShadTableCaption;
 // Legacy helpers — kept as thin wrappers so existing callers keep working.
 export function Th({ children }: { children?: React.ReactNode }) {
   return (
-    <ShadTableHead className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+    <ShadTableHead className="k-eyebrow font-medium">
       {children}
     </ShadTableHead>
   );
@@ -142,11 +127,6 @@ export function Td({
   );
 }
 
-/**
- * Tr — table row. If `href` is provided, renders as a clickable row.
- * The href is currently informational; callers should also wrap individual
- * cell contents in a <Link> for actual navigation.
- */
 export function Tr({
   children,
   href,
@@ -160,11 +140,6 @@ export function Tr({
   return <ShadTableRow>{children}</ShadTableRow>;
 }
 
-/**
- * RowLink — a clickable-styled table row. Renders a TableRow with
- * cursor-pointer and a muted hover state. Pair with a <Link> in the first
- * cell to make the row actually navigate.
- */
 export function RowLink({
   href: _href,
   children,
@@ -181,28 +156,78 @@ export function RowLink({
 }
 
 /**
- * StatusPill — thin wrapper over shadcn Badge with `variant` instead of the
- * legacy `tone` prop. Callers can still pass `tone` and it is mapped.
+ * StatusPill — uses Badge with tone-mapped classes. Coral is reserved for the
+ * single "primary/active" status; everything else is neutral. Callers can
+ * pass an explicit tone via `pillTone`, otherwise we infer from the status.
  */
 export function StatusPill({
   status,
   variant,
   tone,
+  pillTone,
 }: {
   status: string;
   variant?: "default" | "secondary" | "outline";
   tone?: "muted" | "strong" | "default";
+  pillTone?: "neutral" | "accent" | "success" | "warning" | "danger";
 }) {
-  const resolved: "default" | "secondary" | "outline" =
-    variant ??
-    (tone === "muted"
-      ? "outline"
-      : tone === "strong"
-      ? "default"
-      : "secondary");
+  const inferred = pillTone ?? inferTone(status);
+  const klass = TONE_CLASSES[inferred];
+  // Map legacy variant/tone to a visual fallback if pillTone wasn't passed.
+  if (!pillTone && (variant === "default" || tone === "strong")) {
+    // Strong/default callers used to render the active item — escalate to accent.
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          "font-mono text-[11px] uppercase tracking-wide border-transparent",
+          TONE_CLASSES.accent,
+        )}
+      >
+        {status}
+      </Badge>
+    );
+  }
   return (
-    <Badge variant={resolved} className="font-mono text-[11px]">
+    <Badge
+      variant="outline"
+      className={cn(
+        "font-mono text-[11px] uppercase tracking-wide border-transparent",
+        klass,
+      )}
+    >
       {status}
     </Badge>
   );
+}
+
+const TONE_CLASSES: Record<
+  "neutral" | "accent" | "success" | "warning" | "danger",
+  string
+> = {
+  neutral: "bg-muted text-muted-foreground",
+  accent: "bg-coral-50 text-coral-700 dark:bg-coral-900/30 dark:text-coral-300",
+  success: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  warning: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  danger: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+};
+
+function inferTone(
+  status: string,
+): "neutral" | "accent" | "success" | "warning" | "danger" {
+  const s = status.toLowerCase();
+  if (
+    s === "open" ||
+    s === "in_progress" ||
+    s === "lead" ||
+    s === "new" ||
+    s === "active"
+  )
+    return "accent";
+  if (s === "done" || s === "closed" || s === "customer" || s === "won")
+    return "success";
+  if (s === "high" || s === "negotiation" || s === "proposal") return "warning";
+  if (s === "cancelled" || s === "lost" || s === "archived" || s === "revoked")
+    return "danger";
+  return "neutral";
 }

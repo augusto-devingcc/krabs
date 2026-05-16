@@ -11,11 +11,9 @@ export default async function DashboardLayout({
   // failure — child pages can assume an authenticated context exists.
   await getDashboardContext();
   return (
-    // `app-shell` scopes the shadcn/neutral OKLCH tokens to the dashboard
-    // tree (see app/globals.css).  `dark` enables `dark:` Tailwind variants
-    // used by shadcn primitives.  Switching to light mode is a one-class
-    // change here (e.g. `app-shell light`) once we wire a theme toggle.
-    <div className="app-shell dark min-h-screen flex">
+    // Light mode is default (Krabs design system). Dark mode opt-in via
+    // theme toggle (TODO). Sidebar lives on bg-subtle, content on bg.
+    <div className="min-h-screen flex bg-background text-foreground">
       <Sidebar />
       <main className="flex-1 overflow-x-auto">{children}</main>
     </div>

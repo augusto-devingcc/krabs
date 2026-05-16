@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a new capability or improvement.
+title: "feature: "
+labels: ["feature", "needs-triage"]
+body:
+  - type: textarea
+    id: what-you-want
+    attributes:
+      label: What you want
+      description: One paragraph describing the capability.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What does this unblock? Who benefits?
+    validations:
+      required: true
+
+  - type: textarea
+    id: how-youd-use-it
+    attributes:
+      label: How you'd use it
+      description: A concrete example — a command, code snippet, or agent prompt.
+      render: shell
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Existing workaround
+      description: How are you solving this today, if at all?

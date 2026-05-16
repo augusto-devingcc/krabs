@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, Search, Filter, ArrowRight, Mail, Phone } from "lucide-react";
+import { Search, Filter, ArrowRight } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listContacts } from "../../../../src/domain/contact.js";
 import {
@@ -13,6 +13,7 @@ import {
   TableCell,
   StatusPill,
 } from "@/components/EntityTable";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,7 +70,6 @@ export default async function ContactsPage({
   return (
     <div className="p-8 max-w-6xl">
       <EntityHeader
-        icon={Users}
         title="contacts"
         description="People you and your agents talk to. Multi-channel identity supported — same person on email + WhatsApp + Telegram is one contact."
         count={items.length}
@@ -115,44 +115,42 @@ export default async function ContactsPage({
           </SelectContent>
         </Select>
         <Button type="submit" variant="outline">
-          Filter <Filter size={16} aria-hidden />
+          <Filter size={16} aria-hidden />
+          Filter
         </Button>
       </form>
 
       {items.length === 0 ? (
         <EntityEmpty
-          icon={Users}
           description="No contacts match these filters. Add your first one with a single message."
           prompt='Add Maria López (maria@example.com) to my CRM and tag her as warm-lead.'
         />
       ) : (
-        <div className="bg-card border border-border rounded-md overflow-hidden">
+        <Card
+          className="overflow-hidden p-0 gap-0 border-border rounded-xl"
+          style={{ boxShadow: "var(--shadow-1)" }}
+        >
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>id</TableHead>
-                <TableHead>name</TableHead>
-                <TableHead>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Mail size={14} aria-hidden /> email
-                  </span>
-                </TableHead>
-                <TableHead>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Phone size={14} aria-hidden /> phone
-                  </span>
-                </TableHead>
-                <TableHead>status</TableHead>
-                <TableHead>updated</TableHead>
+                <TableHead className="k-eyebrow font-medium">id</TableHead>
+                <TableHead className="k-eyebrow font-medium">name</TableHead>
+                <TableHead className="k-eyebrow font-medium">email</TableHead>
+                <TableHead className="k-eyebrow font-medium">phone</TableHead>
+                <TableHead className="k-eyebrow font-medium">status</TableHead>
+                <TableHead className="k-eyebrow font-medium">updated</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((c) => (
-                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50">
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {c.id.slice(0, 12)}…
                   </TableCell>
-                  <TableCell>{c.name}</TableCell>
+                  <TableCell className="text-sm">{c.name}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {c.primaryEmail ?? "—"}
                   </TableCell>
@@ -162,14 +160,14 @@ export default async function ContactsPage({
                   <TableCell>
                     <StatusPill status={c.status} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
+                  <TableCell className="font-mono text-xs text-muted-foreground">
                     {rel(c.updatedAt)}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
+        </Card>
       )}
 
       {nextHref && (

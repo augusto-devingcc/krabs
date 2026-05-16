@@ -160,7 +160,7 @@ export function interactionCommand(): Command {
             `${tag} ${result.deletedId}`,
             `  kind:    ${result.snapshot.kind}`,
             `  subject: ${result.snapshot.subject ?? "-"}`,
-            result.agentActionId ? `  undo:    socrm action undo ${result.agentActionId}` : "",
+            result.agentActionId ? `  undo:    krabs action undo ${result.agentActionId}` : "",
           ]
             .filter(Boolean)
             .join("\n");

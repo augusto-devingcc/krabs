@@ -16,7 +16,7 @@ export default async function BillingPage() {
       <h1 className="text-3xl font-medium mb-2">Pick your plan</h1>
       <p className="text-muted-foreground mb-8 max-w-2xl">
         You&apos;re currently on the <strong className="text-foreground">Free</strong>{" "}
-        plan. Pay only when you actually use socrm in production.
+        plan. Pay only when you actually use krabs in production.
       </p>
 
       <PricingGrid

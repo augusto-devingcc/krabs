@@ -1,8 +1,32 @@
 {
-  "name": "socrm",
-  "version": "0.0.1",
+  "name": "krabs",
+  "version": "0.4.3",
   "private": true,
-  "description": "Solo Agentic CRM — multi-tenant CRM for solopreneurs and their agents",
+  "description": "krabs.dev — a CRM designed to be operated by AI agents. Reachable over MCP, CLI, or HTTP. Every mutation is idempotent, dry-runnable, and reversible.",
+  "license": "MIT",
+  "homepage": "https://krabs.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/augusto-devingcc/krabs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/augusto-devingcc/krabs/issues"
+  },
+  "keywords": [
+    "crm",
+    "agent",
+    "ai-agent",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "openclaw",
+    "self-hosted",
+    "next.js",
+    "hono",
+    "drizzle",
+    "turso"
+  ],
+  "author": "Augusto García <augusto@realtialabs.com>",
   "packageManager": "pnpm@11.1.2",
   "engines": {
     "node": ">=22"
@@ -20,16 +44,18 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/scripts/seed.ts",
+    "setup": "tsx src/scripts/setup.ts",
     "db:studio": "drizzle-kit studio"
   },
   "bin": {
-    "socrm": "./dist/cli/main.js",
-    "socrm-mcp": "./dist/mcp/server.js"
+    "krabs": "./cli/dist/index.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@clerk/nextjs": "^7.3.4",
     "@hono/node-server": "^1.13.7",
+    "@hugeicons/core-free-icons": "^4.1.4",
+    "@hugeicons/react": "^1.1.6",
     "@libsql/client": "^0.14.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@tailwindcss/postcss": "^4.3.0",

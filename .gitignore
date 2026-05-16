@@ -15,3 +15,8 @@ coverage/
 .vitest-cache/
 .tsdown-cache/
 .env*.local
+cli/dist/
+cli/node_modules/
+
+# clerk configuration (can include secrets)
+/.clerk/
