@@ -658,6 +658,95 @@ html, body {
 }
 
 /* ─────────────────────────────────────────────────────────────────
+ * Marketing surface — responsive overrides
+ * Cascade: 768px (tablet / phone landscape), 480px (phone portrait).
+ * Grouped by component, not by breakpoint.
+ * ───────────────────────────────────────────────────────────────── */
+
+/* Prevent iOS Safari from auto-zooming text on orientation change. */
+html, body { -webkit-text-size-adjust: 100%; }
+
+/* ── Nav (mobile) ── */
+@media (max-width: 768px) {
+  .mk-nav__inner { padding: 12px 20px; gap: 16px; }
+  .mk-nav__links { display: none; }
+}
+@media (max-width: 480px) {
+  /* Hide sign-in + theme toggle on phone portrait — Clerk's modal lets users
+     switch to sign-in from the Get-started CTA, and the toggle is non-essential. */
+  .mk-nav__signin { display: none; }
+  .mk-nav__theme { display: none; }
+  .mk-nav__right { gap: 8px; }
+  .mk-nav__inner .mk-btn--sm { font-size: 12px; padding: 0 10px; }
+}
+
+/* ── Hero (mobile) ── */
+@media (max-width: 768px) {
+  .mk-hero { padding: 48px 20px 64px; }
+  .mk-hero__h1 { font-size: 48px; line-height: 1.06; word-wrap: break-word; }
+  .mk-hero__sub { font-size: 16px; }
+  .mk-hero__ctas { flex-direction: row; flex-wrap: wrap; }
+  .mk-hero__terminal { margin-top: 24px; }
+  .mk-term__body { overflow-x: auto; font-size: 12px; padding: 14px 16px; }
+}
+@media (max-width: 480px) {
+  .mk-hero__eyebrow { padding: 4px 10px 4px 8px; font-size: 11px; }
+  .mk-hero__h1 { font-size: 36px; }
+  .mk-hero__sub { font-size: 15px; }
+  .mk-hero__ctas { justify-content: center; }
+  .mk-hero__ctas a { flex: 1 1 100%; justify-content: center; }
+  .mk-term__body { font-size: 11px; }
+}
+
+/* ── Code Showcase (mobile) ── */
+@media (max-width: 768px) {
+  .mk-cs { padding: 48px 20px; }
+  .mk-cs__inner { gap: 28px; }
+  .mk-cs__lead { position: static; }
+}
+@media (max-width: 480px) {
+  .mk-cs__tab { font-size: 12px; padding: 8px 10px; }
+  .mk-cs__code { font-size: 12px; padding: 12px 14px; min-height: 200px; }
+}
+
+/* ── Feature Grid (mobile) ── */
+@media (max-width: 768px) {
+  .mk-fg { padding: 64px 20px; }
+  .mk-fg__lead { margin-bottom: 28px; }
+  .mk-fg__cell { padding: 22px 20px; }
+}
+@media (max-width: 480px) {
+  .mk-fg__cell-title { font-size: 15px; }
+}
+
+/* ── Closing CTA (mobile) ── */
+@media (max-width: 768px) {
+  .mk-cta { padding: 48px 20px; }
+  .mk-cta__inner { padding: 28px 24px; }
+  .mk-cta__h { font-size: 26px; }
+  .mk-cta__install { font-size: 12px; padding: 12px 14px; overflow-x: auto; }
+}
+@media (max-width: 480px) {
+  .mk-cta__h { font-size: 22px; }
+  .mk-cta__install { flex-direction: column; align-items: flex-start; gap: 8px; overflow-x: visible; }
+  .mk-cta__install .copy { margin-left: 0; width: 100%; text-align: center; }
+}
+
+/* ── Footer (mobile) ── */
+@media (max-width: 768px) {
+  .mk-ft__inner { padding: 40px 20px 24px; gap: 32px; }
+  .mk-ft__legal {
+    padding: 16px 20px; flex-direction: column;
+    gap: 8px; align-items: flex-start;
+  }
+}
+@media (max-width: 480px) {
+  /* Keep 2 cols at phone size — 16 stacked links in 1 column reads worse than 2x8. */
+  .mk-ft__cols { grid-template-columns: 1fr 1fr; }
+  .mk-ft__col-head { font-size: 10px; }
+}
+
+/* ─────────────────────────────────────────────────────────────────
  * Docs surface — Krabs UI Kit (`dn-`, `ds-`, `dc-`, `dt-` classes)
  * Lifted verbatim from designer's ui_kits/docs/index.html.
  * Used by app/docs/* pages. Scoped to docs intentionally.

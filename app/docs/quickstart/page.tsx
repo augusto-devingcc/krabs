@@ -27,24 +27,23 @@ export default function QuickstartPage() {
             Install
           </h2>
           <p>
-            The <code>{BRAND.name}</code> CLI ships through Homebrew and npm. Pick whichever you
-            already use — both install the same binary.
+            v0.4 ships from source. Homebrew + npm distribution arrive in v0.5 — until then, clone
+            and build:
           </p>
-          <pre className="dc__code">{`# Homebrew (recommended on macOS / linux)
-brew install augusto-devingcc/krabs/krabs
-
-# npm (cross-platform)
-npm install -g krabs-cli`}</pre>
+          <pre className="dc__code">{`git clone https://github.com/augusto-devingcc/krabs.git
+cd krabs
+pnpm install
+pnpm setup`}</pre>
           <p>
-            The Homebrew command auto-registers the <code>augusto-devingcc/krabs</code> tap — no separate{" "}
-            <code>brew tap</code> step is needed. Then log in:
+            <code>pnpm setup</code> mints an API key against a local SQLite DB and saves it to{" "}
+            <code>~/.config/krabs/config.json</code>. Your CLI is now authenticated for the
+            localhost API. For the hosted version (<code>{BRAND.app}</code>), run{" "}
+            <code>./cli/dist/index.js auth login --api-url https://{BRAND.api}</code> after building
+            the CLI — that triggers the device flow.
           </p>
-          <pre className="dc__code">{`krabs auth login`}</pre>
           <p>
-            <code>krabs auth login</code> opens a browser at <code>{BRAND.app}</code>, completes
-            OAuth, and writes a token to <code>~/.config/krabs/config.json</code>. See the{" "}
-            <Link href="/docs/install">install guide</Link> for pnpm dlx, uninstall, and
-            troubleshooting.
+            See the <Link href="/docs/install">install guide</Link> for symlinking the CLI to your{" "}
+            <code>PATH</code>, uninstall, and the v0.5 distribution roadmap.
           </p>
 
           <Callout tone="info" title="free tier">

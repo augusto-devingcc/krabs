@@ -237,7 +237,7 @@ function FeatureGrid() {
 
 function ClosingCTA() {
   const [copied, setCopied] = useState(false);
-  const command = "brew install augusto-devingcc/krabs/krabs && krabs auth login";
+  const command = "git clone github.com/augusto-devingcc/krabs && cd krabs && pnpm setup";
 
   useEffect(() => {
     if (!copied) return;
@@ -258,10 +258,10 @@ function ClosingCTA() {
     <section className="mk-cta" id="pricing">
       <div className="mk-cta__inner">
         <div className="mk-eyebrow">install</div>
-        <h2 className="mk-cta__h">Start in 30 seconds.</h2>
+        <h2 className="mk-cta__h">Start in 5 minutes.</h2>
         <p className="mk-cta__p">
-          No demo call. No 14-day trial. 500 ops free every month. Pay only when
-          your agents are running real work.
+          No demo call. No 14-day trial. Clone the repo, run setup, you have an
+          API + CLI on localhost. Hosted free tier with 500 ops/month at sign-up.
         </p>
         <div className="mk-cta__install">
           <span className="pmt">$</span>

@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { DocsToc } from "@/components/docs/DocsToc";
 import { Callout } from "@/components/docs/Callout";
-import { BRAND } from "@/lib/brand.js";
 
 const TOC = [
-  { id: "homebrew", label: "Homebrew" },
-  { id: "npm", label: "npm" },
-  { id: "pnpm-dlx", label: "pnpm dlx" },
+  { id: "from-source", label: "From source (v0.4)" },
+  { id: "what-you-get", label: "What you get" },
+  { id: "coming-soon", label: "Coming in v0.5" },
   { id: "uninstall", label: "Uninstall" },
   { id: "next-steps", label: "Next steps" },
 ];
@@ -19,87 +18,98 @@ export default function InstallPage() {
           <div className="dc__breadcrumb">docs / install</div>
           <h1 className="dc__h1">Install</h1>
           <p className="dc__lede">
-            The <code>{BRAND.name}</code> CLI is a single binary distributed through Homebrew and
-            npm. Pick whichever you already use.
+            krabs is in <code>v0.4</code>. For now, install from source — clone the repo and run
+            the setup script. Homebrew + npm distribution ship in <code>v0.5</code>.
           </p>
 
-          <h2 className="dc__h2" id="homebrew">
-            Homebrew
+          <h2 className="dc__h2" id="from-source">
+            From source (v0.4)
           </h2>
+          <p>Three commands and you have an API + CLI on localhost:</p>
+          <pre className="dc__code">{`git clone https://github.com/augusto-devingcc/krabs.git
+cd krabs
+pnpm install
+pnpm setup`}</pre>
           <p>
-            Recommended on macOS and Linux. The command below auto-registers the{" "}
-            <code>augusto-devingcc/krabs</code> tap — there is no separate <code>brew tap</code> step.
+            <code>pnpm setup</code> creates a local SQLite database, mints an API key for you, and
+            writes it to <code>~/.config/krabs/config.json</code>. The CLI is now authenticated
+            against your localhost instance.
           </p>
-          <pre className="dc__code">{`brew install augusto-devingcc/krabs/krabs`}</pre>
           <p>
-            Verify the install resolved correctly:
+            Start the API server in another terminal:
           </p>
-          <pre className="dc__code">{`krabs --version`}</pre>
+          <pre className="dc__code">{`pnpm dev:api`}</pre>
           <p>
-            Updates ride along with <code>brew upgrade</code>. The formula pins to a specific npm
-            tarball, so a release is a no-op until the tap repo merges a new version.
+            Verify everything by listing the contract:
           </p>
+          <pre className="dc__code">{`./cli/dist/index.js schema describe
+# or after pnpm build:cli, just: krabs schema describe`}</pre>
 
-          <Callout tone="info" title="tap source">
-            The formula lives at{" "}
-            <a href="https://github.com/augusto-devingcc/homebrew-krabs" target="_blank" rel="noopener noreferrer">
-              augusto-devingcc/homebrew-krabs
-            </a>
-            . The first <code>brew install</code> clones it into your Homebrew taps directory; later
-            installs reuse the cached tap.
+          <Callout tone="info" title="why source-only at v0.4">
+            We ship the CLI as a published npm package + Homebrew tap in <code>v0.5</code>.
+            Until then, source install keeps the release surface small while we stabilize the
+            contract. The flow above is what the published binary will run anyway.
           </Callout>
 
-          <h2 className="dc__h2" id="npm">
-            npm
+          <h2 className="dc__h2" id="what-you-get">
+            What you get
           </h2>
+          <ul>
+            <li>
+              <code>./cli/dist/index.js</code> — the krabs CLI, a single ESM file (~66 KB)
+            </li>
+            <li>
+              <code>~/.config/krabs/config.json</code> — your API URL + bearer token
+            </li>
+            <li>
+              <code>./data/krabs.db</code> — local SQLite, your entire krabs state
+            </li>
+            <li>
+              An accounts row + an api_keys row, both visible if you query the DB directly
+            </li>
+          </ul>
           <p>
-            Cross-platform. Recommended if you do not use Homebrew, or you want the CLI in the same
-            Node toolchain as the rest of your project.
+            To put the CLI on your <code>PATH</code> as <code>krabs</code>, symlink it:
           </p>
-          <pre className="dc__code">{`npm install -g krabs-cli`}</pre>
-          <p>
-            Verify the binary is on your <code>PATH</code>:
-          </p>
-          <pre className="dc__code">{`which krabs`}</pre>
-          <p>
-            If <code>which</code> returns nothing, your npm global <code>bin</code> directory is not
-            on <code>PATH</code>. Run <code>npm config get prefix</code> and add{" "}
-            <code>$(npm config get prefix)/bin</code> to your shell rc file.
-          </p>
+          <pre className="dc__code">{`ln -s "$PWD/cli/dist/index.js" /usr/local/bin/krabs
+krabs --version`}</pre>
 
-          <h2 className="dc__h2" id="pnpm-dlx">
-            pnpm dlx
+          <h2 className="dc__h2" id="coming-soon">
+            Coming in v0.5
           </h2>
+          <p>The distribution paths that will work once the CLI is published:</p>
+          <pre className="dc__code">{`# Homebrew
+brew install augusto-devingcc/krabs/krabs
+
+# npm
+npm install -g krabs-cli
+
+# Run without installing
+pnpm dlx krabs-cli auth login`}</pre>
           <p>
-            For one-off use, run the CLI without installing it globally. <code>pnpm dlx</code>{" "}
-            fetches the package into a temporary cache, executes it, and discards it.
-          </p>
-          <pre className="dc__code">{`pnpm dlx krabs-cli auth login`}</pre>
-          <p>
-            Useful in CI runners or one-shot scripts where leaving a global binary behind is
-            undesirable. The equivalent on npm is <code>npx krabs-cli ...</code>.
+            Track the v0.5 milestone on the{" "}
+            <a
+              href="https://github.com/augusto-devingcc/krabs/milestones"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub milestones page
+            </a>
+            .
           </p>
 
           <h2 className="dc__h2" id="uninstall">
             Uninstall
           </h2>
+          <p>Delete the repo and wipe the local config + data:</p>
+          <pre className="dc__code">{`rm -rf ~/path/to/krabs
+rm -rf ~/.config/krabs
+# remove the symlink if you created one:
+rm -f /usr/local/bin/krabs`}</pre>
           <p>
-            Remove the binary:
-          </p>
-          <pre className="dc__code">{`# Homebrew
-brew uninstall krabs
-
-# npm
-npm uninstall -g krabs-cli`}</pre>
-          <p>
-            Then wipe the token and config directory:
-          </p>
-          <pre className="dc__code">{`rm -rf ~/.config/krabs/`}</pre>
-          <p>
-            Tokens live only on disk here — the server has no record of which machine holds a key,
-            only that it exists. If you want to revoke server-side as well, run{" "}
-            <code>krabs auth tokens revoke</code> before uninstalling, or use the{" "}
-            <Link href="/dashboard/keys">dashboard</Link>.
+            Tokens live only on your disk. If you also created keys against the hosted{" "}
+            <code>api.krabs.dev</code>, revoke them from the{" "}
+            <Link href="/dashboard/keys">dashboard</Link> before uninstalling.
           </p>
 
           <h2 className="dc__h2" id="next-steps">
@@ -107,11 +117,14 @@ npm uninstall -g krabs-cli`}</pre>
           </h2>
           <ul>
             <li>
-              <Link href="/docs/quickstart">Quickstart →</Link> log in, mint a key, run your first
-              call.
+              <Link href="/docs/quickstart">Quickstart →</Link> first call, three transports.
             </li>
             <li>
-              <Link href="/docs/auth">Auth & tokens →</Link> scopes, rotation, and revocation.
+              <Link href="/docs/auth">Auth & tokens →</Link> how to mint, rotate, revoke.
+            </li>
+            <li>
+              <Link href="/docs/self-hosting">Self-hosting →</Link> running krabs entirely on your
+              own infrastructure (no Clerk, no Turso).
             </li>
           </ul>
 

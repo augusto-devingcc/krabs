@@ -77,12 +77,13 @@ flowchart LR
 ## Quickstart (hosted)
 
 ```bash
-brew install augusto-devingcc/krabs/krabs
-krabs auth login   # opens browser, approves device
-krabs contact list
+# v0.4 — install from source. Homebrew + npm distribution ship in v0.5.
+git clone https://github.com/augusto-devingcc/krabs.git
+cd krabs && pnpm install
+./cli/dist/index.js auth login --api-url https://api.krabs.dev
 ```
 
-Get a free tier at [krabs.dev/sign-up](https://krabs.dev/sign-up) — 500 ops/month forever, no credit card.
+The `auth login` command runs the OAuth 2.0 device flow: opens a browser at `krabs.dev/device`, you approve, the CLI receives its token. Get a free tier at [krabs.dev/sign-up](https://krabs.dev/sign-up) — 500 ops/month forever, no credit card.
 
 ## Quickstart (self-hosted)
 

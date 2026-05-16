@@ -54,14 +54,17 @@ Content-Type: application/json
 
 All calls carry a bearer token in the `Authorization` header (or `auth.token` in MCP config, or `$KRABS_TOKEN` env for CLI). Tokens look like `krabs_sk_<32-chars>`. They are shown once at creation and never again — store them in the agent's secrets, not in code.
 
-If you don't have a token, run the device flow:
+If you don't have a token, the human runs the device flow on their machine:
 
 ```bash
-krabs auth login
-# → opens browser, user approves, token saved to ~/.config/krabs/config.json
+# v0.4: from source
+git clone https://github.com/augusto-devingcc/krabs.git
+cd krabs && pnpm install && pnpm setup
+# pnpm setup writes a local-mode token. For the hosted krabs.dev:
+./cli/dist/index.js auth login --api-url https://api.krabs.dev
 ```
 
-Or in the host runtime, ask the user to visit `https://krabs.dev/device` and enter the device code you generate via `POST /v1/auth/device`. See [auth docs](https://krabs.dev/docs/auth).
+The login command opens a browser, the user approves, and the token lands at `~/.config/krabs/config.json`. Or, in any host runtime, ask the user to visit `https://krabs.dev/device` and enter the device code you generated via `POST https://api.krabs.dev/v1/auth/device`. See [auth docs](https://krabs.dev/docs/auth).
 
 ## Primitives
 
