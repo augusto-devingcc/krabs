@@ -3,7 +3,6 @@ tests/
 *.test.ts
 .env*
 dist/
-.next/
 coverage/
 .vitest-cache/
 .tsdown-cache/
