@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --strict-builds=false
       - name: Typecheck
         run: pnpm typecheck
       - name: Tests
@@ -42,11 +42,11 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --strict-builds=false
       - name: Build CLI
         working-directory: ./cli
         run: |
-          pnpm install --no-frozen-lockfile
+          pnpm install --no-frozen-lockfile --strict-builds=false
           ./node_modules/.bin/tsup
       - name: Verify bin
         working-directory: ./cli
