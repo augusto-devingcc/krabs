@@ -52,7 +52,7 @@ jobs:
       - name: Build CLI
         working-directory: ./cli
         run: |
-          pnpm install --no-frozen-lockfile --strict-builds=false
+          pnpm install --no-frozen-lockfile
           ./node_modules/.bin/tsup
       - name: Verify bin
         working-directory: ./cli
