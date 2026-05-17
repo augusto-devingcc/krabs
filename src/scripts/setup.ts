@@ -15,7 +15,8 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { accounts, apiKeys } from "../db/schema.js";
 import { newId } from "../contract/ids.js";
 import { generateApiKeyPlaintext, sha256Hex, apiKeyPreview } from "../lib/hash.js";
-import { writeConfig } from "../cli/config.js";
+import { readConfig, writeConfig } from "../cli/config.js";
+import { eq } from "drizzle-orm";
 
 type Flags = {
   email: string;
@@ -204,35 +205,81 @@ async function main() {
 
   await migrate(db, { migrationsFolder: "./src/db/migrations" });
 
-  const existing = await db.select({ id: accounts.id }).from(accounts).limit(1);
-  if (existing.length > 0) {
-    if (!flags.force) {
-      client.close();
-      throw new Error(
-        "Setup already run. Pass --force to reset and create a new operator account.",
-      );
+  // ── Idempotent setup ────────────────────────────────────────
+  // First run                 → create account + api key, write config
+  // Re-run, config has token   → reuse account, reuse key if its hash matches
+  // Re-run, config gone        → reuse account, mint a fresh key, write config
+  // Re-run with --force        → drop account (cascade), start over
+  const existingAccount = await db.select().from(accounts).limit(1).then((r) => r[0]);
+
+  let accountId: string;
+  let plaintext: string;
+  let apiKeyId: string;
+  let mode: "fresh" | "reused" | "rotated" | "forced";
+
+  if (existingAccount && !flags.force) {
+    accountId = existingAccount.id;
+    const cfg = readConfig();
+    if (cfg.token) {
+      const tokenHash = sha256Hex(cfg.token);
+      const matchingKey = await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.tokenHash, tokenHash))
+        .limit(1)
+        .then((r) => r[0]);
+      if (matchingKey) {
+        // Both the account and the stored API key are intact — perfectly idempotent.
+        plaintext = cfg.token;
+        apiKeyId = matchingKey.id;
+        mode = "reused";
+      } else {
+        // Account survived but the key was deleted (or config.json got out of sync).
+        // Mint a fresh key against the same account.
+        apiKeyId = newId("apiKey");
+        plaintext = generateApiKeyPlaintext();
+        await db.insert(apiKeys).values({
+          id: apiKeyId,
+          accountId,
+          label: "Local operator key (rotated)",
+          tokenHash: sha256Hex(plaintext),
+          tokenPreview: apiKeyPreview(plaintext),
+        });
+        mode = "rotated";
+      }
+    } else {
+      // No config on disk — account exists from a previous run, mint a new key.
+      apiKeyId = newId("apiKey");
+      plaintext = generateApiKeyPlaintext();
+      await db.insert(apiKeys).values({
+        id: apiKeyId,
+        accountId,
+        label: "Local operator key (rotated)",
+        tokenHash: sha256Hex(plaintext),
+        tokenPreview: apiKeyPreview(plaintext),
+      });
+      mode = "rotated";
     }
-    await db.delete(accounts);
+  } else {
+    if (existingAccount) await db.delete(accounts); // --force: cascade everything
+    accountId = newId("account");
+    apiKeyId = newId("apiKey");
+    plaintext = generateApiKeyPlaintext();
+    await db.insert(accounts).values({
+      id: accountId,
+      email: flags.email,
+      name: flags.name,
+      clerkUserId: null,
+    });
+    await db.insert(apiKeys).values({
+      id: apiKeyId,
+      accountId,
+      label: "Local operator key",
+      tokenHash: sha256Hex(plaintext),
+      tokenPreview: apiKeyPreview(plaintext),
+    });
+    mode = existingAccount ? "forced" : "fresh";
   }
-
-  const accountId = newId("account");
-  const apiKeyId = newId("apiKey");
-  const plaintext = generateApiKeyPlaintext();
-
-  await db.insert(accounts).values({
-    id: accountId,
-    email: flags.email,
-    name: flags.name,
-    clerkUserId: null,
-  });
-
-  await db.insert(apiKeys).values({
-    id: apiKeyId,
-    accountId,
-    label: "Local operator key",
-    tokenHash: sha256Hex(plaintext),
-    tokenPreview: apiKeyPreview(plaintext),
-  });
 
   const cfgPath = writeConfig({ apiUrl: flags.apiUrl, token: plaintext });
 
@@ -247,11 +294,18 @@ async function main() {
     },
   };
 
+  const modeLabel = {
+    fresh: "new install",
+    reused: "existing install · account + token reused",
+    rotated: "existing install · token rotated",
+    forced: "wiped and recreated (--force)",
+  }[mode];
+
   console.log("");
-  console.log("✔ krabs is ready");
+  console.log(`✔ krabs is ready  (${modeLabel})`);
   console.log("");
   console.log(`  account_id  ${accountId}`);
-  console.log(`  email       ${flags.email}`);
+  console.log(`  email       ${existingAccount && mode !== "forced" ? existingAccount.email : flags.email}`);
   console.log(`  api_url     ${flags.apiUrl}`);
   console.log(`  token       ${plaintext}  (also saved to ${cfgPath})`);
   console.log("");
