@@ -18,7 +18,6 @@ import {
   TableCell,
   StatusPill,
 } from "@/components/EntityTable";
-import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -92,7 +91,6 @@ export default async function FinancePage() {
   const recentInvoices = invoicesResult.items.slice(0, 20);
   const recentExpenses = expensesResult.items.slice(0, 20);
 
-  // Bulk name lookups: collect distinct ids first, then one query per table.
   const contactIds = Array.from(
     new Set<string>(
       [
@@ -138,33 +136,26 @@ export default async function FinancePage() {
   const netPositive = summary.net_cents > 0;
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-10">
+    <div className="center">
+      <div className="mb-8">
         <p className="k-eyebrow mb-2">crm · money</p>
-        <h1 className="k-h2 mb-2">Money</h1>
-        <p className="k-body-sm text-muted-foreground max-w-2xl">
+        <h1 className="center__h">Money</h1>
+        <p className="k-body-sm text-muted-foreground max-w-2xl mt-2">
           Track MRR, invoices, expenses, and net profit — across every line of
           business.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        <StatCard
-          label="mrr"
-          big={`$${formatCents(summary.mrr_cents)}`}
-          sub={`ARR $${formatCents(summary.arr_cents)} · ${summary.counts.active_subscriptions} active subscriptions`}
-        />
-        <StatCard
+      {/* Top summary stats — .ag__summary horizontal bar with mono labels. */}
+      <div className="ag__summary mb-10" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+        <Stat label="mrr" value={`$${formatCents(summary.mrr_cents)}`} sub={`ARR $${formatCents(summary.arr_cents)} · ${summary.counts.active_subscriptions} active`} />
+        <Stat
           label="net (this month)"
-          big={`$${formatCents(summary.net_cents)}`}
+          value={`$${formatCents(summary.net_cents)}`}
           sub={`revenue $${formatCents(summary.revenue.paid_cents)} · expenses $${formatCents(summary.expenses.total_cents)}`}
           accent={netPositive}
         />
-        <StatCard
-          label="outstanding"
-          big={String(summary.counts.invoices_outstanding)}
-          sub="invoices sent or overdue · filter coming soon"
-        />
+        <Stat label="outstanding" value={String(summary.counts.invoices_outstanding)} sub="invoices sent or overdue" />
       </div>
 
       <Section
@@ -178,57 +169,48 @@ export default async function FinancePage() {
             prompt="krabs subscription create --contact ctc_... --product prd_... --amount 12000 --cycle monthly"
           />
         ) : (
-          <Card
-            className="overflow-hidden p-0 gap-0 border-border rounded-xl"
-            style={{ boxShadow: "var(--shadow-1)" }}
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="k-eyebrow font-medium">contact</TableHead>
-                  <TableHead className="k-eyebrow font-medium">product</TableHead>
-                  <TableHead className="k-eyebrow font-medium">mrr</TableHead>
-                  <TableHead className="k-eyebrow font-medium">cycle</TableHead>
-                  <TableHead className="k-eyebrow font-medium">status</TableHead>
-                  <TableHead className="k-eyebrow font-medium">next renewal</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>contact</TableHead>
+                <TableHead>product</TableHead>
+                <TableHead style={{ textAlign: "right", width: 100 }}>mrr</TableHead>
+                <TableHead style={{ width: 110 }}>cycle</TableHead>
+                <TableHead style={{ width: 120 }}>status</TableHead>
+                <TableHead style={{ textAlign: "right", width: 130 }}>next renewal</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {activeSubs.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell className="dt-name-l">
+                    {contactNames.get(s.contactId) ?? (
+                      <span className="dt-owner">{s.contactId.slice(0, 12)}…</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {s.productId
+                      ? (productNames.get(s.productId) ?? (
+                          <span className="font-mono text-xs">
+                            {s.productId.slice(0, 12)}…
+                          </span>
+                        ))
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="dt-value">
+                    ${formatCents(s.mrrCents)}
+                  </TableCell>
+                  <TableCell className="dt-owner">{s.billingCycle}</TableCell>
+                  <TableCell>
+                    <StatusPill status={s.status} pillTone={subscriptionTone(s.status)} />
+                  </TableCell>
+                  <TableCell className="dt-updated">
+                    {shortDate(s.currentPeriodEnd)}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activeSubs.map((s) => (
-                  <TableRow key={s.id} className="hover:bg-muted/50">
-                    <TableCell className="text-sm">
-                      {contactNames.get(s.contactId) ?? (
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {s.contactId.slice(0, 12)}…
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {s.productId
-                        ? (productNames.get(s.productId) ?? (
-                            <span className="font-mono text-xs">
-                              {s.productId.slice(0, 12)}…
-                            </span>
-                          ))
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      ${formatCents(s.mrrCents)}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {s.billingCycle}
-                    </TableCell>
-                    <TableCell>
-                      <StatusPill status={s.status} pillTone={subscriptionTone(s.status)} />
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {shortDate(s.currentPeriodEnd)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </Section>
 
@@ -243,49 +225,38 @@ export default async function FinancePage() {
             prompt="krabs invoice create --contact ctc_... --amount 50000"
           />
         ) : (
-          <Card
-            className="overflow-hidden p-0 gap-0 border-border rounded-xl"
-            style={{ boxShadow: "var(--shadow-1)" }}
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="k-eyebrow font-medium">number</TableHead>
-                  <TableHead className="k-eyebrow font-medium">contact</TableHead>
-                  <TableHead className="k-eyebrow font-medium">amount</TableHead>
-                  <TableHead className="k-eyebrow font-medium">status</TableHead>
-                  <TableHead className="k-eyebrow font-medium">issued</TableHead>
-                  <TableHead className="k-eyebrow font-medium">due</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead style={{ width: 130 }}>number</TableHead>
+                <TableHead>contact</TableHead>
+                <TableHead style={{ textAlign: "right", width: 110 }}>amount</TableHead>
+                <TableHead style={{ width: 110 }}>status</TableHead>
+                <TableHead style={{ width: 110 }}>issued</TableHead>
+                <TableHead style={{ textAlign: "right", width: 110 }}>due</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentInvoices.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="dt-owner">{inv.number}</TableCell>
+                  <TableCell className="dt-name-l">
+                    {contactNames.get(inv.contactId) ?? (
+                      <span className="dt-owner">{inv.contactId.slice(0, 12)}…</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="dt-value">
+                    ${formatCents(inv.amountCents)}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={inv.status} pillTone={invoiceTone(inv.status)} />
+                  </TableCell>
+                  <TableCell className="dt-owner">{rel(inv.issuedAt)}</TableCell>
+                  <TableCell className="dt-updated">{shortDate(inv.dueAt)}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentInvoices.map((inv) => (
-                  <TableRow key={inv.id} className="hover:bg-muted/50">
-                    <TableCell className="font-mono text-xs">{inv.number}</TableCell>
-                    <TableCell className="text-sm">
-                      {contactNames.get(inv.contactId) ?? (
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {inv.contactId.slice(0, 12)}…
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      ${formatCents(inv.amountCents)}
-                    </TableCell>
-                    <TableCell>
-                      <StatusPill status={inv.status} pillTone={invoiceTone(inv.status)} />
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {rel(inv.issuedAt)}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {shortDate(inv.dueAt)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </Section>
 
@@ -300,78 +271,65 @@ export default async function FinancePage() {
             prompt="krabs expense create --amount 4900 --category infra --vendor Vercel"
           />
         ) : (
-          <Card
-            className="overflow-hidden p-0 gap-0 border-border rounded-xl"
-            style={{ boxShadow: "var(--shadow-1)" }}
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="k-eyebrow font-medium">when</TableHead>
-                  <TableHead className="k-eyebrow font-medium">category</TableHead>
-                  <TableHead className="k-eyebrow font-medium">vendor</TableHead>
-                  <TableHead className="k-eyebrow font-medium">amount</TableHead>
-                  <TableHead className="k-eyebrow font-medium">source</TableHead>
-                  <TableHead className="k-eyebrow font-medium">description</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead style={{ width: 110 }}>when</TableHead>
+                <TableHead style={{ width: 130 }}>category</TableHead>
+                <TableHead style={{ width: 140 }}>vendor</TableHead>
+                <TableHead style={{ textAlign: "right", width: 110 }}>amount</TableHead>
+                <TableHead style={{ width: 110 }}>source</TableHead>
+                <TableHead>description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentExpenses.map((e) => (
+                <TableRow key={e.id}>
+                  <TableCell className="dt-owner">{rel(e.occurredAt)}</TableCell>
+                  <TableCell>
+                    <StatusPill status={e.category} pillTone="neutral" />
+                  </TableCell>
+                  <TableCell className="dt-owner">{e.vendor ?? "—"}</TableCell>
+                  <TableCell className="dt-value">
+                    -${formatCents(e.amountCents)}
+                  </TableCell>
+                  <TableCell className="dt-owner">{e.source}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {truncate(e.description, 60)}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentExpenses.map((e) => (
-                  <TableRow key={e.id} className="hover:bg-muted/50">
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {rel(e.occurredAt)}
-                    </TableCell>
-                    <TableCell>
-                      <StatusPill status={e.category} pillTone="neutral" />
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {e.vendor ?? "—"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      -${formatCents(e.amountCents)}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {e.source}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {truncate(e.description, 60)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </Section>
     </div>
   );
 }
 
-function StatCard({
+function Stat({
   label,
-  big,
+  value,
   sub,
   accent,
 }: {
   label: string;
-  big: string;
+  value: string;
   sub: string;
   accent?: boolean;
 }) {
   return (
-    <div
-      className="border border-border rounded-xl p-6 bg-card"
-      style={{ boxShadow: "var(--shadow-1)" }}
-    >
-      <p className="k-eyebrow mb-3">{label}</p>
-      <p
-        className={`k-h2 font-mono tabular-nums tracking-tight mb-2 ${
-          accent ? "text-coral-600 dark:text-coral-400" : "text-foreground"
-        }`}
+    <div className="ag__summary-stat">
+      <div className="ag__summary-k">{label}</div>
+      <div
+        className="ag__summary-v"
+        style={accent ? { color: "var(--accent-500)" } : undefined}
       >
-        {big}
-      </p>
-      <p className="font-mono text-xs text-muted-foreground">{sub}</p>
+        {value}
+      </div>
+      <div className="font-mono text-[11px] text-muted-foreground mt-2 leading-snug">
+        {sub}
+      </div>
     </div>
   );
 }
@@ -390,21 +348,33 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-10 pt-8 border-t border-border">
+    <section
+      className="mb-10 pt-8 border-t"
+      style={{ borderColor: "var(--border-light)" }}
+    >
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="k-h3">{title}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
         <details className="group relative">
-          <summary className="list-none cursor-pointer inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-[13px] text-foreground hover:bg-muted/50 transition-colors">
-            <Plus size={14} aria-hidden />
+          <summary
+            className="list-none cursor-pointer inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--radius-2)] border text-[12.5px] text-foreground hover:bg-muted/50 transition-colors"
+            style={{ borderColor: "var(--border-light)" }}
+          >
+            <Plus size={13} aria-hidden />
             {actionLabel}
           </summary>
-          <div className="absolute right-0 mt-2 z-10 w-[420px] max-w-[90vw] p-3 rounded-md border border-border bg-popover shadow-md">
+          <div
+            className="absolute right-0 mt-2 z-10 w-[420px] max-w-[90vw] p-3 rounded-[var(--radius-3)] border bg-popover shadow-md"
+            style={{ borderColor: "var(--border-light)" }}
+          >
             <p className="k-eyebrow mb-2">use the cli</p>
             <p className="k-body-sm text-muted-foreground mb-2">
               Create flows ship in v0.5. For now, your agent or terminal does
               this directly:
             </p>
-            <code className="font-mono text-xs block border border-border rounded-md bg-muted px-2.5 py-2 break-all">
+            <code
+              className="font-mono text-xs block border rounded-[var(--radius-2)] bg-muted px-2.5 py-2 break-all"
+              style={{ borderColor: "var(--border-light)" }}
+            >
               <span className="text-muted-foreground select-none">$ </span>
               {cliExample}
             </code>

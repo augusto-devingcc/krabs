@@ -1,7 +1,6 @@
 import { ChevronDown, HelpCircle, Shield } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { PricingGrid } from "./UpgradeButtons";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -9,15 +8,16 @@ export default async function BillingPage() {
   await getDashboardContext();
 
   return (
-    <div className="p-8 max-w-5xl">
-      <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground mb-2">
-        # billing
-      </p>
-      <h1 className="text-3xl font-medium mb-2">Pick your plan</h1>
-      <p className="text-muted-foreground mb-8 max-w-2xl">
-        You&apos;re currently on the <strong className="text-foreground">Free</strong>{" "}
-        plan. Pay only when you actually use krabs in production.
-      </p>
+    <div className="center">
+      <div className="mb-8">
+        <p className="k-eyebrow mb-2">crm · billing</p>
+        <h1 className="center__h">Pick your plan</h1>
+        <p className="k-body-sm text-muted-foreground max-w-2xl mt-2">
+          You&apos;re currently on the{" "}
+          <strong className="text-foreground">Free</strong> plan. Pay only when
+          you actually use krabs in production.
+        </p>
+      </div>
 
       <PricingGrid
         plans={[
@@ -63,18 +63,20 @@ export default async function BillingPage() {
         ]}
       />
 
-      <div className="mt-10">
-        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground mb-3">
-          # faq
-        </p>
-        <Card className="p-0 gap-0 overflow-hidden">
-          <CardHeader className="px-5 py-3 border-b">
-            <div className="flex items-center gap-2">
-              <HelpCircle size={20} className="text-muted-foreground" aria-hidden />
-              <CardTitle>Frequently asked</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 divide-y divide-border">
+      <div className="mt-12">
+        <p className="k-eyebrow mb-3">faq</p>
+        <div
+          className="border rounded-[var(--radius-4)] bg-card overflow-hidden"
+          style={{ borderColor: "var(--border-light)" }}
+        >
+          <div
+            className="px-5 py-3 border-b flex items-center gap-2"
+            style={{ borderColor: "var(--border-light)" }}
+          >
+            <HelpCircle size={16} className="text-muted-foreground" aria-hidden />
+            <h3 className="text-sm font-semibold">Frequently asked</h3>
+          </div>
+          <div className="divide-y" style={{ borderColor: "var(--border-muted)" }}>
             <FaqItem
               q="Can I change plans anytime?"
               a="Yes — upgrades take effect immediately and downgrades take effect at the end of your current billing period. Polar handles proration automatically."
@@ -87,8 +89,8 @@ export default async function BillingPage() {
               q="Where does my data live?"
               a="Turso (libSQL) in us-east-1. Each account is a logical tenant inside a shared database. Export your data anytime from the settings page."
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <p className="inline-flex items-center gap-2 text-xs text-muted-foreground mt-6">
@@ -102,7 +104,7 @@ export default async function BillingPage() {
 function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <details className="group">
-      <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between text-sm font-medium hover:bg-muted/50 select-none">
+      <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between text-sm font-medium hover:bg-muted/50 select-none transition-colors">
         <span>{q}</span>
         <ChevronDown
           size={16}

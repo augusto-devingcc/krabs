@@ -2,9 +2,7 @@ import Link from "next/link";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { NameForm } from "./NameForm";
 import { CopyAccountId } from "./CopyAccountId";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
 export const dynamic = "force-dynamic";
 
@@ -12,108 +10,101 @@ export default async function SettingsPage() {
   const { account, clerkEmail } = await getDashboardContext();
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="mb-8">
-        <p className="k-eyebrow mb-2">crm · account</p>
-        <h1 className="k-h2 mb-2">Account</h1>
-        <p className="k-body-sm text-muted-foreground max-w-2xl">
-          Tenant-level configuration. Your account is the boundary — every agent
-          and key lives inside it.
-        </p>
-      </div>
+    <>
+      <header className="st__pane-h">
+        <div className="st__pane-eyebrow">crm · account</div>
+        <h1 className="st__pane-title">Account</h1>
+      </header>
 
-      <Section title="Identity" eyebrow="identity">
-        <Row k="account id" v={<CopyAccountId value={account.id} />} />
-        <Separator />
-        <Row
-          k="email"
-          v={
-            <div className="flex flex-col">
-              <span className="font-mono text-xs text-foreground">
-                {clerkEmail}
-              </span>
-              <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">
-                synced from Clerk
-              </span>
+      <div className="st__pane-body">
+        <section className="st-sec">
+          <div className="st-sec__h">
+            <h2 className="st-sec__title">Identity</h2>
+            <p className="st-sec__sub">
+              Tenant-level identifiers. Synced from Clerk where possible.
+            </p>
+          </div>
+          <div className="st-sec__body">
+            <div className="st-row">
+              <div>
+                <div className="st-row__lbl">account id</div>
+                <div className="st-row__hint">Reference this in your agent contracts.</div>
+              </div>
+              <div className="st-row__v">
+                <CopyAccountId value={account.id} />
+              </div>
             </div>
-          }
-        />
-        <Separator />
-        <Row
-          k="created"
-          v={<span className="font-mono text-xs">{account.createdAt}</span>}
-        />
-      </Section>
+            <div className="st-row">
+              <div>
+                <div className="st-row__lbl">email</div>
+                <div className="st-row__hint">Synced from Clerk on every sign-in.</div>
+              </div>
+              <div className="st-row__v">
+                <span className="font-mono text-[12.5px] text-foreground">
+                  {clerkEmail}
+                </span>
+              </div>
+            </div>
+            <div className="st-row">
+              <div>
+                <div className="st-row__lbl">created</div>
+                <div className="st-row__hint">When this tenant was provisioned.</div>
+              </div>
+              <div className="st-row__v">
+                <span className="font-mono text-[12.5px] text-foreground">
+                  {account.createdAt}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <Section title="Profile" eyebrow="profile">
-        <NameForm initial={account.name ?? ""} />
-      </Section>
+        <section className="st-sec">
+          <div className="st-sec__h">
+            <h2 className="st-sec__title">Profile</h2>
+            <p className="st-sec__sub">Display name shown in your dashboard.</p>
+          </div>
+          <div className="st-sec__body">
+            <NameForm initial={account.name ?? ""} />
+          </div>
+        </section>
 
-      <Section title="Your agents" eyebrow="agents">
-        <p className="k-body-sm text-muted-foreground mb-4">
-          API keys are how Claude Desktop, the CLI, and any other agent talk to
-          your account.
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/dashboard/keys">View your API keys</Link>
-        </Button>
-      </Section>
+        <section className="st-sec">
+          <div className="st-sec__h">
+            <h2 className="st-sec__title">Your agents</h2>
+            <p className="st-sec__sub">
+              API keys are how Claude Desktop, the CLI, and any other agent talk to
+              your account.
+            </p>
+          </div>
+          <div className="st-sec__body">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/keys">View your API keys</Link>
+            </Button>
+          </div>
+        </section>
 
-      <Card
-        className="mb-5 border-red-200 dark:border-red-900/40 rounded-xl"
-        style={{ boxShadow: "var(--shadow-1)" }}
-      >
-        <CardContent className="py-6">
-          <p className="k-eyebrow mb-1 text-red-700 dark:text-red-300">
-            danger zone
-          </p>
-          <h2 className="k-h4 mb-2 text-red-700 dark:text-red-300">
-            Delete account
-          </h2>
-          <p className="k-body-sm text-muted-foreground">
-            Deleting an account is not yet self-serve.{" "}
-            <a
-              href="mailto:support@krabs.dev?subject=Delete%20my%20account"
-              className="underline hover:text-foreground"
-            >
-              Email support@krabs.dev
-            </a>{" "}
-            and we&apos;ll wipe your tenant and confirm.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  eyebrow,
-  children,
-}: {
-  title: string;
-  eyebrow: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card
-      className="mb-5 border-border rounded-xl"
-      style={{ boxShadow: "var(--shadow-1)" }}
-    >
-      <CardContent className="py-6">
-        <p className="k-eyebrow mb-1">{eyebrow}</p>
-        <h2 className="k-h4 mb-4">{title}</h2>
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
-function Row({ k, v }: { k: string; v: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-3 gap-4 py-2 text-sm">
-      <span className="k-eyebrow pt-0.5">{k}</span>
-      <span className="col-span-2">{v}</span>
-    </div>
+        <section className="st-sec">
+          <div
+            className="st-sec__h"
+            style={{ borderColor: "var(--danger-500)" }}
+          >
+            <h2 className="st-sec__title" style={{ color: "var(--danger-500)" }}>
+              Danger zone
+            </h2>
+            <p className="st-sec__sub">
+              Deleting an account is not yet self-serve.{" "}
+              <a
+                href="mailto:support@krabs.dev?subject=Delete%20my%20account"
+                className="underline hover:text-foreground"
+              >
+                Email support@krabs.dev
+              </a>{" "}
+              and we&apos;ll wipe your tenant and confirm.
+            </p>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }

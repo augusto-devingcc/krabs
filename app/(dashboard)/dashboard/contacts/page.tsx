@@ -13,7 +13,6 @@ import {
   TableCell,
   StatusPill,
 } from "@/components/EntityTable";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,7 +67,7 @@ export default async function ContactsPage({
     : null;
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="center">
       <EntityHeader
         title="contacts"
         description="People you and your agents talk to. Multi-channel identity supported — same person on email + WhatsApp + Telegram is one contact."
@@ -77,11 +76,11 @@ export default async function ContactsPage({
 
       <form
         action="/dashboard/contacts"
-        className="mb-6 flex flex-col sm:flex-row gap-2"
+        className="mb-6 flex flex-col sm:flex-row gap-2 max-w-3xl"
       >
         <div className="relative flex-1">
           <Search
-            size={16}
+            size={14}
             aria-hidden
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
           />
@@ -93,7 +92,7 @@ export default async function ContactsPage({
           />
         </div>
         <Select name="status" defaultValue={sp.status || "all"}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="all statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -105,7 +104,7 @@ export default async function ContactsPage({
           </SelectContent>
         </Select>
         <Select name="limit" defaultValue={String(limit)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="50 / page" />
           </SelectTrigger>
           <SelectContent>
@@ -114,8 +113,8 @@ export default async function ContactsPage({
             <SelectItem value="100">100 / page</SelectItem>
           </SelectContent>
         </Select>
-        <Button type="submit" variant="outline">
-          <Filter size={16} aria-hidden />
+        <Button type="submit" variant="outline" size="sm">
+          <Filter size={14} aria-hidden />
           Filter
         </Button>
       </form>
@@ -126,55 +125,37 @@ export default async function ContactsPage({
           prompt='Add Maria López (maria@example.com) to my CRM and tag her as warm-lead.'
         />
       ) : (
-        <Card
-          className="overflow-hidden p-0 gap-0 border-border rounded-xl"
-          style={{ boxShadow: "var(--shadow-1)" }}
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="k-eyebrow font-medium">id</TableHead>
-                <TableHead className="k-eyebrow font-medium">name</TableHead>
-                <TableHead className="k-eyebrow font-medium">email</TableHead>
-                <TableHead className="k-eyebrow font-medium">phone</TableHead>
-                <TableHead className="k-eyebrow font-medium">status</TableHead>
-                <TableHead className="k-eyebrow font-medium">updated</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>name</TableHead>
+              <TableHead>email</TableHead>
+              <TableHead>phone</TableHead>
+              <TableHead style={{ width: 110 }}>status</TableHead>
+              <TableHead style={{ width: 120, textAlign: "right" }}>updated</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="dt-name-l">{c.name}</TableCell>
+                <TableCell className="dt-owner">{c.primaryEmail ?? "—"}</TableCell>
+                <TableCell className="dt-owner">{c.primaryPhone ?? "—"}</TableCell>
+                <TableCell>
+                  <StatusPill status={c.status} />
+                </TableCell>
+                <TableCell className="dt-updated">{rel(c.updatedAt)}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((c) => (
-                <TableRow
-                  key={c.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                >
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {c.id.slice(0, 12)}…
-                  </TableCell>
-                  <TableCell className="text-sm">{c.name}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {c.primaryEmail ?? "—"}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {c.primaryPhone ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <StatusPill status={c.status} />
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {rel(c.updatedAt)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+            ))}
+          </TableBody>
+        </Table>
       )}
 
       {nextHref && (
         <div className="mt-6 flex justify-center">
-          <Button asChild variant="ghost">
+          <Button asChild variant="ghost" size="sm">
             <Link href={nextHref}>
-              Next page <ArrowRight size={16} aria-hidden />
+              Next page <ArrowRight size={14} aria-hidden />
             </Link>
           </Button>
         </div>

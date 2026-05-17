@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -50,14 +49,14 @@ export default async function TasksPage({
   const { items } = await listTasks(ctx, filters);
 
   const primary = (items as Task[]).filter(
-    (t) => t.status === "open" || t.status === "in_progress"
+    (t) => t.status === "open" || t.status === "in_progress",
   );
   const secondary = (items as Task[]).filter(
-    (t) => t.status === "done" || t.status === "cancelled"
+    (t) => t.status === "done" || t.status === "cancelled",
   );
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="center">
       <EntityHeader
         title="tasks"
         description="Things to do. Tied optionally to a contact or deal. Set status=done and your agent stamps completedAt automatically."
@@ -69,7 +68,7 @@ export default async function TasksPage({
         className="mb-6 flex flex-col sm:flex-row gap-2"
       >
         <Select name="status" defaultValue={sp.status || "all"}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="all statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -81,7 +80,7 @@ export default async function TasksPage({
           </SelectContent>
         </Select>
         <Select name="priority" defaultValue={sp.priority || "any"}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="any priority" />
           </SelectTrigger>
           <SelectContent>
@@ -91,8 +90,8 @@ export default async function TasksPage({
             <SelectItem value="low">low</SelectItem>
           </SelectContent>
         </Select>
-        <Button type="submit" variant="outline">
-          <Filter size={16} aria-hidden />
+        <Button type="submit" variant="outline" size="sm">
+          <Filter size={14} aria-hidden />
           Filter
         </Button>
       </form>
@@ -103,7 +102,7 @@ export default async function TasksPage({
           prompt='Add a task to follow up with Maria next Tuesday, high priority.'
         />
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 max-w-4xl">
           {primary.length > 0 && <TaskGroup label="active" tasks={primary} />}
           {secondary.length > 0 && (
             <TaskGroup label="completed" tasks={secondary} muted />
@@ -131,16 +130,14 @@ function TaskGroup({
           {tasks.length}
         </span>
       </div>
-      <Card
-        className="py-0 gap-0 border-border rounded-xl overflow-hidden"
-        style={{ boxShadow: "var(--shadow-1)" }}
+      <div
+        className="border rounded-[var(--radius-3)] bg-card overflow-hidden"
+        style={{ borderColor: "var(--border-light)" }}
       >
-        <CardContent className="px-0">
-          {tasks.map((t, i) => (
-            <TaskRow key={t.id} task={t} first={i === 0} />
-          ))}
-        </CardContent>
-      </Card>
+        {tasks.map((t, i) => (
+          <TaskRow key={t.id} task={t} first={i === 0} />
+        ))}
+      </div>
     </section>
   );
 }
@@ -155,16 +152,17 @@ function TaskRow({ task, first }: { task: Task; first: boolean }) {
   return (
     <div
       className={cn(
-        "flex items-start gap-4 px-4 py-3.5 hover:bg-muted/50 transition-colors",
-        !first && "border-t border-border"
+        "flex items-start gap-4 px-4 py-3 hover:bg-muted/50 transition-colors",
+        !first && "border-t",
       )}
+      style={!first ? { borderColor: "var(--border-muted)" } : undefined}
     >
       <CheckboxIcon
-        size={18}
+        size={16}
         aria-hidden
         className={cn(
           "mt-0.5 shrink-0",
-          checked ? "text-muted-foreground" : "text-foreground"
+          checked ? "text-muted-foreground" : "text-foreground",
         )}
       />
 
@@ -172,9 +170,7 @@ function TaskRow({ task, first }: { task: Task; first: boolean }) {
         <p
           className={cn(
             "text-sm truncate",
-            checked
-              ? "line-through text-muted-foreground"
-              : "text-foreground"
+            checked ? "line-through text-muted-foreground" : "text-foreground",
           )}
           title={task.title}
         >
@@ -200,13 +196,7 @@ function TaskRow({ task, first }: { task: Task; first: boolean }) {
       <div className="flex items-center gap-2 shrink-0">
         <StatusPill
           status={task.priority}
-          pillTone={
-            task.priority === "high"
-              ? "warning"
-              : task.priority === "low"
-              ? "neutral"
-              : "neutral"
-          }
+          pillTone={task.priority === "high" ? "warning" : "neutral"}
         />
         <StatusPill status={task.status} />
       </div>

@@ -5,8 +5,6 @@ import { listActions } from "../../../../src/domain/contact.js";
 import { reversibilityOf } from "../../../../src/domain/action.js";
 import { ActionRow, type AuditRow } from "./ActionRow";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/components/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -83,57 +81,56 @@ export default async function AuditPage({
       clearHref: buildHref(sp, { targetId: undefined }),
     });
 
-  const reversibleCount = rows.filter((r) => r.reversibility === "reversible")
-    .length;
+  const reversibleCount = rows.filter((r) => r.reversibility === "reversible").length;
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-8">
-        <p className="k-eyebrow mb-2">crm · audit</p>
-        <h1 className="k-h2 mb-2">What your agents did</h1>
-        <p className="k-body-sm text-muted-foreground max-w-2xl">
-          Every mutation — by you, the CLI, the MCP, or any of your agents — is
-          here. Reversible ones can be undone with one click. Undoing is itself
-          logged.
-        </p>
+    <div className="rp">
+      {/* Header — designer's .rp__head pattern (title + soft subtitle). */}
+      <div className="rp__head">
+        <div>
+          <p className="k-eyebrow mb-2">crm · audit</p>
+          <h2 className="rp__title">
+            What your agents did
+            <span className="rp__sub">last 100 actions</span>
+          </h2>
+          <p className="k-body-sm text-muted-foreground max-w-2xl mt-2">
+            Every mutation — by you, the CLI, the MCP, or any of your agents — is
+            here. Reversible ones can be undone with one click. Undoing is itself
+            logged.
+          </p>
+        </div>
       </div>
 
-      <div
-        className="grid grid-cols-3 gap-3 mb-6 rounded-xl border border-border bg-background p-3"
-        style={{ boxShadow: "var(--shadow-1)" }}
-      >
-        <Stat label="entries" value={filtered.length} />
-        <Stat label="reversible" value={reversibleCount} />
-        <Stat
-          label="filter"
-          value={filter}
-          mono={false}
-        />
+      {/* Stats bar — designer's .rp__stats (top + bottom rules, mono labels). */}
+      <div className="rp__stats">
+        <div>
+          <div className="rp__stat-k">entries</div>
+          <div className="rp__stat-v">{filtered.length.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="rp__stat-k">reversible</div>
+          <div className="rp__stat-v">{reversibleCount.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="rp__stat-k">filter</div>
+          <div className="rp__stat-v" style={{ fontFamily: "var(--font-sans)" }}>
+            {filter}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <FilterChip
-          label="all"
-          active={filter === "all"}
-          href={buildHref(sp, { filter: undefined })}
-        />
-        <FilterChip
-          label="reversible only"
-          active={filter === "reversible"}
-          href={buildHref(sp, { filter: "reversible" })}
-        />
-        <FilterChip
-          label="destructive ops"
-          active={filter === "destructive"}
-          href={buildHref(sp, { filter: "destructive" })}
-        />
+      {/* Filter chips */}
+      <div className="flex flex-wrap items-center gap-2 -mt-2">
+        <FilterChip label="all" active={filter === "all"} href={buildHref(sp, { filter: undefined })} />
+        <FilterChip label="reversible only" active={filter === "reversible"} href={buildHref(sp, { filter: "reversible" })} />
+        <FilterChip label="destructive ops" active={filter === "destructive"} href={buildHref(sp, { filter: "destructive" })} />
         {activeChips.map((c) => (
           <Button
             key={c.label}
             asChild
             variant="outline"
             size="sm"
-            className="rounded-md font-mono"
+            className="rounded-[var(--radius-2)] font-mono"
           >
             <Link href={c.clearHref}>
               <span>{c.label}</span>
@@ -143,54 +140,26 @@ export default async function AuditPage({
         ))}
       </div>
 
-      <Card
-        className="p-0 gap-0 overflow-hidden font-mono text-xs border-border rounded-xl"
-        style={{ boxShadow: "var(--shadow-1)" }}
-      >
-        <div className="px-4 py-2.5 border-b border-border flex flex-row items-center gap-3 bg-muted/40">
-          <span className="k-eyebrow">$ krabs action list</span>
-          <span className="ml-auto font-mono text-[11px] text-muted-foreground tabular-nums">
-            {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
-          </span>
-        </div>
-        <div className="divide-y divide-border">
-          {filtered.length === 0 ? (
-            <div className="p-10 text-center text-muted-foreground">
-              <p className="mb-2">(no actions match)</p>
-              <p className="text-muted-foreground/70">
-                Once an agent (or you) does anything, it shows up here in real
-                time.
-              </p>
-            </div>
-          ) : (
-            filtered.map((a) => <ActionRow key={a.id} a={a} />)
-          )}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  mono = true,
-}: {
-  label: string;
-  value: number | string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="px-2">
-      <p className="k-eyebrow mb-1">{label}</p>
-      <p
-        className={cn(
-          "text-xl font-medium tabular-nums text-foreground",
-          mono && "font-mono",
+      {/* Action list */}
+      <div className="font-mono text-xs">
+        {filtered.length === 0 ? (
+          <div
+            className="p-10 text-center text-muted-foreground border rounded-[var(--radius-3)]"
+            style={{ borderColor: "var(--border-light)" }}
+          >
+            <p className="mb-2">(no actions match)</p>
+            <p className="text-muted-foreground/70">
+              Once an agent (or you) does anything, it shows up here in real time.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y" style={{ borderColor: "var(--border-muted)" }}>
+            {filtered.map((a) => (
+              <ActionRow key={a.id} a={a} />
+            ))}
+          </div>
         )}
-      >
-        {value}
-      </p>
+      </div>
     </div>
   );
 }
@@ -209,7 +178,7 @@ function FilterChip({
       asChild
       size="sm"
       variant={active ? "default" : "outline"}
-      className="rounded-md font-mono text-xs"
+      className="rounded-[var(--radius-2)] font-mono text-xs"
     >
       <Link href={href}>{label}</Link>
     </Button>

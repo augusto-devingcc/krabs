@@ -11,11 +11,19 @@ import {
   TableCell,
   StatusPill,
 } from "@/components/EntityTable";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
 const STAGES = ["new", "qualified", "proposal", "negotiation", "closed"] as const;
+
+// Stage → color dot (matches designer's DealsTable: neutral/info/warning/success).
+const STAGE_DOT: Record<string, string> = {
+  new: "var(--neutral-400)",
+  qualified: "var(--info-500)",
+  proposal: "var(--warning-500)",
+  negotiation: "var(--warning-500)",
+  closed: "var(--success-500)",
+};
 
 export default async function DealsPage() {
   const { ctx } = await getDashboardContext();
@@ -29,7 +37,7 @@ export default async function DealsPage() {
   const stages = Array.from(new Set([...STAGES, ...byStage.keys()]));
 
   return (
-    <div className="p-8 max-w-7xl">
+    <div className="center">
       <EntityHeader
         title="deals"
         description="Revenue opportunities. Move them through stages — your agent can update fields conversationally."
@@ -43,32 +51,38 @@ export default async function DealsPage() {
         />
       ) : (
         <>
+          {/* Kanban by stage — minimalist Linear-style cards. No drag-and-drop;
+              agents move stages. */}
           <p className="k-eyebrow mb-3">
             no drag-and-drop yet — ask your agent to move stages.
           </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-10">
             {stages.map((stage) => {
               const col = byStage.get(stage) ?? [];
               return (
-                <Card
+                <div
                   key={stage}
-                  className="min-h-[180px] py-3 gap-3 border-border rounded-xl"
+                  className="border border-border-light rounded-md bg-card min-h-[180px]"
+                  style={{ borderColor: "var(--border-light)" }}
                 >
-                  <CardHeader className="px-3 pb-2 border-b border-border grid-cols-[1fr_auto]">
+                  <div
+                    className="flex items-center justify-between px-3 py-2 border-b"
+                    style={{ borderColor: "var(--border-light)" }}
+                  >
                     <span className="k-eyebrow">{stage}</span>
                     <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
                       {col.length}
                     </span>
-                  </CardHeader>
-                  <CardContent className="gap-2 px-3 flex-1">
+                  </div>
+                  <div className="flex flex-col gap-2 p-3">
                     {col.map((d) => (
                       <div
                         key={d.id}
-                        className="rounded-md border border-border bg-background px-3 py-2 hover:bg-muted/50 transition-colors"
+                        className="rounded-[var(--radius-2)] border bg-background px-3 py-2 hover:bg-muted/50 transition-colors"
+                        style={{ borderColor: "var(--border-light)" }}
                       >
                         <p
-                          className="text-sm font-medium truncate text-foreground"
+                          className="text-sm truncate text-foreground"
                           title={d.title}
                         >
                           {d.title}
@@ -88,56 +102,52 @@ export default async function DealsPage() {
                         empty
                       </p>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
 
+          {/* Full list — exact designer DealsTable pattern */}
           <p className="k-eyebrow mb-3">all deals</p>
-          <Card
-            className="overflow-hidden p-0 gap-0 border-border rounded-xl"
-            style={{ boxShadow: "var(--shadow-1)" }}
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="k-eyebrow font-medium">id</TableHead>
-                  <TableHead className="k-eyebrow font-medium">title</TableHead>
-                  <TableHead className="k-eyebrow font-medium">stage</TableHead>
-                  <TableHead className="k-eyebrow font-medium">status</TableHead>
-                  <TableHead className="k-eyebrow font-medium">value</TableHead>
-                  <TableHead className="k-eyebrow font-medium">
-                    close date
-                  </TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>name</TableHead>
+                <TableHead style={{ width: 140 }}>stage</TableHead>
+                <TableHead style={{ width: 120 }}>status</TableHead>
+                <TableHead style={{ width: 120, textAlign: "right" }}>value</TableHead>
+                <TableHead style={{ width: 120, textAlign: "right" }}>close date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell className="dt-name-l">{d.title}</TableCell>
+                  <TableCell>
+                    <span className="dt-stage">
+                      <span
+                        className="dt-stage-dot"
+                        style={{ background: STAGE_DOT[d.stage] ?? "var(--neutral-400)" }}
+                      />
+                      {d.stage}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={d.status} />
+                  </TableCell>
+                  <TableCell className="dt-value">
+                    {d.value
+                      ? `$${d.value.toLocaleString()}${d.currency && d.currency !== "USD" ? ` ${d.currency}` : ""}`
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="dt-updated">
+                    {d.expectedCloseDate ?? "—"}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((d) => (
-                  <TableRow key={d.id} className="hover:bg-muted/50">
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {d.id.slice(0, 12)}…
-                    </TableCell>
-                    <TableCell className="text-sm">{d.title}</TableCell>
-                    <TableCell>
-                      <StatusPill status={d.stage} pillTone="accent" />
-                    </TableCell>
-                    <TableCell>
-                      <StatusPill status={d.status} />
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {d.value
-                        ? `${d.value.toLocaleString()} ${d.currency ?? ""}`.trim()
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {d.expectedCloseDate ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+              ))}
+            </TableBody>
+          </Table>
         </>
       )}
     </div>

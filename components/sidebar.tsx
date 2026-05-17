@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand.js";
+import { useMarketingTheme } from "@/components/marketing/theme-context";
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
 
@@ -63,16 +64,24 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useUser();
+  const { theme } = useMarketingTheme();
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
   const workspaceName = user?.firstName
     ? user.firstName.toLowerCase()
     : (email.split("@")[0] ?? "workspace");
 
+  // logo-mark.svg has a dark background (fits light theme); logo-mark-light.svg
+  // has a light background (fits dark theme). The .sb__ws-mark CSS flips its own
+  // background between themes too, so picking the matching SVG keeps the mark
+  // legible without a visible frame around it.
+  const markSrc =
+    theme === "dark" ? "/brand/logo-mark-light.svg" : "/brand/logo-mark.svg";
+
   return (
     <aside className="sb">
       <div className="sb__ws">
         <div className="sb__ws-mark">
-          <Image src="/brand/logo-mark.svg" width={20} height={20} alt="" />
+          <Image src={markSrc} width={20} height={20} alt="" />
         </div>
         <div className="sb__ws-meta">
           <div className="sb__ws-name">

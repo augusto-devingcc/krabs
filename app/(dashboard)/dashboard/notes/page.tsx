@@ -2,13 +2,6 @@ import NextLink from "next/link";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listNotes } from "../../../../src/domain/note.js";
 import { EntityHeader, EntityEmpty } from "@/components/EntityTable";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +10,7 @@ export default async function NotesPage() {
   const { items } = await listNotes(ctx, { limit: 50 });
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="center">
       <EntityHeader
         title="notes"
         description="Free-form scratchpad. Markdown-ish. Tied to a contact or deal optionally — your agent often writes meeting notes here."
@@ -30,49 +23,51 @@ export default async function NotesPage() {
           prompt='Take a note on Acme deal: Decision-maker is Pedro; budget signed off; demo next Wed.'
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {items.map((n) => (
-            <Card
+            <article
               key={n.id}
-              className="border-border rounded-xl transition-colors hover:bg-muted/30"
-              style={{ boxShadow: "var(--shadow-1)" }}
+              className="border rounded-[var(--radius-4)] bg-card p-4 flex flex-col gap-3 transition-colors hover:bg-muted/30"
+              style={{ borderColor: "var(--border-light)" }}
             >
-              <CardHeader className="flex flex-row items-center justify-between gap-3">
-                <span className="font-mono text-xs text-muted-foreground">
+              <header className="flex items-center justify-between gap-3 -mb-1">
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {n.id.slice(0, 10)}…
                 </span>
-                <time className="font-mono text-xs text-muted-foreground">
+                <time className="font-mono text-[11px] text-muted-foreground">
                   {rel(n.createdAt)}
                 </time>
-              </CardHeader>
+              </header>
 
               {n.title && (
-                <CardContent>
-                  <CardTitle className="k-h4 leading-snug">{n.title}</CardTitle>
-                </CardContent>
+                <h3 className="text-base font-semibold leading-snug tracking-tight">
+                  {n.title}
+                </h3>
               )}
 
-              <CardContent>
-                <div className="relative">
-                  <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed text-muted-foreground max-h-56 overflow-hidden">
-                    {n.body}
-                  </pre>
-                  <div
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-16"
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, transparent, var(--card))",
-                    }}
-                  />
-                </div>
-              </CardContent>
+              <div className="relative">
+                <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed text-muted-foreground max-h-56 overflow-hidden">
+                  {n.body}
+                </pre>
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, var(--card))",
+                  }}
+                />
+              </div>
 
               {(n.contactId || n.dealId) && (
-                <CardFooter className="border-t border-border pt-4 flex flex-wrap gap-2">
+                <footer
+                  className="border-t pt-3 flex flex-wrap gap-2"
+                  style={{ borderColor: "var(--border-muted)" }}
+                >
                   {n.contactId && (
                     <NextLink
                       href={`/dashboard/contacts?q=${encodeURIComponent(n.contactId)}`}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-muted font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[var(--radius-2)] border bg-muted font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+                      style={{ borderColor: "var(--border-light)" }}
                     >
                       <span>contact</span>
                       <span>·</span>
@@ -82,16 +77,17 @@ export default async function NotesPage() {
                   {n.dealId && (
                     <NextLink
                       href={`/dashboard/deals`}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-muted font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[var(--radius-2)] border bg-muted font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+                      style={{ borderColor: "var(--border-light)" }}
                     >
                       <span>deal</span>
                       <span>·</span>
                       <span>{n.dealId.slice(0, 10)}…</span>
                     </NextLink>
                   )}
-                </CardFooter>
+                </footer>
               )}
-            </Card>
+            </article>
           ))}
         </div>
       )}

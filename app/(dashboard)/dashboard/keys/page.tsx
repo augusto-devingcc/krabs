@@ -7,20 +7,13 @@ import { KeyCreator } from "./KeyCreator";
 import { RevokeButton } from "./RevokeButton";
 import { AuthorizeAgentForm } from "./AuthorizeAgentForm";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/EntityTable";
 
 export const dynamic = "force-dynamic";
 
@@ -67,103 +60,93 @@ export default async function KeysPage() {
   const isEmpty = items.length === 0;
 
   const authorizeCard = (
-    <Card
-      className="mb-6 border-border rounded-xl"
-      style={{ boxShadow: "var(--shadow-1)" }}
+    <section
+      className="my-6 border rounded-[var(--radius-4)] bg-card p-5"
+      style={{ borderColor: "var(--border-light)" }}
     >
-      <CardHeader>
-        <p className="k-eyebrow">authorize</p>
-        <CardTitle className="k-h4">Authorize a new agent</CardTitle>
-        <CardDescription>
-          Your agent shows a code like{" "}
-          <span className="font-mono">WDJB-MJHT</span>. Enter it to approve.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <AuthorizeAgentForm />
-      </CardContent>
-    </Card>
+      <p className="k-eyebrow mb-1">authorize</p>
+      <h2 className="text-base font-semibold mb-1">Authorize a new agent</h2>
+      <p className="k-body-sm text-muted-foreground mb-4">
+        Your agent shows a code like <span className="font-mono">WDJB-MJHT</span>.
+        Enter it to approve.
+      </p>
+      <AuthorizeAgentForm />
+    </section>
   );
 
-  const devicesCard = (
-    <Card
-      className="mt-6 overflow-hidden border-border rounded-xl"
-      style={{ boxShadow: "var(--shadow-1)" }}
-    >
-      <CardHeader>
-        <p className="k-eyebrow">devices</p>
-        <CardTitle className="k-h4">Authorized devices</CardTitle>
-        <CardDescription>
-          Agents you&apos;ve approved through the device flow. Revoking here
-          revokes their underlying API key.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        {devices.length === 0 ? (
-          <p className="k-body-sm text-muted-foreground px-6 pb-6">
-            No agents authorized yet. Use the form above.
+  const devicesSection = (
+    <section className="mt-8">
+      <div className="flex items-end justify-between mb-3">
+        <div>
+          <p className="k-eyebrow mb-1">devices</p>
+          <h2 className="text-base font-semibold">Authorized devices</h2>
+          <p className="k-body-sm text-muted-foreground mt-1 max-w-2xl">
+            Agents you&apos;ve approved through the device flow. Revoking here
+            revokes their underlying API key.
           </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="k-eyebrow font-medium">device</TableHead>
-                <TableHead className="k-eyebrow font-medium">
-                  approved
-                </TableHead>
-                <TableHead className="k-eyebrow font-medium">token</TableHead>
-                <TableHead className="k-eyebrow font-medium">status</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {devices.map((d) => {
-                const deviceName = parseClientName(d.clientMeta);
-                const isRevoked = d.apiKeyRevokedAt !== null;
-                return (
-                  <TableRow key={d.id} className="hover:bg-muted/50">
-                    <TableCell className="text-sm">{deviceName}</TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {d.approvedAt ? relTime(d.approvedAt) : "—"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {d.apiKeyPreview ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      {isRevoked ? (
-                        <span className="font-mono text-[11px] uppercase tracking-wide bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded px-1.5 py-0.5">
-                          revoked
-                        </span>
-                      ) : (
-                        <span className="font-mono text-[11px] uppercase tracking-wide bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded px-1.5 py-0.5">
-                          active
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {!isRevoked && d.apiKeyId && (
-                        <RevokeButton
-                          keyId={d.apiKeyId}
-                          label={d.apiKeyLabel ?? deviceName}
-                        />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+      {devices.length === 0 ? (
+        <p
+          className="k-body-sm text-muted-foreground border rounded-[var(--radius-3)] py-6 px-5"
+          style={{ borderColor: "var(--border-light)" }}
+        >
+          No agents authorized yet. Use the form above.
+        </p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>device</TableHead>
+              <TableHead style={{ width: 130 }}>approved</TableHead>
+              <TableHead style={{ width: 160 }}>token</TableHead>
+              <TableHead style={{ width: 110 }}>status</TableHead>
+              <TableHead style={{ width: 80 }} />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {devices.map((d) => {
+              const deviceName = parseClientName(d.clientMeta);
+              const isRevoked = d.apiKeyRevokedAt !== null;
+              return (
+                <TableRow key={d.id}>
+                  <TableCell className="dt-name-l">{deviceName}</TableCell>
+                  <TableCell className="dt-updated" style={{ textAlign: "left" }}>
+                    {d.approvedAt ? relTime(d.approvedAt) : "—"}
+                  </TableCell>
+                  <TableCell className="dt-owner">
+                    {d.apiKeyPreview ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`k-badge k-badge--${isRevoked ? "danger" : "success"}`}
+                    >
+                      {isRevoked ? "revoked" : "active"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {!isRevoked && d.apiKeyId && (
+                      <RevokeButton
+                        keyId={d.apiKeyId}
+                        label={d.apiKeyLabel ?? deviceName}
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+    </section>
   );
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="center">
       <div className="mb-8">
         <p className="k-eyebrow mb-2">crm · keys</p>
-        <h1 className="k-h2 mb-2">Connect your agents</h1>
-        <p className="k-body-sm text-muted-foreground max-w-2xl">
+        <h1 className="center__h">Connect your agents</h1>
+        <p className="k-body-sm text-muted-foreground max-w-2xl mt-2">
           One key per agent or device. Every action your agents take is recorded
           against the key, so the audit log tells you exactly which client did
           what.
@@ -172,107 +155,79 @@ export default async function KeysPage() {
 
       {isEmpty ? (
         <>
-          <Card
-            className="border-border rounded-xl"
-            style={{ boxShadow: "var(--shadow-1)" }}
+          <section
+            className="border rounded-[var(--radius-4)] bg-card p-6"
+            style={{ borderColor: "var(--border-light)" }}
           >
-            <CardContent className="py-10">
-              <p className="k-eyebrow mb-2">get started</p>
-              <h2 className="k-h3 mb-2">Generate your first API key</h2>
-              <p className="k-body-sm text-muted-foreground max-w-xl mb-6">
-                Name it after the agent or device that&apos;ll use it — like
-                &ldquo;Claude Desktop on MacBook&rdquo; — so the audit log stays
-                readable.
-              </p>
-              <KeyCreator embedded />
-            </CardContent>
-          </Card>
+            <p className="k-eyebrow mb-2">get started</p>
+            <h2 className="text-lg font-semibold mb-2">Generate your first API key</h2>
+            <p className="k-body-sm text-muted-foreground max-w-xl mb-6">
+              Name it after the agent or device that&apos;ll use it — like
+              &ldquo;Claude Desktop on MacBook&rdquo; — so the audit log stays
+              readable.
+            </p>
+            <KeyCreator embedded />
+          </section>
 
-          <div className="mt-6">{authorizeCard}</div>
-
-          {devicesCard}
+          {authorizeCard}
+          {devicesSection}
         </>
       ) : (
         <>
           <KeyCreator />
-
           {authorizeCard}
 
-          <Card
-            className="overflow-hidden p-0 gap-0 border-border rounded-xl"
-            style={{ boxShadow: "var(--shadow-1)" }}
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="k-eyebrow font-medium">label</TableHead>
-                  <TableHead className="k-eyebrow font-medium">type</TableHead>
-                  <TableHead className="k-eyebrow font-medium">
-                    preview
-                  </TableHead>
-                  <TableHead className="k-eyebrow font-medium">
-                    last used
-                  </TableHead>
-                  <TableHead className="k-eyebrow font-medium">
-                    status
-                  </TableHead>
-                  <TableHead className="k-eyebrow font-medium">
-                    created
-                  </TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((k) => {
-                  const isSystem = k.label === "Web Dashboard";
-                  return (
-                    <TableRow key={k.id} className="hover:bg-muted/50">
-                      <TableCell className="text-sm">{k.label}</TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            "font-mono text-[11px] uppercase tracking-wide " +
-                            (isSystem
-                              ? "bg-muted text-muted-foreground rounded px-1.5 py-0.5"
-                              : "bg-coral-50 text-coral-700 dark:bg-coral-900/30 dark:text-coral-300 rounded px-1.5 py-0.5")
-                          }
-                        >
-                          {isSystem ? "system" : "agent"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {k.tokenPreview}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {k.lastUsedAt ? relTime(k.lastUsedAt) : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {k.revokedAt ? (
-                          <span className="font-mono text-[11px] uppercase tracking-wide bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded px-1.5 py-0.5">
-                            revoked
-                          </span>
-                        ) : (
-                          <span className="font-mono text-[11px] uppercase tracking-wide bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded px-1.5 py-0.5">
-                            active
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {relTime(k.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        {!k.revokedAt && !isSystem && (
-                          <RevokeButton keyId={k.id} label={k.label} />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>label</TableHead>
+                <TableHead style={{ width: 90 }}>type</TableHead>
+                <TableHead style={{ width: 150 }}>preview</TableHead>
+                <TableHead style={{ width: 110 }}>last used</TableHead>
+                <TableHead style={{ width: 100 }}>status</TableHead>
+                <TableHead style={{ width: 110 }}>created</TableHead>
+                <TableHead style={{ width: 80 }} />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((k) => {
+                const isSystem = k.label === "Web Dashboard";
+                return (
+                  <TableRow key={k.id}>
+                    <TableCell className="dt-name-l">{k.label}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`k-badge k-badge--${isSystem ? "neutral" : "accent"}`}
+                      >
+                        {isSystem && null}
+                        {!isSystem && <span className="k-badge__dot" />}
+                        {isSystem ? "system" : "agent"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="dt-owner">{k.tokenPreview}</TableCell>
+                    <TableCell className="dt-owner">
+                      {k.lastUsedAt ? relTime(k.lastUsedAt) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`k-badge k-badge--${k.revokedAt ? "danger" : "success"}`}
+                      >
+                        {k.revokedAt ? "revoked" : "active"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="dt-owner">{relTime(k.createdAt)}</TableCell>
+                    <TableCell>
+                      {!k.revokedAt && !isSystem && (
+                        <RevokeButton keyId={k.id} label={k.label} />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
 
-          {devicesCard}
+          {devicesSection}
         </>
       )}
     </div>
