@@ -37,11 +37,17 @@ export function verifyAndParseEvent(
     // The webhooks helper is static; no secret key needed to verify a signature.
     return Stripe.webhooks.constructEvent(rawBody, signatureHeader, webhookSecret);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    // Don't surface Stripe's internal error message — its wording differs by
+    // failure mode ("No signatures found", "Unable to extract timestamps", ...)
+    // and would let a probe distinguish "wrong secret" from "no integration".
+    // We log the detail for our own debugging; the response stays generic.
+    logger.warn(
+      { err: err instanceof Error ? err.message : String(err) },
+      "stripe webhook: signature verification failed",
+    );
     throw new ApiError({
       code: "VALIDATION_FAILED",
       message: "Invalid Stripe webhook signature",
-      hint: msg,
     });
   }
 }

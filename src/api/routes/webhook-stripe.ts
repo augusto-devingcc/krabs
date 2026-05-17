@@ -22,11 +22,18 @@ webhookStripeRoute.post("/:accountId/webhook", async (c) => {
   const rawBody = await c.req.text();
   const signatureHeader = c.req.header("stripe-signature") ?? c.req.header("Stripe-Signature");
 
+  // Generic "invalid signature" error reused for every pre-verification failure
+  // (missing header, unknown accountId, inactive integration, bad signature).
+  // Keeping these indistinguishable prevents an unauthenticated caller from
+  // enumerating which accountIds have an active Stripe integration.
+  const invalidSig = new ApiError({
+    code: "VALIDATION_FAILED",
+    message: "Invalid Stripe webhook signature",
+  });
+
   if (!signatureHeader) {
-    throw new ApiError({
-      code: "VALIDATION_FAILED",
-      message: "Missing Stripe-Signature header",
-    });
+    logger.warn({ accountId }, "stripe webhook: missing signature header");
+    throw invalidSig;
   }
 
   const integration = await db
@@ -43,7 +50,8 @@ webhookStripeRoute.post("/:accountId/webhook", async (c) => {
     .then((r) => r[0]);
 
   if (!integration) {
-    return c.json({ error: "integration not found or inactive" }, 404);
+    logger.warn({ accountId }, "stripe webhook: no active integration for account");
+    throw invalidSig;
   }
 
   const whsec = decryptWebhookSecret(integration);
