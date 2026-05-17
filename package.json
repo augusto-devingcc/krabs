@@ -98,7 +98,8 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "sharp",
-      "@clerk/shared"
+      "@clerk/shared",
+      "msw"
     ]
   }
 }
