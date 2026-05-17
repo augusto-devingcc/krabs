@@ -2,7 +2,8 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { Moon, Search, Sun } from "lucide-react";
+import { useMarketingTheme } from "@/components/marketing/theme-context";
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Overview",
@@ -35,9 +36,11 @@ function resolveTitle(pathname: string): string {
   return humanize(last);
 }
 
-export function Topbar() {
+export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const pathname = usePathname();
   const title = resolveTitle(pathname);
+  const { theme, toggleTheme } = useMarketingTheme();
+  const isDark = theme === "dark";
 
   return (
     <header className="tb">
@@ -46,8 +49,8 @@ export function Topbar() {
       <button
         className="tb__search"
         type="button"
-        disabled
-        aria-label="Search (coming soon)"
+        onClick={onOpenPalette}
+        aria-label="Open command palette"
       >
         <Search size={13} aria-hidden />
         <span>Search</span>
@@ -55,6 +58,16 @@ export function Topbar() {
           <span className="k-kbd">⌘</span>
           <span className="k-kbd">K</span>
         </span>
+      </button>
+
+      <button
+        className="tb__theme"
+        type="button"
+        onClick={toggleTheme}
+        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        title={isDark ? "Light mode" : "Dark mode"}
+      >
+        {isDark ? <Sun size={14} aria-hidden /> : <Moon size={14} aria-hidden />}
       </button>
 
       <span className="tb__user">
