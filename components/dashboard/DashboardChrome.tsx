@@ -10,7 +10,13 @@ import { CommandPalette } from "@/components/dashboard/CommandPalette";
 // palette state, and the app shell (sidebar + topbar + content area).
 // The dashboard layout is a server component (it awaits getDashboardContext),
 // so all interactive shell concerns live here.
-export function DashboardChrome({ children }: { children: React.ReactNode }) {
+export function DashboardChrome({
+  children,
+  workspaceName,
+}: {
+  children: React.ReactNode;
+  workspaceName?: string;
+}) {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const open = useCallback(() => setPaletteOpen(true), []);
@@ -36,7 +42,11 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
           contexts. Without a fixed height parent, the inner `.app`/`.main`
           `overflow:hidden` rules don't have anything to clip against. */}
       <div className="app h-screen flex bg-background text-foreground">
-        <Sidebar />
+        {workspaceName !== undefined ? (
+          <Sidebar workspaceName={workspaceName} />
+        ) : (
+          <Sidebar />
+        )}
         <div className="main">
           <Topbar onOpenPalette={open} />
           {/* Page renders directly into `.main`'s flex column. Each route

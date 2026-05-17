@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   Users,
@@ -61,14 +60,10 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ workspaceName }: { workspaceName?: string } = {}) {
   const pathname = usePathname();
-  const { user } = useUser();
   const { theme } = useMarketingTheme();
-  const email = user?.primaryEmailAddress?.emailAddress ?? "";
-  const workspaceName = user?.firstName
-    ? user.firstName.toLowerCase()
-    : (email.split("@")[0] ?? "workspace");
+  const label = workspaceName ?? "workspace";
 
   // logo-mark.svg has a dark background (fits light theme); logo-mark-light.svg
   // has a light background (fits dark theme). The .sb__ws-mark CSS flips its own
@@ -85,7 +80,7 @@ export function Sidebar() {
         </div>
         <div className="sb__ws-meta">
           <div className="sb__ws-name">
-            {BRAND.name} · {workspaceName}
+            {BRAND.name} · {label}
           </div>
         </div>
         <span className="sb__ws-chev">▾</span>

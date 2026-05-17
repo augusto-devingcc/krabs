@@ -2,14 +2,23 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Clerk is the auth provider for the *hosted* SaaS surface. In self-host mode
-// (no `CLERK_SECRET_KEY` in env), we serve API + CLI only — the web dashboard
-// at `/dashboard/*` is replaced with a static `/self-host` page.
+// (no `CLERK_SECRET_KEY` in env) we still serve the dashboard at /dashboard/*
+// — it just runs against the single local-operator account that `pnpm setup`
+// created. The threat model is "my own machine", not multi-tenant SaaS.
 const CLERK_ENABLED = !!process.env.CLERK_SECRET_KEY;
 
-const isHostedOnlyRoute = createRouteMatcher(["/dashboard(.*)", "/device(.*)"]);
+const isHostedOnlyAuthRoute = createRouteMatcher(["/dashboard(.*)", "/device(.*)"]);
+// In self-host mode there's no sign-in / sign-up (one local operator) and no
+// device flow (agents share the local API key directly). Bounce those routes
+// to /dashboard so the dashboard is the single entry point.
+const isSelfHostBouncedRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/device(.*)",
+]);
 
 const clerkBackedMiddleware = clerkMiddleware(async (auth, req) => {
-  if (isHostedOnlyRoute(req)) {
+  if (isHostedOnlyAuthRoute(req)) {
     const { userId } = await auth();
     if (!userId) {
       const signInUrl = new URL("/sign-in", req.url);
@@ -20,8 +29,8 @@ const clerkBackedMiddleware = clerkMiddleware(async (auth, req) => {
 });
 
 function selfHostMiddleware(req: NextRequest) {
-  if (isHostedOnlyRoute(req)) {
-    return NextResponse.redirect(new URL("/self-host", req.url));
+  if (isSelfHostBouncedRoute(req)) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
   return NextResponse.next();
 }

@@ -620,6 +620,144 @@ export function buildOperationCatalog(): OperationDescriptor[] {
       supportsDryRun: false,
       supportsIntent: false,
     },
+    {
+      operation: "integration.stripe.status",
+      description:
+        "Returns { connected: false } until Stripe is wired. When connected: displayName, providerAccountId (acct_*), webhook health, masked secret. Read this before assuming subscription/invoice data will mirror.",
+      inputSchema: zodToJsonSchema(z.object({}).strict(), { name: "IntegrationStripeStatusInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "integration.stripe.connect",
+      description:
+        "Connect Stripe by passing a Restricted Key (rk_live_... / rk_test_...). krabs registers the webhook on Stripe automatically. The human gets the key from dashboard.stripe.com/apikeys/create — ask them; never invent one. Required scopes: Webhook Endpoints (Write); Customers/Subscriptions/Invoices/Charges/Refunds/Products/Prices (Read).",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          secretKey: z.string().min(10).max(255),
+          displayName: z.string().min(1).max(100).default("Stripe"),
+        }),
+        { name: "IntegrationStripeConnectInput" },
+      ),
+      destructive: false,
+      idempotent: false,
+      supportsDryRun: false,
+      supportsIntent: true,
+    },
+    {
+      operation: "integration.stripe.disconnect",
+      description:
+        "Detach Stripe and remove the webhook on Stripe's side. Historical synced data (subscriptions, invoices) stays in krabs.",
+      inputSchema: zodToJsonSchema(z.object({}).strict(), { name: "IntegrationStripeDisconnectInput" }),
+      destructive: true,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: true,
+    },
+    {
+      operation: "integration.resend.status",
+      description:
+        "Returns connection state, masked secret, and counts of registered vs verified sending domains. Use before calling email.send to decide whether to send or draft for manual sending.",
+      inputSchema: zodToJsonSchema(z.object({}).strict(), { name: "IntegrationResendStatusInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "integration.resend.connect",
+      description:
+        "Connect Resend by passing an API key (re_...). Ask the human; never invent one. Use Full Access so krabs can manage sending domains.",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          secretKey: z.string().min(10).max(255),
+          displayName: z.string().min(1).max(100).default("Resend"),
+        }),
+        { name: "IntegrationResendConnectInput" },
+      ),
+      destructive: false,
+      idempotent: false,
+      supportsDryRun: false,
+      supportsIntent: true,
+    },
+    {
+      operation: "integration.resend.disconnect",
+      description: "Detach Resend. Historical sending-domain rows stay.",
+      inputSchema: zodToJsonSchema(z.object({}).strict(), { name: "IntegrationResendDisconnectInput" }),
+      destructive: true,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: true,
+    },
+    {
+      operation: "email_domain.list",
+      description: "List sending domains registered with Resend on behalf of this account.",
+      inputSchema: zodToJsonSchema(z.object({}).strict(), { name: "EmailDomainListInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "email_domain.add",
+      description:
+        "Register a sending domain with Resend. Returns the DNS records (TXT SPF / CNAME DKIM / TXT DMARC) the human must publish at their registrar. Tell them exactly which records to add, then call email_domain.verify when they confirm.",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          domain: z.string().min(3).max(253),
+          region: z
+            .enum(["us-east-1", "eu-west-1", "sa-east-1", "ap-northeast-1"])
+            .optional(),
+        }),
+        { name: "EmailDomainAddInput" },
+      ),
+      destructive: false,
+      idempotent: false,
+      supportsDryRun: false,
+      supportsIntent: true,
+    },
+    {
+      operation: "email_domain.verify",
+      description:
+        "Re-check DNS for a sending domain after the human published the records. Returns updated status. DNS can take 1–60 minutes; retry with backoff if still pending.",
+      inputSchema: zodToJsonSchema(z.object({ id: z.string() }), { name: "EmailDomainVerifyInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "email_domain.remove",
+      description: "Detach a sending domain from this account and from Resend.",
+      inputSchema: zodToJsonSchema(z.object({ id: z.string() }), { name: "EmailDomainRemoveInput" }),
+      destructive: true,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: true,
+    },
+    {
+      operation: "email.send",
+      description:
+        "Send an email through the connected Resend account. `from` must be on a verified domain (check via email_domain.list). Auto-logs an interaction kind='email_out'. Returns 409 if Resend is not connected — fall back to drafting for manual send and tell the human exactly which CLI/MCP call to wire it.",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          from: z.string().min(3).max(254),
+          to: z.union([z.string(), z.array(z.string())]),
+          subject: z.string().min(1).max(998),
+          html: z.string().optional(),
+          text: z.string().optional(),
+          replyTo: z.string().optional(),
+          contactId: z.string().optional(),
+        }),
+        { name: "EmailSendInput" },
+      ),
+      destructive: false,
+      idempotent: false,
+      supportsDryRun: false,
+      supportsIntent: true,
+    },
   ]);
 }
 

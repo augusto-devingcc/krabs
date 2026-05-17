@@ -1586,6 +1586,231 @@ export function registerKrabsTools(server: McpServer, cfg: KrabsMcpConfig): void
     },
   );
 
+  // ── integrations · Stripe ─────────────────────────────────
+  server.registerTool(
+    "stripe_status",
+    {
+      title: "Stripe integration status",
+      description:
+        "Returns { connected: false } until the human wires Stripe via stripe_connect. When connected: displayName, providerAccountId (Stripe acct_*), webhook health, masked secret. Use to decide whether to call subscription/invoice operations directly or wait for the Stripe webhook to mirror data.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/integrations/stripe/status", { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "stripe_connect",
+    {
+      title: "Connect Stripe (agent-driven)",
+      description:
+        "Connect the operator's Stripe account by passing a Restricted Key. krabs registers the webhook on Stripe automatically. The human gets the key from https://dashboard.stripe.com/apikeys/create — ask them for it; never invent one. Required permissions: Webhook Endpoints (Write), Customers/Subscriptions/Invoices/Charges/Refunds/Products/Prices (Read). Returns the masked secret so subsequent runs can verify which key is wired.",
+      inputSchema: {
+        secretKey: z.string().min(10).max(255),
+        displayName: z.string().min(1).max(100).optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { secretKey: a.secretKey };
+        body.displayName = a.displayName ?? "Stripe";
+        return textResult(await callApi(cfg, "/v1/integrations/stripe", { method: "POST", body }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "stripe_disconnect",
+    {
+      title: "Disconnect Stripe",
+      description:
+        "Remove the Stripe integration and the webhook on Stripe's side. The historical sync data (subscriptions, invoices) stays in krabs.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/integrations/stripe", { method: "DELETE" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── integrations · Resend ─────────────────────────────────
+  server.registerTool(
+    "resend_status",
+    {
+      title: "Resend integration status",
+      description:
+        "Returns whether Resend is connected, the masked secret, and how many sending domains exist + how many are verified. Use to decide whether to call email_send or fall back to drafting the email for the human to send manually.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/integrations/resend/status", { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "resend_connect",
+    {
+      title: "Connect Resend (agent-driven)",
+      description:
+        "Connect Resend by passing an API key. The human gets it from https://resend.com/api-keys — ask for it; never invent one. Use Full Access so krabs can manage sending domains. Returns the masked secret.",
+      inputSchema: {
+        secretKey: z.string().min(10).max(255),
+        displayName: z.string().min(1).max(100).optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { secretKey: a.secretKey };
+        body.displayName = a.displayName ?? "Resend";
+        return textResult(await callApi(cfg, "/v1/integrations/resend", { method: "POST", body }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "resend_disconnect",
+    {
+      title: "Disconnect Resend",
+      description: "Remove the Resend integration. Historical sending-domain rows stay.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/integrations/resend", { method: "DELETE" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "resend_domain_list",
+    {
+      title: "List sending domains",
+      description:
+        "List the sending domains krabs has registered with Resend on behalf of this account. Each has status ∈ pending|verified|failed plus its DNS records.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/email-domains", { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "resend_domain_add",
+    {
+      title: "Add a sending domain",
+      description:
+        "Register a sending domain with Resend. Returns the DNS records the human needs to publish at their registrar (TXT for SPF, CNAME for DKIM, TXT for DMARC). Tell the human exactly which records to add, then call resend_domain_verify after they confirm publication.",
+      inputSchema: {
+        domain: z.string().min(3).max(253),
+        region: z
+          .enum(["us-east-1", "eu-west-1", "sa-east-1", "ap-northeast-1"])
+          .optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { domain: a.domain };
+        if (a.region) body.region = a.region;
+        return textResult(await callApi(cfg, "/v1/email-domains", { method: "POST", body }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "resend_domain_verify",
+    {
+      title: "Verify a sending domain",
+      description:
+        "Re-check DNS for a sending domain after the human has published the records. Returns the updated status. DNS propagation can take 1–60 minutes — retry with backoff if status remains pending.",
+      inputSchema: { id: z.string().regex(/^edm_[0-9A-HJKMNP-TV-Z]{26}$/) },
+    },
+    async (a) => {
+      try {
+        return textResult(
+          await callApi(cfg, `/v1/email-domains/${a.id}/verify`, { method: "POST" }),
+        );
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "resend_domain_remove",
+    {
+      title: "Remove a sending domain",
+      description: "Detach a sending domain from this account and from Resend.",
+      inputSchema: { id: z.string().regex(/^edm_[0-9A-HJKMNP-TV-Z]{26}$/) },
+    },
+    async (a) => {
+      try {
+        return textResult(
+          await callApi(cfg, `/v1/email-domains/${a.id}`, { method: "DELETE" }),
+        );
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "email_send",
+    {
+      title: "Send an email via Resend",
+      description:
+        "Send an email through the connected Resend account. `from` must be on a verified domain (call resend_domain_list to check). Auto-logs an interaction with kind='email_out' and the Resend message id in metadata. Returns 409 if Resend is not connected.",
+      inputSchema: {
+        from: z.string().min(3).max(254),
+        to: z.union([z.string(), z.array(z.string())]),
+        subject: z.string().min(1).max(998),
+        html: z.string().optional(),
+        text: z.string().optional(),
+        replyTo: z.string().optional(),
+        contactId: z.string().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = {
+          from: a.from,
+          to: a.to,
+          subject: a.subject,
+        };
+        if (a.html) body.html = a.html;
+        if (a.text) body.text = a.text;
+        if (a.replyTo) body.replyTo = a.replyTo;
+        if (a.contactId) body.contactId = a.contactId;
+        return textResult(await callApi(cfg, "/v1/email/send", { method: "POST", body }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
   server.registerTool(
     "finance_funnel",
     {

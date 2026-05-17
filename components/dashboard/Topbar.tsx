@@ -1,9 +1,20 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Moon, Search, Sun } from "lucide-react";
 import { useMarketingTheme } from "@/components/marketing/theme-context";
+
+// UserButton is loaded only when Clerk is configured. In self-host mode
+// (no NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) the Clerk SDK throws at import
+// time, so the import is gated dynamically.
+const ClerkUserButton =
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    ? dynamic(
+        () => import("@clerk/nextjs").then((m) => m.UserButton),
+        { ssr: false },
+      )
+    : null;
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Overview",
@@ -71,9 +82,13 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
       </button>
 
       <span className="tb__user">
-        <UserButton
-          appearance={{ elements: { avatarBox: "h-[22px] w-[22px]" } }}
-        />
+        {ClerkUserButton ? (
+          <ClerkUserButton
+            appearance={{ elements: { avatarBox: "h-[22px] w-[22px]" } }}
+          />
+        ) : (
+          <span className="tb__user-local" title="Self-host · local operator">●</span>
+        )}
       </span>
     </header>
   );

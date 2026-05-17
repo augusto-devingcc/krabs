@@ -6,9 +6,12 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Resolves Clerk auth, syncs/creates the account row, and provisions
-  // a "Web Dashboard" API key on first signup. Throws/redirects on auth
-  // failure — child pages can assume an authenticated context exists.
-  await getDashboardContext();
-  return <DashboardChrome>{children}</DashboardChrome>;
+  // Resolves the current operator. Hosted = Clerk session → account row.
+  // Self-host = the single local-operator account from `pnpm setup`. Either
+  // way, child pages can assume an authenticated context.
+  const { clerkName, clerkEmail } = await getDashboardContext();
+  const workspaceName = (
+    clerkName?.split(/\s+/)[0] ?? clerkEmail.split("@")[0] ?? "workspace"
+  ).toLowerCase();
+  return <DashboardChrome workspaceName={workspaceName}>{children}</DashboardChrome>;
 }
