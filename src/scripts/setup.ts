@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
@@ -51,6 +53,16 @@ async function main() {
     throw new Error(
       `DATABASE_URL points at a remote target (${url}). \`pnpm setup\` is for local single-user mode only — use a file:./ URL.`,
     );
+  }
+
+  // libSQL won't create the parent directory itself — fresh clones don't have
+  // ./data yet, so do that ourselves before opening the connection.
+  if (url.startsWith("file:")) {
+    const filePath = url.slice("file:".length).replace(/^\/+/, "");
+    const dir = path.dirname(filePath);
+    if (dir && dir !== "." && dir !== "/") {
+      mkdirSync(dir, { recursive: true });
+    }
   }
 
   const client = createClient({ url });
