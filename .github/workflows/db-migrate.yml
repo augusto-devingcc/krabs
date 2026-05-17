@@ -1,0 +1,39 @@
+name: Apply DB migrations to production
+
+# Runs after every push to main that touches src/db/migrations/.
+# Drizzle migrate is idempotent: existing rows in __drizzle_migrations are
+# skipped, only new files run. Safe to re-run.
+#
+# Requires the following repository secrets (Settings → Secrets → Actions):
+#   TURSO_DATABASE_URL    libsql://… (the production DB)
+#   TURSO_AUTH_TOKEN      bearer token with write scope
+# These are also the env vars Vercel reads at runtime, so duplicating them
+# as GH Actions secrets is the same value, copied.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/db/migrations/**'
+  workflow_dispatch:        # manual trigger from the GH UI
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: drizzle migrate
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: pnpm db:migrate
