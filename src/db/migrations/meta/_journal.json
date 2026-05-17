@@ -64,6 +64,13 @@
       "when": 1778962770508,
       "tag": "0008_soft_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1778989142590,
+      "tag": "0009_low_star_brand",
+      "breakpoints": true
     }
   ]
 }

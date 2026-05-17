@@ -21,6 +21,7 @@ const prefixes = {
   invoice: "inv",
   expense: "exp",
   integration: "intg",
+  emailDomain: "edm",
 } as const;
 
 export type EntityKind = keyof typeof prefixes;

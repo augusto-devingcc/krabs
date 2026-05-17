@@ -19,6 +19,10 @@ import { financeRoute } from "./routes/finance.js";
 import { authDeviceRoute } from "./routes/auth-device.js";
 import { integrationsStripeRoute } from "./routes/integrations-stripe.js";
 import { webhookStripeRoute } from "./routes/webhook-stripe.js";
+import { integrationsResendRoute } from "./routes/integrations-resend.js";
+import { emailDomainsRoute } from "./routes/email-domains.js";
+import { emailRoute } from "./routes/email.js";
+import { mcpRoute } from "./routes/mcp.js";
 import { errorHandler } from "./middleware/error.js";
 
 export function buildApp() {
@@ -51,7 +55,11 @@ export function buildApp() {
   // via signature, not a krabs API key.
   app.route("/v1/integrations/stripe", webhookStripeRoute);
   app.route("/v1/integrations/stripe", integrationsStripeRoute);
+  app.route("/v1/integrations/resend", integrationsResendRoute);
+  app.route("/v1/email-domains", emailDomainsRoute);
+  app.route("/v1/email", emailRoute);
   app.route("/v1/actions", actionsRoute);
+  app.route("/v1/mcp", mcpRoute);
 
   app.notFound((c) =>
     c.json(

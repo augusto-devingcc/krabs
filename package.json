@@ -72,6 +72,7 @@
     "radix-ui": "^1.4.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "resend": "^6.12.3",
     "shadcn": "^4.7.0",
     "stripe": "^22.1.1",
     "tailwind-merge": "^3.6.0",

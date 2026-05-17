@@ -509,7 +509,7 @@ export type ExpenseRow = typeof expenses.$inferSelect;
 // any non-2xx response, so the webhook handler must short-circuit on repeats.
 // ─────────────────────────────────────────────────────────────────
 
-export const integrationProviders = ["stripe"] as const;
+export const integrationProviders = ["stripe", "resend"] as const;
 export type IntegrationProvider = (typeof integrationProviders)[number];
 
 export const integrationStatuses = ["active", "disconnected", "error"] as const;
@@ -579,6 +579,39 @@ export const stripeEvents = sqliteTable(
 
 export type IntegrationRow = typeof integrations.$inferSelect;
 export type StripeEventRow = typeof stripeEvents.$inferSelect;
+
+export const emailDomainStatuses = ["pending", "verified", "failed"] as const;
+export type EmailDomainStatus = (typeof emailDomainStatuses)[number];
+
+export const emailDomains = sqliteTable(
+  "email_domains",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    integrationId: text("integration_id")
+      .notNull()
+      .references(() => integrations.id, { onDelete: "cascade" }),
+    domain: text("domain").notNull(),
+    resendDomainId: text("resend_domain_id"),
+    status: text("status").notNull().default("pending"),
+    // JSON array of { name, type, value, ttl, status } DNS records Resend wants us to add.
+    dnsRecords: text("dns_records"),
+    region: text("region"),
+    lastVerifiedAt: text("last_verified_at"),
+    lastErrorMessage: text("last_error_message"),
+    createdAt: text("created_at").notNull().default(nowDefault),
+    updatedAt: text("updated_at").notNull().default(nowDefault),
+  },
+  (t) => ({
+    accountIdx: index("email_domains_account_idx").on(t.accountId),
+    integrationIdx: index("email_domains_integration_idx").on(t.integrationId),
+    accountDomainIdx: uniqueIndex("email_domains_account_domain_idx").on(t.accountId, t.domain),
+  }),
+);
+
+export type EmailDomainRow = typeof emailDomains.$inferSelect;
 
 export const deviceAuthorizationStatuses = ["pending", "approved", "denied", "expired"] as const;
 export type DeviceAuthorizationStatus = (typeof deviceAuthorizationStatuses)[number];

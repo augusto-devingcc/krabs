@@ -1,161 +1,275 @@
 import { BRAND } from "@/lib/brand.js";
 
-type Bullet = { kind: "shipped" | "fixed" | "broke"; text: string };
+type GitHubRelease = {
+  id: number;
+  tag_name: string;
+  name: string | null;
+  body: string | null;
+  published_at: string | null;
+  html_url: string;
+  draft: boolean;
+  prerelease: boolean;
+};
+
+type Bullet = { kind: "shipped" | "fixed" | "broke" | "docs" | "chore"; text: string };
 type Entry = {
   version: string;
   date: string;
   title: string;
+  body: string;
   bullets: Bullet[];
+  url: string;
+  prerelease: boolean;
 };
 
-const ENTRIES: Entry[] = [
-  {
-    version: "v0.4.3",
-    date: "2026-05-12",
-    title: "Idempotency keys now persist 30 days.",
-    bullets: [
-      { kind: "shipped", text: "Idempotency-Key header honored on all 32 mutation endpoints" },
-      { kind: "shipped", text: "30-day window keyed by (account_id, key) tuple" },
-      { kind: "fixed", text: "dry-run plans no longer leaked into the audit log" },
-    ],
-  },
-  {
-    version: "v0.4.2",
-    date: "2026-04-28",
-    title: "Undo tokens get a longer leash.",
-    bullets: [
-      { kind: "shipped", text: "undo window extended from 24h to 72h on deal.delete and contact.delete" },
-      { kind: "shipped", text: "undo.list returns expiring tokens, sorted by time-to-live" },
-      { kind: "broke", text: "removed undefined behavior of double-undo (now returns 409, was 200)" },
-    ],
-  },
-  {
-    version: "v0.4.0",
-    date: "2026-04-09",
-    title: "MCP transport hits parity with HTTP.",
-    bullets: [
-      { kind: "shipped", text: "all 46 v1 operations exposed as MCP tools via @krabs/mcp@0.4" },
-      { kind: "shipped", text: "tool descriptions sourced from /v1/schema — single source of truth" },
-      { kind: "fixed", text: "task.assign over MCP no longer dropped due dates in non-UTC zones" },
-      { kind: "fixed", text: "note.create truncating bodies > 8 KiB instead of returning 413" },
-    ],
-  },
-  {
-    version: "v0.3.7",
-    date: "2026-03-22",
-    title: "Audit log gains structured diffs.",
-    bullets: [
-      { kind: "shipped", text: "audit.list now returns RFC 6902 JSON Patch deltas per mutation" },
-      { kind: "shipped", text: "prompt provenance stored alongside MCP-originated writes" },
-      { kind: "broke", text: "audit row schema changed: `payload` renamed to `after`, added `before` and `patch`" },
-    ],
-  },
-  {
-    version: "v0.3.4",
-    date: "2026-02-14",
-    title: "CLI release channel goes public.",
-    bullets: [
-      { kind: "shipped", text: "brew install krabs and curl -sSf releases.krabs.dev/install.sh" },
-      { kind: "shipped", text: "krabs login flow with device-code OAuth, no copy-pasted tokens" },
-      { kind: "fixed", text: "contact.merge swallowing the loser's tags instead of unioning them" },
-    ],
-  },
-];
+const REPO = "augusto-devingcc/krabs";
 
 const bulletColor: Record<Bullet["kind"], string> = {
-  shipped: "var(--accent-600, #E04A1F)",
+  shipped: "var(--accent-600)",
   fixed: "var(--fg-2)",
-  broke: "var(--danger-500, #DC2626)",
+  broke: "var(--danger-500)",
+  docs: "var(--fg-3)",
+  chore: "var(--fg-3)",
 };
 
-export default function ChangelogPage() {
+// Cache GitHub release fetches at the edge for 10 minutes — releases don't
+// change often and we don't want to spam the GitHub API or hit rate limits.
+export const revalidate = 600;
+
+async function fetchReleases(): Promise<Entry[]> {
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO}/releases?per_page=20`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...(process.env.GITHUB_TOKEN
+          ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
+          : {}),
+      },
+      next: { revalidate: 600 },
+    },
+  );
+  if (!res.ok) return [];
+  const releases: GitHubRelease[] = await res.json();
+  return releases
+    .filter((r) => !r.draft)
+    .map((r) => parseRelease(r));
+}
+
+const KNOWN_KINDS = new Set<Bullet["kind"]>([
+  "shipped",
+  "fixed",
+  "broke",
+  "docs",
+  "chore",
+]);
+
+function parseRelease(r: GitHubRelease): Entry {
+  const body = r.body ?? "";
+  const lines = body.split(/\r?\n/);
+
+  const bullets: Bullet[] = [];
+  let titleFromBody = "";
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    // Title: prefer the first non-bullet/non-heading sentence in the body
+    if (!titleFromBody && !line.startsWith("-") && !line.startsWith("*") && !line.startsWith("#")) {
+      titleFromBody = line.replace(/^\*+|\*+$/g, "").trim();
+      continue;
+    }
+
+    // Bullets matching "- shipped:" / "* fixed:" / "- broke:" / etc.
+    const m = line.match(/^[-*]\s*(\w+)\s*:\s*(.+)$/);
+    if (m && m[1] && m[2]) {
+      const kind = m[1].toLowerCase() as Bullet["kind"];
+      if (KNOWN_KINDS.has(kind)) {
+        bullets.push({ kind, text: m[2].trim() });
+      }
+    }
+  }
+
+  return {
+    version: r.tag_name,
+    date: (r.published_at ?? "").slice(0, 10),
+    title: r.name ?? titleFromBody ?? r.tag_name,
+    body,
+    bullets,
+    url: r.html_url,
+    prerelease: r.prerelease,
+  };
+}
+
+export default async function ChangelogPage() {
+  const entries = await fetchReleases();
+
   return (
     <main style={{ padding: "80px 32px 120px", maxWidth: 880, margin: "0 auto" }}>
-      <header style={{ marginBottom: 56 }}>
+      <header style={{ marginBottom: 40 }}>
         <div className="mk-eyebrow">changelog</div>
         <h1 className="mk-h2">What changed in {BRAND.name}.</h1>
-        <p className="mk-sub">Versioned, monospace, no fluff.</p>
+        <p className="mk-sub">
+          Versioned, monospace, no fluff. Synced from{" "}
+          <a
+            href={`https://github.com/${REPO}/releases`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--fg-2)", textDecoration: "underline" }}
+          >
+            GitHub Releases
+          </a>
+          .
+        </p>
       </header>
 
-      <div>
-        {ENTRIES.map((entry, idx) => (
-          <article
-            key={entry.version}
-            style={{
-              paddingTop: idx === 0 ? 0 : 40,
-              paddingBottom: 40,
-              borderBottom: `1px solid var(--border-light)`,
-            }}
-          >
-            <div
+      {entries.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div>
+          {entries.map((entry, idx) => (
+            <ReleaseEntry entry={entry} key={entry.version} first={idx === 0} />
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div
+      style={{
+        padding: "32px 28px",
+        border: "1px solid var(--border-light)",
+        borderRadius: "var(--radius-4)",
+        color: "var(--fg-2)",
+        fontSize: 14,
+        lineHeight: 1.6,
+      }}
+    >
+      No releases yet. Follow{" "}
+      <a
+        href={`https://github.com/${REPO}/releases`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: "var(--fg)", textDecoration: "underline" }}
+      >
+        github.com/{REPO}/releases
+      </a>{" "}
+      to know when the first one drops.
+    </div>
+  );
+}
+
+function ReleaseEntry({ entry, first }: { entry: Entry; first: boolean }) {
+  return (
+    <article
+      style={{
+        paddingTop: first ? 0 : 40,
+        paddingBottom: 40,
+        borderBottom: "1px solid var(--border-light)",
+      }}
+    >
+      <div
+        className="k-mono"
+        style={{
+          color: "var(--fg-3)",
+          fontSize: 12.5,
+          marginBottom: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <a
+          href={entry.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "var(--fg-2)", textDecoration: "none" }}
+        >
+          {entry.version}
+        </a>
+        {entry.prerelease && (
+          <>
+            <span style={{ opacity: 0.5 }}>·</span>
+            <span style={{ color: "var(--warning-600)" }}>pre-release</span>
+          </>
+        )}
+        {entry.date && (
+          <>
+            <span style={{ opacity: 0.5 }}>·</span>
+            <span>{entry.date}</span>
+          </>
+        )}
+      </div>
+
+      <h2
+        className="k-h3"
+        style={{
+          margin: "0 0 18px",
+          color: "var(--fg)",
+          fontSize: 20,
+          lineHeight: 1.35,
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {entry.title}
+      </h2>
+
+      {entry.bullets.length > 0 ? (
+        <ul
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {entry.bullets.map((b, i) => (
+            <li
+              key={i}
               className="k-mono"
               style={{
-                color: "var(--fg-3)",
-                fontSize: 12.5,
-                marginBottom: 10,
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: "var(--fg-2)",
                 display: "flex",
-                alignItems: "center",
                 gap: 10,
+                alignItems: "baseline",
               }}
             >
-              <span style={{ color: "var(--fg-2)" }}>{entry.version}</span>
-              <span style={{ opacity: 0.5 }}>·</span>
-              <span>{entry.date}</span>
-            </div>
-
-            <h2
-              className="k-h3"
-              style={{
-                margin: "0 0 18px",
-                color: "var(--fg)",
-                fontSize: 20,
-                lineHeight: 1.35,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {entry.title}
-            </h2>
-
-            <ul
-              style={{
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-              }}
-            >
-              {entry.bullets.map((b, i) => (
-                <li
-                  key={i}
-                  className="k-mono"
-                  style={{
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                    color: "var(--fg-2)",
-                    display: "flex",
-                    gap: 10,
-                    alignItems: "baseline",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: bulletColor[b.kind],
-                      fontWeight: 500,
-                      minWidth: 64,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {b.kind}:
-                  </span>
-                  <span>{b.text}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </div>
-    </main>
+              <span
+                style={{
+                  color: bulletColor[b.kind],
+                  fontWeight: 500,
+                  minWidth: 64,
+                  flexShrink: 0,
+                }}
+              >
+                {b.kind}:
+              </span>
+              <span>{b.text}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p
+          style={{
+            margin: 0,
+            color: "var(--fg-2)",
+            fontSize: 14,
+            lineHeight: 1.6,
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {entry.body || "No release notes yet."}
+        </p>
+      )}
+    </article>
   );
 }
