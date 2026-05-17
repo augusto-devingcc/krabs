@@ -3,10 +3,12 @@ import { DocsToc } from "@/components/docs/DocsToc";
 import { Callout } from "@/components/docs/Callout";
 
 const TOC = [
-  { id: "from-source", label: "From source" },
-  { id: "what-you-get", label: "What you get" },
-  { id: "put-on-path", label: "Put the CLI on PATH" },
-  { id: "homebrew-npm", label: "Homebrew · npm" },
+  { id: "one-liner", label: "One-liner install" },
+  { id: "what-it-does", label: "What the script does" },
+  { id: "manual", label: "Manual install (no script)" },
+  { id: "npx-github", label: "Without cloning — npx github:" },
+  { id: "prebuilt-binary", label: "Prebuilt binary (GitHub Releases)" },
+  { id: "what-you-get", label: "What you get on disk" },
   { id: "uninstall", label: "Uninstall" },
   { id: "next-steps", label: "Next steps" },
 ];
@@ -19,106 +21,167 @@ export default function InstallPage() {
           <div className="dc__breadcrumb">docs / install</div>
           <h1 className="dc__h1">Install</h1>
           <p className="dc__lede">
-            krabs ships <code>v0.5.x</code> from source. Clone the repo, run setup, and you have a
-            local API + CLI bound to a SQLite file in five minutes. Homebrew + npm distribution is
-            wired but not yet published — see below.
+            krabs is open source and self-hostable. You can install it without
+            ever touching npm — clone the repo, run the kickoff, or use the
+            one-line installer below. Pick whichever you prefer; they all land
+            at the same final state.
           </p>
 
-          <h2 className="dc__h2" id="from-source">
-            From source
+          <h2 className="dc__h2" id="one-liner">
+            One-liner install (recommended)
           </h2>
-          <p>Four commands and you have an API + CLI on localhost:</p>
-          <pre className="dc__code">{`git clone https://github.com/augusto-devingcc/krabs.git
-cd krabs
-pnpm install
-pnpm setup`}</pre>
+          <pre className="dc__code">{`curl -fsSL https://krabs.dev/install.sh | sh`}</pre>
           <p>
-            <code>pnpm setup</code> creates a local SQLite database under <code>./data/</code>,
-            runs all migrations, mints an API key for you, and writes it to{" "}
-            <code>~/.config/krabs/config.json</code>. The CLI is now authenticated against
-            your localhost instance.
-          </p>
-          <p>Start the API server in another terminal:</p>
-          <pre className="dc__code">{`pnpm dev:api`}</pre>
-          <p>Verify everything by listing the contract:</p>
-          <pre className="dc__code">{`./cli/dist/index.js schema describe
-# or after pnpm build:cli, just: krabs schema describe`}</pre>
-
-          <Callout tone="info" title="why source-only today">
-            We&apos;ll cut <code>krabs-cli</code> on npm and a Homebrew tap once the contract has been
-            stable for a release cycle. Source install is the same flow under the hood and stays
-            useful for self-hosters forever — it is not a workaround.
-          </Callout>
-
-          <h2 className="dc__h2" id="what-you-get">
-            What you get
-          </h2>
-          <ul>
-            <li>
-              <code>./cli/dist/index.js</code> — the krabs CLI, a single ESM file (~66 KB)
-            </li>
-            <li>
-              <code>~/.config/krabs/config.json</code> — your API URL + bearer token
-            </li>
-            <li>
-              <code>./data/local.db</code> — local SQLite, your entire krabs state
-            </li>
-            <li>
-              An accounts row + an api_keys row, both visible if you query the DB directly
-            </li>
-          </ul>
-
-          <h2 className="dc__h2" id="put-on-path">
-            Put the CLI on PATH
-          </h2>
-          <p>
-            To call the CLI as <code>krabs</code> from anywhere, symlink the built binary into a
-            directory on your <code>PATH</code>:
-          </p>
-          <pre className="dc__code">{`pnpm build:cli
-ln -s "$PWD/cli/dist/index.js" /usr/local/bin/krabs
-krabs --version`}</pre>
-
-          <h2 className="dc__h2" id="homebrew-npm">
-            Homebrew · npm
-          </h2>
-          <p>
-            A Homebrew formula lives at <code>Formula/krabs.rb</code> in the repo and the CLI
-            workspace publishes as <code>krabs-cli</code> on npm. Both paths are wired but
-            unpublished — once we ship them, these commands work:
-          </p>
-          <pre className="dc__code">{`# Homebrew (planned)
-brew install augusto-devingcc/krabs/krabs
-
-# npm (planned)
-npm install -g krabs-cli
-
-# Run without installing (planned)
-pnpm dlx krabs-cli auth login`}</pre>
-          <p>
-            Track readiness on the{" "}
+            Requires <code>node ≥ 22</code> and <code>git</code> on your PATH.
+            <code>pnpm</code> gets enabled via{" "}
             <a
-              href="https://github.com/augusto-devingcc/krabs/milestones"
+              href="https://nodejs.org/api/corepack.html"
               target="_blank"
               rel="noopener noreferrer"
             >
-              GitHub milestones
-            </a>
-            .
+              corepack
+            </a>{" "}
+            if you don&apos;t have it.
           </p>
+          <p>
+            Override the install directory with{" "}
+            <code>KRABS_DIR=/where/to/install</code> (default{" "}
+            <code>$HOME/krabs</code>) or the branch with{" "}
+            <code>KRABS_BRANCH=...</code>.
+          </p>
+          <Callout tone="info" title="not on npm — on purpose">
+            We deliberately ship krabs without an npm package. The CLI is a
+            single 79 KB ESM file that lives in the cloned repo; the installer
+            symlinks it onto your PATH. No npm registry account, no Homebrew
+            tap, no global state outside <code>~/.config/krabs/config.json</code>.
+          </Callout>
+
+          <h2 className="dc__h2" id="what-it-does">
+            What the script does
+          </h2>
+          <ol>
+            <li>Checks <code>node ≥ 22</code> and <code>git</code></li>
+            <li>Enables <code>pnpm</code> via <code>corepack</code> if missing</li>
+            <li>
+              <code>git clone</code> into <code>$HOME/krabs</code> (or{" "}
+              <code>$KRABS_DIR</code>)
+            </li>
+            <li>
+              <code>pnpm install</code> (production + dev deps)
+            </li>
+            <li>
+              Copies <code>.env.example</code> to <code>.env</code> if missing
+            </li>
+            <li>
+              <code>pnpm kickoff</code> — builds the CLI + MCP server, runs all
+              migrations, mints an API key, saves it to{" "}
+              <code>~/.config/krabs/config.json</code>, and prints the MCP
+              config snippet for Claude Desktop / Cursor
+            </li>
+            <li>
+              Symlinks <code>dist/cli/main.mjs</code> to the first writable
+              directory on your PATH (<code>~/.local/bin</code> →{" "}
+              <code>/usr/local/bin</code>) as <code>krabs</code>
+            </li>
+          </ol>
+
+          <h2 className="dc__h2" id="manual">
+            Manual install (no script)
+          </h2>
+          <p>If you&apos;d rather run every step yourself:</p>
+          <pre className="dc__code">{`git clone https://github.com/augusto-devingcc/krabs.git
+cd krabs
+cp .env.example .env
+pnpm install
+pnpm kickoff           # builds CLI + MCP, mints key, prints MCP config
+ln -s "$PWD/dist/cli/main.mjs" /usr/local/bin/krabs   # optional: put 'krabs' on PATH`}</pre>
+          <p>Then start the API in another terminal:</p>
+          <pre className="dc__code">{`pnpm dev:api`}</pre>
+
+          <h2 className="dc__h2" id="npx-github">
+            Without cloning — <code>npx github:</code>
+          </h2>
+          <p>
+            One-shot invocations without any persistent install (slow on first
+            run because npx clones + installs each time, but useful for CI or
+            scripts):
+          </p>
+          <pre className="dc__code">{`npx -y github:augusto-devingcc/krabs schema describe
+npx -y github:augusto-devingcc/krabs account business-profile get`}</pre>
+          <p>
+            The root <code>package.json</code> declares{" "}
+            <code>bin.krabs = ./dist/cli/main.mjs</code>, so npx finds the binary
+            after the clone. This path doesn&apos;t install anything globally — it
+            re-clones to a temp dir each invocation.
+          </p>
+
+          <h2 className="dc__h2" id="prebuilt-binary">
+            Prebuilt binary (GitHub Releases)
+          </h2>
+          <p>
+            Every tagged release attaches a prebuilt <code>krabs.mjs</code> to
+            its{" "}
+            <a
+              href="https://github.com/augusto-devingcc/krabs/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub Releases
+            </a>{" "}
+            page. If you only want the CLI (no dashboard, no MCP server, no
+            local DB), grab it directly:
+          </p>
+          <pre className="dc__code">{`curl -fsSL https://github.com/augusto-devingcc/krabs/releases/latest/download/krabs.mjs \\
+  -o /usr/local/bin/krabs
+chmod +x /usr/local/bin/krabs
+krabs --version`}</pre>
+          <p>
+            You&apos;ll still need a krabs API to talk to (either the hosted{" "}
+            <code>api.krabs.dev</code> via <code>krabs auth login</code>, or a
+            self-hosted instance — see the manual flow above).
+          </p>
+
+          <h2 className="dc__h2" id="what-you-get">
+            What you get on disk
+          </h2>
+          <ul>
+            <li>
+              <code>~/krabs/</code> — the cloned repo (configurable via{" "}
+              <code>$KRABS_DIR</code>)
+            </li>
+            <li>
+              <code>~/krabs/dist/cli/main.mjs</code> — the krabs CLI, a single
+              ESM file (~80 KB)
+            </li>
+            <li>
+              <code>~/krabs/dist/mcp/server.mjs</code> — the MCP server (the
+              MCP config snippet points at this path)
+            </li>
+            <li>
+              <code>~/.config/krabs/config.json</code> — your API URL + bearer
+              token
+            </li>
+            <li>
+              <code>~/krabs/data/local.db</code> — local SQLite, your entire
+              krabs state
+            </li>
+            <li>
+              <code>/usr/local/bin/krabs</code> (or{" "}
+              <code>~/.local/bin/krabs</code>) — symlink to{" "}
+              <code>dist/cli/main.mjs</code> so the CLI is on PATH
+            </li>
+          </ul>
 
           <h2 className="dc__h2" id="uninstall">
             Uninstall
           </h2>
-          <p>Delete the repo and wipe the local config + data:</p>
-          <pre className="dc__code">{`rm -rf ~/path/to/krabs
+          <pre className="dc__code">{`rm -rf ~/krabs
 rm -rf ~/.config/krabs
-# remove the symlink if you created one:
-rm -f /usr/local/bin/krabs`}</pre>
+rm -f /usr/local/bin/krabs   # or wherever the installer put it`}</pre>
           <p>
-            Tokens live only on your disk. If you also created keys against the hosted{" "}
+            All state is local. If you also created API keys against the hosted{" "}
             <code>api.krabs.dev</code>, revoke them from the{" "}
-            <Link href="/dashboard/keys">dashboard</Link> before uninstalling.
+            <Link href="/dashboard/keys">dashboard</Link> before removing.
           </p>
 
           <h2 className="dc__h2" id="next-steps">
@@ -126,14 +189,20 @@ rm -f /usr/local/bin/krabs`}</pre>
           </h2>
           <ul>
             <li>
-              <Link href="/docs/quickstart">Quickstart →</Link> first call, three transports.
+              <Link href="/docs/quickstart">Quickstart →</Link> first call,
+              three transports.
             </li>
             <li>
-              <Link href="/docs/auth">Auth & tokens →</Link> how to mint, rotate, revoke.
+              <Link href="/docs/skill">Agent skill →</Link> the document your
+              agent reads to bootstrap itself.
             </li>
             <li>
-              <Link href="/docs/self-hosting">Self-hosting →</Link> running krabs entirely on your
-              own infrastructure (no Clerk, no Turso).
+              <Link href="/docs/finance">Finance · ROAS · CAC →</Link> how the
+              agent ingests ad spend and reports funnel metrics.
+            </li>
+            <li>
+              <Link href="/docs/self-hosting">Self-hosting →</Link> running
+              krabs entirely on your own infrastructure.
             </li>
           </ul>
 
@@ -145,7 +214,9 @@ rm -f /usr/local/bin/krabs`}</pre>
             >
               Edit this page on GitHub →
             </a>
-            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-17 · v0.5.0</span>
+            <span style={{ color: "var(--fg-3)" }}>
+              last updated 2026-05-17 · v0.5.0
+            </span>
           </div>
         </article>
       </main>

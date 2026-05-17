@@ -1,32 +1,58 @@
 name: Release CLI
 
+# Cuts a GitHub Release with the prebuilt CLI binary attached as krabs.mjs.
+# No npm publish: distribution is via curl from the Release URL or via
+# `pnpm kickoff` (git clone). See public/install.sh for the one-liner.
+#
+# Trigger by pushing a tag matching v*  (e.g. `gh release create v0.5.1 --generate-notes`).
+
 on:
   push:
     tags:
-      - 'cli-v*'
+      - 'v*'
+
+permissions:
+  contents: write  # gh release upload needs write to releases
 
 jobs:
-  publish:
+  build-and-attach:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write   # for npm provenance
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
-      - run: pnpm install --frozen-lockfile
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
       - name: Build CLI
-        working-directory: ./cli
+        run: pnpm build:cli
+
+      - name: Stage release asset
         run: |
-          pnpm install --no-frozen-lockfile
-          ./node_modules/.bin/tsup
-      - name: Publish to npm
-        working-directory: ./cli
-        run: npm publish --provenance --access public
+          set -eu
+          test -f dist/cli/main.mjs
+          mkdir -p release
+          cp dist/cli/main.mjs release/krabs.mjs
+          chmod +x release/krabs.mjs
+          ls -la release/
+
+      - name: Ensure release exists, then upload binary
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TAG" \
+              --generate-notes
+          fi
+          gh release upload "$TAG" release/krabs.mjs \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber

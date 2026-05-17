@@ -74,34 +74,54 @@ flowchart LR
     class clients,core edge;
 ```
 
-## Quickstart (hosted)
+## Install in one line (self-host, open source)
 
 ```bash
-# Install from source. Homebrew + npm distribution are wired but unpublished — see docs/install.
-git clone https://github.com/augusto-devingcc/krabs.git
-cd krabs && pnpm install
-./cli/dist/index.js auth login --api-url https://api.krabs.dev
+curl -fsSL https://krabs.dev/install.sh | sh
 ```
 
-The `auth login` command runs the OAuth 2.0 device flow: opens a browser at `krabs.dev/device`, you approve, the CLI receives its token. Get a free tier at [krabs.dev/sign-up](https://krabs.dev/sign-up) — 500 ops/month forever, no credit card.
+That's the whole install. The script checks for Node.js 22+, enables `pnpm` via corepack if needed, clones the repo into `~/krabs`, runs `pnpm install`, runs `pnpm kickoff`, and symlinks the `krabs` binary onto your PATH. When it finishes you'll have:
 
-## Quickstart (self-hosted, zero-friction)
+- A local SQLite database with all 11 migrations applied
+- An API key minted and saved to `~/.config/krabs/config.json`
+- A printed MCP config snippet ready to paste into Claude Desktop / Cursor
+- The `krabs` CLI on your PATH
+
+Then in another terminal:
 
 ```bash
-git clone https://github.com/augusto-devingcc/krabs.git
-cd krabs
-pnpm install
-cp .env.example .env
-pnpm kickoff          # builds the CLI + MCP server, mints a key, prints an
-                      # MCP config snippet you paste straight into Claude/Cursor
-pnpm dev:api          # starts the Hono API on :3000 (in another terminal)
+cd ~/krabs && pnpm dev:api
 ```
 
-That's it. Paste the printed MCP block into your `claude_desktop_config.json` or Cursor settings, restart your agent host, then tell your agent:
+And tell your agent (Claude Desktop, Cursor, Claude Code) literally this one sentence:
 
 > Read https://krabs.dev/skill.md and run the kickoff.
 
 The agent fetches the skill, sees `business_profile` is null, runs the kickoff conversation (revenue model · cadence · ad channels · contract size), and persists your answers via `businessProfile.set`. No training docs to copy-paste.
+
+> No npm publish required. No Homebrew tap required. The CLI lives in the cloned repo at `dist/cli/main.mjs` and gets symlinked onto your PATH automatically. See [`docs/install`](https://krabs.dev/docs/install) for alternative install paths (git clone manual, `npx github:augusto-devingcc/krabs`, prebuilt binary from GitHub Releases).
+
+## Quickstart (hosted SaaS)
+
+```bash
+curl -fsSL https://krabs.dev/install.sh | sh   # gives you the CLI
+krabs auth login --api-url https://api.krabs.dev
+```
+
+The `auth login` command runs the OAuth 2.0 device flow: opens a browser at `krabs.dev/device`, you approve, the CLI receives its token. Get a free tier at [krabs.dev/sign-up](https://krabs.dev/sign-up) — 500 ops/month forever, no credit card.
+
+## Self-host quickstart — manual (no installer script)
+
+If you prefer to read every step yourself, the installer is doing this:
+
+```bash
+git clone https://github.com/augusto-devingcc/krabs.git
+cd krabs
+cp .env.example .env
+pnpm install
+pnpm kickoff          # builds CLI + MCP server, mints a local key, prints MCP config
+pnpm dev:api          # starts the Hono API on :3000 (in another terminal)
+```
 
 In another terminal:
 ```bash
