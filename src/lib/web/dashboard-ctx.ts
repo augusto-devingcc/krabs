@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { resolveAccountForClerkUser, type ResolvedAccount } from "../../domain/clerk-sync.js";
 import { isSelfHostMode, resolveSelfHostAccount } from "./self-host.js";
 
@@ -12,6 +13,13 @@ import { isSelfHostMode, resolveSelfHostAccount } from "./self-host.js";
  * Two modes:
  *   - Hosted (CLERK_SECRET_KEY present): Clerk session → account row
  *   - Self-host (no CLERK_SECRET_KEY): single local operator, no auth
+ *
+ * The Clerk imports are static (not dynamic) because Next.js's RSC bundler
+ * needs to see them at build time — dynamic-importing a server-only module
+ * inside an RSC tripped production server-component renders with a generic
+ * "An error occurred in the Server Components render" digest. Importing
+ * statically is safe even in self-host mode: we only ever *call* auth() /
+ * currentUser() inside the hosted branch below.
  */
 export async function getDashboardContext(): Promise<{
   ctx: { accountId: string; apiKeyId: string };
@@ -30,11 +38,6 @@ export async function getDashboardContext(): Promise<{
       clerkName: account.name,
     };
   }
-
-  // Hosted: import Clerk lazily so self-host builds don't pay for it at
-  // module-eval time and so a missing CLERK_SECRET_KEY in dev doesn't blow
-  // up before we get the chance to fall through to the self-host branch.
-  const { auth, currentUser } = await import("@clerk/nextjs/server");
 
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
