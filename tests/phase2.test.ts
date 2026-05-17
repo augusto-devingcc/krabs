@@ -257,7 +257,7 @@ describe("api_key lifecycle", () => {
       { "X-Agent-Intent": "provision a new MCP client" },
     );
     expect(res.status).toBe(201);
-    expect(res.body.data.token).toMatch(/^crm_live_/);
+    expect(res.body.data.token).toMatch(/^krabs_sk_/);
     expect(res.body.data.apiKey.label).toBe("Second agent");
     createdKeyId = res.body.data.apiKey.id;
     createdToken = res.body.data.token;

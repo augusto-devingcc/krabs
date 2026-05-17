@@ -45,7 +45,7 @@ describe("GET /v1/health", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({
-      data: { ok: true, service: "socrm-api" },
+      data: { ok: true, service: "krabs-api" },
       _schema_version: "1",
     });
   });
