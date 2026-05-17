@@ -2,7 +2,7 @@
 # krabs.dev — one-line installer for self-host (open source).
 #
 #   curl -fsSL https://krabs.dev/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/augusto-devingcc/krabs/main/scripts/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/augusto-devingcc/krabs/main/public/install.sh | sh
 #
 # What it does
 #   1. Checks Node.js >= 22, enables pnpm via corepack if missing
