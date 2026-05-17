@@ -1,6 +1,6 @@
 {
   "name": "krabs",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "private": true,
   "description": "krabs.dev — a CRM designed to be operated by AI agents. Reachable over MCP, CLI, or HTTP. Every mutation is idempotent, dry-runnable, and reversible.",
   "license": "MIT",
