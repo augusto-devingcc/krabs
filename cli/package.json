@@ -1,10 +1,10 @@
 {
   "name": "krabs-cli",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "Command-line interface for krabs.dev — a CRM for AI agents.",
   "type": "module",
   "bin": { "krabs": "./dist/index.js" },
-  "files": ["dist", "README.md"],
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
