@@ -29,7 +29,9 @@ jobs:
       - name: Tests
         run: pnpm test
       - name: Build
-        run: pnpm build
+        run: |
+          mkdir -p ./data
+          pnpm build
         env:
           # Stub Clerk vars so the Next.js build doesn't fail when CLERK_* is empty.
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_stub
