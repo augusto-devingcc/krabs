@@ -2,10 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { connectStripeAction } from "./actions";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function ConnectStripeForm() {
   const [pending, startTransition] = useTransition();
@@ -20,92 +16,93 @@ export function ConnectStripeForm() {
   }
 
   return (
-    <form action={onSubmit} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="stripe-display-name" className="k-eyebrow">
-          display name <span className="text-muted-foreground normal-case">(optional)</span>
-        </Label>
-        <Input
-          id="stripe-display-name"
-          name="displayName"
-          placeholder="Acme Stripe"
-          autoComplete="off"
-        />
-        <p className="text-xs text-muted-foreground">
-          Shown in this dashboard so you can tell accounts apart.
-        </p>
+    <form action={onSubmit} className="st-form">
+      <div className="st-row">
+        <div>
+          <label htmlFor="stripe-display-name" className="st-row__lbl">
+            display name <span className="st-row__hint--inline">(optional)</span>
+          </label>
+          <div className="st-row__hint">Shown in this dashboard so you can tell accounts apart.</div>
+        </div>
+        <div className="st-row__v">
+          <label className="st-input">
+            <input
+              id="stripe-display-name"
+              name="displayName"
+              placeholder="Acme Stripe"
+              autoComplete="off"
+            />
+          </label>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="stripe-secret" className="k-eyebrow">
-          restricted API key
-        </Label>
-        <Input
-          id="stripe-secret"
-          name="secretKey"
-          type="password"
-          placeholder="rk_live_..."
-          required
-          autoComplete="off"
-          spellCheck={false}
-          className="font-mono"
-        />
-        <p className="text-xs text-muted-foreground">
-          Paste a Restricted Key from your Stripe Dashboard. krabs registers the
-          webhook in your Stripe automatically.
-        </p>
-
-        <details className="mt-2 text-xs text-muted-foreground group">
-          <summary className="cursor-pointer k-eyebrow hover:text-foreground select-none">
-            required permissions
-          </summary>
-          <ul className="mt-3 pl-1 space-y-1.5 list-none">
-            <PermRow scope="Webhook Endpoints" level="Write" />
-            <PermRow scope="Customers" level="Read" />
-            <PermRow scope="Subscriptions" level="Read" />
-            <PermRow scope="Invoices" level="Read" />
-            <PermRow scope="Charges" level="Read" />
-            <PermRow scope="Refunds" level="Read" />
-            <PermRow scope="Products" level="Read" />
-            <PermRow scope="Prices" level="Read" />
-          </ul>
-        </details>
-
-        <details className="mt-1 text-xs text-muted-foreground group">
-          <summary className="cursor-pointer k-eyebrow hover:text-foreground select-none">
-            how to create a restricted key
-          </summary>
-          <ol className="mt-3 pl-5 space-y-2 list-decimal">
-            <li>
-              In your Stripe Dashboard, go to{" "}
-              <a
-                href="https://dashboard.stripe.com/apikeys/create"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="underline hover:text-foreground"
-              >
-                Developers &rarr; API keys &rarr; Create restricted key
-              </a>
-              .
-            </li>
-            <li>Name it &ldquo;krabs.dev&rdquo; so it&apos;s easy to revoke later.</li>
-            <li>Enable each permission listed above at the level shown.</li>
-            <li>
-              Click <span className="font-mono">Create key</span> and copy the{" "}
-              <span className="font-mono">rk_live_...</span> value.
-            </li>
-            <li>Paste it above and connect.</li>
-          </ol>
-        </details>
+      <div className="st-row">
+        <div>
+          <label htmlFor="stripe-secret" className="st-row__lbl">restricted API key</label>
+          <div className="st-row__hint">
+            Paste a Restricted Key from your Stripe Dashboard. krabs registers the
+            webhook in your Stripe automatically.
+          </div>
+        </div>
+        <div className="st-row__v">
+          <label className="st-input st-input--mono">
+            <input
+              id="stripe-secret"
+              name="secretKey"
+              type="password"
+              placeholder="rk_live_..."
+              required
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </label>
+        </div>
       </div>
+
+      <details className="st-help">
+        <summary>required permissions</summary>
+        <ul className="st-help__perms">
+          <PermRow scope="Webhook Endpoints" level="Write" />
+          <PermRow scope="Customers" level="Read" />
+          <PermRow scope="Subscriptions" level="Read" />
+          <PermRow scope="Invoices" level="Read" />
+          <PermRow scope="Charges" level="Read" />
+          <PermRow scope="Refunds" level="Read" />
+          <PermRow scope="Products" level="Read" />
+          <PermRow scope="Prices" level="Read" />
+        </ul>
+      </details>
+
+      <details className="st-help">
+        <summary>how to create a restricted key</summary>
+        <ol>
+          <li>
+            In your Stripe Dashboard, go to{" "}
+            <a
+              href="https://dashboard.stripe.com/apikeys/create"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Developers → API keys → Create restricted key
+            </a>
+            .
+          </li>
+          <li>Name it &ldquo;krabs.dev&rdquo; so it&apos;s easy to revoke later.</li>
+          <li>Enable each permission listed above at the level shown.</li>
+          <li>
+            Click <code>Create key</code> and copy the <code>rk_live_...</code> value.
+          </li>
+          <li>Paste it above and connect.</li>
+        </ol>
+      </details>
 
       {err && (
-        <Alert variant="destructive">
-          <AlertDescription className="font-mono">{err}</AlertDescription>
-        </Alert>
+        <div className="st-alert st-alert--danger" role="alert">
+          <code>{err}</code>
+        </div>
       )}
 
-      <div>
+      <div className="st-form__actions">
         <button
           type="submit"
           disabled={pending}
@@ -120,8 +117,8 @@ export function ConnectStripeForm() {
 
 function PermRow({ scope, level }: { scope: string; level: "Read" | "Write" }) {
   return (
-    <li className="flex items-center gap-2 text-foreground">
-      <span className="font-mono text-[11px] uppercase tracking-wide bg-muted text-muted-foreground rounded px-1.5 py-0.5 min-w-[44px] text-center">
+    <li>
+      <span className={`k-pip k-pip--${level === "Write" ? "accent" : "neutral"}`}>
         {level}
       </span>
       <span>{scope}</span>

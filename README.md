@@ -77,7 +77,7 @@ flowchart LR
 ## Quickstart (hosted)
 
 ```bash
-# v0.4 — install from source. Homebrew + npm distribution ship in v0.5.
+# Install from source. Homebrew + npm distribution are wired but unpublished — see docs/install.
 git clone https://github.com/augusto-devingcc/krabs.git
 cd krabs && pnpm install
 ./cli/dist/index.js auth login --api-url https://api.krabs.dev
@@ -85,16 +85,23 @@ cd krabs && pnpm install
 
 The `auth login` command runs the OAuth 2.0 device flow: opens a browser at `krabs.dev/device`, you approve, the CLI receives its token. Get a free tier at [krabs.dev/sign-up](https://krabs.dev/sign-up) — 500 ops/month forever, no credit card.
 
-## Quickstart (self-hosted)
+## Quickstart (self-hosted, zero-friction)
 
 ```bash
 git clone https://github.com/augusto-devingcc/krabs.git
 cd krabs
 pnpm install
 cp .env.example .env
-pnpm setup            # creates a local account + saves your API key
-pnpm dev:api          # starts the Hono API on :3000
+pnpm kickoff          # builds the CLI + MCP server, mints a key, prints an
+                      # MCP config snippet you paste straight into Claude/Cursor
+pnpm dev:api          # starts the Hono API on :3000 (in another terminal)
 ```
+
+That's it. Paste the printed MCP block into your `claude_desktop_config.json` or Cursor settings, restart your agent host, then tell your agent:
+
+> Read https://krabs.dev/skill.md and run the kickoff.
+
+The agent fetches the skill, sees `business_profile` is null, runs the kickoff conversation (revenue model · cadence · ad channels · contract size), and persists your answers via `businessProfile.set`. No training docs to copy-paste.
 
 In another terminal:
 ```bash

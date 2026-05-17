@@ -150,7 +150,7 @@ data: {
             >
               Edit this page on GitHub →
             </a>
-            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-16 · v0.4.3</span>
+            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-17 · v0.5.0</span>
           </div>
         </article>
       </main>

@@ -5,6 +5,7 @@ import {
   getFinanceSummary,
   getMrrBreakdown,
   getExpensesByCategory,
+  getFunnelMetrics,
 } from "../../domain/finance.js";
 
 export const financeRoute = new Hono();
@@ -33,4 +34,14 @@ financeRoute.get("/expenses-by-category", async (c) => {
   if (from) range.from = from;
   if (to) range.to = to;
   return c.json(wrap(await getExpensesByCategory(auth, range)));
+});
+
+financeRoute.get("/funnel", async (c) => {
+  const auth = c.get("auth");
+  const range: { from?: string; to?: string } = {};
+  const from = c.req.query("from");
+  const to = c.req.query("to");
+  if (from) range.from = from;
+  if (to) range.to = to;
+  return c.json(wrap(await getFunnelMetrics(auth, range)));
 });

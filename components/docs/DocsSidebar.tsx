@@ -31,6 +31,10 @@ const TREE: Array<{
     ],
   },
   {
+    head: "money & funnel",
+    items: [{ href: "/docs/finance", label: "Finance · ROAS · CAC", badge: "new" }],
+  },
+  {
     head: "for agents",
     items: [{ href: "/docs/skill", label: "Agent skill", badge: "new" }],
   },

@@ -100,9 +100,36 @@ async function main() {
   console.log(`  api_url     ${flags.apiUrl}`);
   console.log(`  token       ${plaintext}  (also saved to ${cfgPath})`);
   console.log("");
-  console.log("Next steps:");
-  console.log("  1. Run `pnpm dev` (or `docker compose up`) to start the API");
-  console.log("  2. Try:  krabs schema describe");
+  console.log("─── Connect an agent (zero-friction kickoff) ───────────────");
+  console.log("");
+  console.log("Claude Desktop · Cursor · Claude Code — paste this into your");
+  console.log("MCP config (claude_desktop_config.json / settings.json):");
+  console.log("");
+  console.log(JSON.stringify(
+    {
+      mcpServers: {
+        krabs: {
+          command: "node",
+          args: [`${process.cwd()}/dist/mcp/server.mjs`],
+          env: {
+            KRABS_API_URL: flags.apiUrl,
+            KRABS_API_KEY: plaintext,
+          },
+        },
+      },
+    },
+    null,
+    2,
+  ));
+  console.log("");
+  console.log("Then start the API and point your agent at the skill:");
+  console.log("  1. `pnpm dev:api`   (in another terminal)");
+  console.log("  2. Open Claude / Cursor and say:");
+  console.log("       \"Read https://krabs.dev/skill.md and run the kickoff.\"");
+  console.log("");
+  console.log("The agent will fetch the skill, see business_profile is null,");
+  console.log("ask you the kickoff questions, and persist the answers via");
+  console.log("`businessProfile.set`. You don't have to teach it anything.");
   console.log("");
 }
 

@@ -74,6 +74,7 @@ const REVERSIBILITY: Record<string, Reversibility> = {
   "tag.detach": "reversible",
   "contact.import_csv": "reversible",
   "contact.ingest_vcard": "reversible",
+  "businessProfile.set": "reversible",
   // one-way (intentionally not exposed for undo)
   "contact.merge": "one-way",
   // meta
@@ -400,6 +401,20 @@ const undoDispatchers: Record<string, UndoDispatcher> = {
       await tx
         .update(accounts)
         .set({ name: before.name, email: before.email })
+        .where(eq(accounts.id, ctx.accountId));
+      return { restored: before };
+    },
+  },
+
+  "businessProfile.set": {
+    plan: async (_ctx, a) => ({
+      willRestore: (a.metadata?.["before"] as Record<string, unknown> | null) ?? null,
+    }),
+    execute: async (ctx, a, tx) => {
+      const before = a.metadata?.["before"] as Record<string, unknown> | null;
+      await tx
+        .update(accounts)
+        .set({ businessProfile: before ? JSON.stringify(before) : null })
         .where(eq(accounts.id, ctx.accountId));
       return { restored: before };
     },

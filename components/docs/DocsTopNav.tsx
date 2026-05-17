@@ -57,7 +57,7 @@ export function DocsTopNav() {
               </svg>
             )}
           </button>
-          <span className="dn__version">v0.4.3</span>
+          <span className="dn__version">v0.5.0</span>
         </div>
       </div>
     </nav>

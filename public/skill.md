@@ -8,7 +8,107 @@ license: MIT
 
 You are operating **krabs.dev**, a multi-tenant CRM designed to be invoked by AI agents (not humans clicking through pages). Every primitive — contact, identity, interaction, deal, task, note, tag — is reachable as a tool. Every mutation is idempotent, dry-runnable, and reversible.
 
-This skill teaches you the contract, the voice, and the common operations. For the live, machine-readable schema of all 46 operations, fetch `https://api.krabs.dev/v1/schema`.
+This skill teaches you the contract, the voice, and the common operations. For the live, machine-readable schema of all 52 operations, fetch `https://api.krabs.dev/v1/schema`.
+
+## First connect — kickoff (run this once)
+
+**On the very first session with a new account, before doing anything else, check `business_profile.get`.** If `profile === null` the human hasn't onboarded yet and you must run a kickoff conversation so krabs knows how to structure data for them. Without this, you'll default to the wrong primitives (e.g. logging recurring SaaS revenue as one-off deals).
+
+Ask these questions in order. Keep each terse, one-line. Don't run them as a wall — wait for each answer.
+
+1. **Revenue model** — "How do you make money? — recurring subscriptions, one-off purchases or memberships, a mix of both, freelance / per-project, or a marketplace?"
+   - Map their answer to one of: `recurring_saas` · `one_time` · `hybrid` · `freelance` · `marketplace` · `other`.
+2. **Billing cadence** (if recurring) — "Do you bill weekly, monthly, quarterly, yearly, or per project?"
+   - Map to: `weekly|monthly|quarterly|yearly|per_project|mixed`.
+3. **Active paid channels** — "Where do customers find you? Meta ads, Google ads, TikTok ads, LinkedIn, organic / SEO, referrals, outbound, events?"
+   - Map to a list of: `meta_ads · google_ads · tiktok_ads · linkedin_ads · x_ads · youtube_ads · organic · referral · outbound · events · other`.
+4. **Typical contract size** (optional, only if useful) — "What's a typical contract size in cents? (e.g. $200/mo = `20000`)"
+5. **Anything special about pricing** (optional notes) — "Anything else I should know? Different plans? Discounts? Promo cycles?"
+
+Then call `business_profile.set` with the structured answers. Example:
+
+```bash
+krabs account business-profile set \
+  --revenue-model hybrid \
+  --cadence monthly \
+  --typical-contract-cents 20000 \
+  --channels meta_ads,google_ads,referral \
+  --notes "monthly $200 retainer + occasional custom $5–15k builds"
+```
+
+After kickoff, frame all reporting through this profile:
+
+- `recurring_saas` → default to `subscription` + `invoice`. Report MRR / ARR / churn / new subs.
+- `one_time` → default to `deal` (membership purchase) + `invoice`. Report revenue / refunds / new customers.
+- `hybrid` → use both. Report MRR for subs **and** one-shot revenue for deals, separately, not summed.
+- `freelance` → `deal` per project, `invoice` per milestone or completion. Report active deals / closed-won this period / outstanding invoices.
+- `marketplace` → contacts are buyers, `deal` per transaction, optional `subscription` per recurring seller plan. Take rate goes into a separate `expense`-mirror flow.
+
+Once the profile is set, the kickoff never repeats. Re-call `business_profile.set` only when the human says the business changed.
+
+## ROAS, CAC, and ad-spend ingestion
+
+krabs computes funnel metrics from rows you record:
+
+- **Ad spend** lives in `expense` with `category="ads"` and a non-manual `source`: `meta_ads`, `google_ads`, `tiktok_ads`, etc.
+- **New customers** are `contact` rows whose `status` transitioned to `customer` inside the window.
+- **Revenue** is `SUM(invoice.amountCents) WHERE status="paid" AND paidAt IN window`.
+
+Call `finance.funnel` for the period:
+
+```bash
+krabs finance funnel --from 2026-05-01T00:00:00Z --to 2026-05-31T23:59:59Z
+# → {
+#   "period": {...},
+#   "revenue": { "paid_cents": 4821000, "currency": "USD" },
+#   "ad_spend": {
+#     "total_cents": 850000,
+#     "by_source": [
+#       { "source": "meta_ads", "total_cents": 620000 },
+#       { "source": "google_ads", "total_cents": 230000 }
+#     ]
+#   },
+#   "new_customers": 14,
+#   "roas": 5.67,            # revenue ÷ ad spend
+#   "cac_cents": 60714,      # ad spend ÷ new customers — $607.14
+#   "blended_cac_cents": 89821  # all expenses ÷ new customers
+# }
+```
+
+To **ingest ad spend**, you (the agent) call the platform's CLI / API, parse the daily numbers, and pipe each row into `expense.create`.
+
+For Meta, use Meta's official Ads CLI (shipped 2026-04-29, designed for agents — predictable commands, JSON output, defined exit codes; Python 3.12+).
+
+```bash
+# One-time setup (the human runs this if you can't shell out)
+pip install meta-ads-cli
+meta --version
+
+# Pull last 7 days of spend per campaign
+meta ads insights get \
+  --date-preset last_7d \
+  --fields spend,impressions,campaign_id,date_start,date_stop \
+  --format json > /tmp/meta.json
+
+# For each row, write it to krabs. spend is decimal-string in account currency.
+jq -c '.[]' /tmp/meta.json | while read -r row; do
+  spend_cents=$(echo "$row" | jq -r '(.spend | tonumber * 100 | floor)')
+  campaign=$(echo "$row"    | jq -r '.campaign_id')
+  date=$(echo "$row"        | jq -r '.date_start')
+  krabs expense.create \
+    --amount-cents "$spend_cents" \
+    --currency USD \
+    --category ads \
+    --source meta_ads \
+    --source-ref "${campaign}:${date}" \
+    --vendor "Meta Ads · ${campaign}" \
+    --occurred-at "${date}T00:00:00Z"
+done
+```
+
+`sourceRef = <campaignId>:<date>` is the dedup key — re-running the same window is safe; krabs returns the existing row instead of creating a duplicate.
+
+Same recipe for `google_ads` (via [google-ads-python](https://github.com/googleads/google-ads-python)), `tiktok_ads`, `linkedin_ads`. krabs is platform-agnostic about ad spend; you do the pipeline. As long as the row lands with `category="ads"` and a non-`manual` source, the funnel breakdown lights up automatically.
 
 ## How to call krabs
 
@@ -211,7 +311,7 @@ The user speaks in intent. You translate to operations. These are the canonical 
 
 1. `contact.list` with `q="Lisa"` and `status` in `("lead","prospect","customer")`. If more than one hit, ask the user to disambiguate by listing the names and `ctc_…` ids.
 2. `interaction.list` for that `contactId`, `kind="meeting"`, last 30 days — find the demo reference. If none, ask the user what to follow up on rather than inventing context.
-3. If a Resend integration is connected: write the email body in krabs voice (see Voice patterns), then call the email send tool (`email.send` in v0.5). It will auto-log `interaction kind="email_out"`.
+3. If a Resend integration is connected: write the email body in krabs voice (see Voice patterns), then call the email send tool (`email.send`). It will auto-log `interaction kind="email_out"`.
 4. If Resend is NOT connected: `interaction.create` with `kind="email_out"`, `direction="outbound"`, body of the draft, and tell the user "drafted but not sent — Resend not connected. Connect at /dashboard/settings/integrations/resend or copy the draft below."
 5. `task.create` with `title="Re-check Lisa response"`, `dueAt=+3 days`, `contactId`, `priority="normal"`.
 6. Report: `follow-up sent · int_… · task tsk_… scheduled for 2026-05-20`.
@@ -445,7 +545,7 @@ Dedup is handled by `stripe_events` (primary key is the Stripe event id `evt_…
 
 Implication for the agent: do not call `subscription.create` or `invoice.create` for a Stripe-managed customer. The webhook will do it. If you need to act fast (user asks "did Acme pay yet?"), `invoice.list` filtered by contact is up-to-date within seconds of the Stripe event.
 
-### Resend (coming in v0.5)
+### Resend (live)
 
 When connected:
 

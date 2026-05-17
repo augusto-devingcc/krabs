@@ -10,6 +10,11 @@ export const accounts = sqliteTable(
     email: text("email").notNull().unique(),
     name: text("name"),
     clerkUserId: text("clerk_user_id"),
+    // JSON: free-form business profile filled during the agent kickoff —
+    // revenue model (recurring / one_time / hybrid / freelance), ad channels,
+    // typical contract size, etc. Used by the agent to frame reporting and
+    // structure deals/products/subscriptions correctly.
+    businessProfile: text("business_profile"),
     createdAt: text("created_at").notNull().default(nowDefault),
     updatedAt: text("updated_at").notNull().default(nowDefault),
   },

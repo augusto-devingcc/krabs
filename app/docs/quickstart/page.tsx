@@ -27,7 +27,8 @@ export default function QuickstartPage() {
             Install
           </h2>
           <p>
-            v0.4 ships from source. Homebrew + npm distribution arrive in v0.5 — until then, clone
+            krabs ships from source today. Homebrew + npm distribution are wired but unpublished
+            (see <Link href="/docs/install#homebrew-npm">install · Homebrew · npm</Link>). Clone
             and build:
           </p>
           <pre className="dc__code">{`git clone https://github.com/augusto-devingcc/krabs.git
@@ -43,7 +44,7 @@ pnpm setup`}</pre>
           </p>
           <p>
             See the <Link href="/docs/install">install guide</Link> for symlinking the CLI to your{" "}
-            <code>PATH</code>, uninstall, and the v0.5 distribution roadmap.
+            <code>PATH</code>, uninstall, and the distribution roadmap.
           </p>
 
           <Callout tone="info" title="free tier">
@@ -155,7 +156,7 @@ args: {
             >
               Edit this page on GitHub →
             </a>
-            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-16 · v0.4.3</span>
+            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-17 · v0.5.0</span>
           </div>
         </article>
       </main>

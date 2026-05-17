@@ -611,12 +611,28 @@ html, body {
   font-family: var(--font-sans); font-size: 12.5px; color: #a1a1aa; font-weight: 500;
   border-radius: var(--radius-2);
   transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-width: 0;
 }
+.mk-cs__tab > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-cs__tab-icon { flex: 0 0 auto; opacity: 0.85; }
 .mk-cs__tab:hover { color: #fafafa; background: #16161a; }
+.mk-cs__tab:hover .mk-cs__tab-icon { opacity: 1; }
 .mk-cs__tab.on { background: #27272a; color: #fafafa; }
+.mk-cs__tab.on .mk-cs__tab-icon { opacity: 1; color: var(--accent-500); }
 .mk-cs__caption {
   padding: 12px 18px 0; font-family: var(--font-mono); font-size: 11.5px; color: #a1a1aa;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
 }
+.mk-cs__docs {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: var(--radius-2);
+  background: #1c1c20; color: #d4d4d8; text-decoration: none;
+  font-family: var(--font-sans); font-size: 11.5px; font-weight: 500;
+  transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+.mk-cs__docs:hover { background: #27272a; color: #fafafa; }
 .mk-cs__code {
   margin: 0; padding: 14px 18px 22px;
   font-family: var(--font-mono); font-size: 13px; line-height: 1.65; color: #fafafa;
@@ -783,19 +799,26 @@ html, body { -webkit-text-size-adjust: 100%; }
 /* ── Hero (mobile) ── */
 @media (max-width: 768px) {
   .mk-hero { padding: 48px 20px 64px; }
-  .mk-hero__h1 { font-size: 48px; line-height: 1.06; word-wrap: break-word; }
+  .mk-hero__h1 { font-size: 44px; line-height: 1.06; word-wrap: break-word; overflow-wrap: anywhere; hyphens: auto; }
+  /* The hard <br /> in markup splits the headline cleanly on desktop; on mobile
+   * the natural-wrap is friendlier than a forced line break that strands one word. */
+  .mk-hero__h1 br { display: none; }
   .mk-hero__sub { font-size: 16px; }
   .mk-hero__ctas { flex-direction: row; flex-wrap: wrap; }
   .mk-hero__terminal { margin-top: 24px; }
   .mk-term__body { overflow-x: auto; font-size: 12px; padding: 14px 16px; }
+  .mk-term__title { font-size: 10px; }
 }
 @media (max-width: 480px) {
-  .mk-hero__eyebrow { padding: 4px 10px 4px 8px; font-size: 11px; }
-  .mk-hero__h1 { font-size: 36px; }
+  .mk-hero__eyebrow {
+    padding: 4px 10px 4px 8px; font-size: 11px;
+    max-width: 100%; white-space: normal; line-height: 1.35;
+  }
+  .mk-hero__h1 { font-size: 34px; }
   .mk-hero__sub { font-size: 15px; }
   .mk-hero__ctas { justify-content: center; }
   .mk-hero__ctas a { flex: 1 1 100%; justify-content: center; }
-  .mk-term__body { font-size: 11px; }
+  .mk-term__body { font-size: 11px; padding: 12px 14px; }
 }
 
 /* ── Code Showcase (mobile) ── */
@@ -803,10 +826,19 @@ html, body { -webkit-text-size-adjust: 100%; }
   .mk-cs { padding: 48px 20px; }
   .mk-cs__inner { gap: 28px; }
   .mk-cs__lead { position: static; }
+  .mk-cs__caption { padding: 12px 14px 0; flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 560px) {
+  /* Three tabs with icon + label start to crowd; hide labels and rely on icon + active highlight.
+   * Active tab keeps the label visible so the user knows which is which. */
+  .mk-cs__tab > span { display: none; }
+  .mk-cs__tab.on > span { display: inline; }
+  .mk-cs__tab { padding: 9px 8px; }
 }
 @media (max-width: 480px) {
-  .mk-cs__tab { font-size: 12px; padding: 8px 10px; }
-  .mk-cs__code { font-size: 12px; padding: 12px 14px; min-height: 200px; }
+  .mk-cs__tab { font-size: 12px; padding: 8px 8px; gap: 5px; }
+  .mk-cs__code { font-size: 12px; padding: 12px 14px; min-height: 200px; overflow-x: auto; }
+  .mk-cs__docs { font-size: 11px; padding: 3px 8px; }
 }
 
 /* ── Feature Grid (mobile) ── */
@@ -1341,6 +1373,57 @@ html, body { -webkit-text-size-adjust: 100%; }
 
 .st-danger { color: var(--danger-500); border-color: var(--border-light); }
 .st-danger:hover { color: var(--danger-600); border-color: var(--danger-500); background: var(--bg); }
+
+/* Forms inside st-sec — the rest of the dashboard pattern, used by integrations. */
+.st-form { display: flex; flex-direction: column; }
+.st-form__actions { padding: 18px 0 4px; display: flex; gap: 10px; }
+
+.st-row__hint--inline {
+  font-size: 12px; color: var(--fg-3); font-weight: 400; margin-left: 4px;
+}
+
+/* Collapsible help block inside a form row. Sits inside .st-row__v at full width. */
+.st-help { padding: 8px 0 0; width: 100%; }
+.st-help > summary {
+  cursor: pointer; list-style: none;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-3); font-weight: 500; padding: 2px 0;
+  transition: color var(--dur-2) var(--ease-out);
+}
+.st-help > summary::-webkit-details-marker { display: none; }
+.st-help > summary:hover { color: var(--fg); }
+.st-help[open] > summary { color: var(--fg); }
+.st-help ol, .st-help ul {
+  margin: 10px 0 4px; padding-left: 20px;
+  font-size: 12.5px; color: var(--fg-2); line-height: 1.55;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.st-help ul.st-help__perms { padding-left: 0; list-style: none; }
+.st-help ul.st-help__perms li { display: flex; align-items: center; gap: 8px; }
+.st-help a { color: var(--fg); text-decoration: underline; }
+.st-help a:hover { color: var(--accent-500); }
+.st-help code {
+  font-family: var(--font-mono); font-size: 11.5px;
+  background: var(--bg-muted); padding: 1px 5px; border-radius: var(--radius-1);
+}
+
+.st-alert {
+  border: 1px solid var(--border-light); border-radius: var(--radius-3);
+  padding: 10px 12px; font-size: 12.5px; line-height: 1.5;
+  background: var(--bg-subtle); color: var(--fg);
+}
+.st-alert code {
+  font-family: var(--font-mono); font-size: 12px; color: var(--fg);
+}
+.st-alert--danger {
+  border-color: var(--danger-500); background: rgba(220, 38, 38, 0.06);
+  color: var(--danger-600);
+}
+.st-alert--danger code { color: var(--danger-600); }
+
+/* In the form layout, st-row__v should stack vertically when its children grow. */
+.st-form .st-row__v { flex-direction: column; align-items: stretch; gap: 8px; }
+.st-form .st-row__v > .st-input { width: 100%; }
 
 /* ============ ContactsPage (.cx-*) ============ */
 .cx { flex: 1; min-width: 0; padding: 32px 40px 40px; overflow-y: auto; animation: cxIn 280ms var(--ease-out) both; }

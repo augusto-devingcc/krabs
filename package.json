@@ -45,6 +45,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/scripts/seed.ts",
     "setup": "tsx src/scripts/setup.ts",
+    "kickoff": "tsdown && tsx src/scripts/setup.ts",
     "db:studio": "drizzle-kit studio"
   },
   "bin": {

@@ -1,0 +1,1 @@
+ALTER TABLE `accounts` ADD `business_profile` text;

@@ -3,9 +3,10 @@ import { DocsToc } from "@/components/docs/DocsToc";
 import { Callout } from "@/components/docs/Callout";
 
 const TOC = [
-  { id: "from-source", label: "From source (v0.4)" },
+  { id: "from-source", label: "From source" },
   { id: "what-you-get", label: "What you get" },
-  { id: "coming-soon", label: "Coming in v0.5" },
+  { id: "put-on-path", label: "Put the CLI on PATH" },
+  { id: "homebrew-npm", label: "Homebrew · npm" },
   { id: "uninstall", label: "Uninstall" },
   { id: "next-steps", label: "Next steps" },
 ];
@@ -18,37 +19,35 @@ export default function InstallPage() {
           <div className="dc__breadcrumb">docs / install</div>
           <h1 className="dc__h1">Install</h1>
           <p className="dc__lede">
-            krabs is in <code>v0.4</code>. For now, install from source — clone the repo and run
-            the setup script. Homebrew + npm distribution ship in <code>v0.5</code>.
+            krabs ships <code>v0.5.x</code> from source. Clone the repo, run setup, and you have a
+            local API + CLI bound to a SQLite file in five minutes. Homebrew + npm distribution is
+            wired but not yet published — see below.
           </p>
 
           <h2 className="dc__h2" id="from-source">
-            From source (v0.4)
+            From source
           </h2>
-          <p>Three commands and you have an API + CLI on localhost:</p>
+          <p>Four commands and you have an API + CLI on localhost:</p>
           <pre className="dc__code">{`git clone https://github.com/augusto-devingcc/krabs.git
 cd krabs
 pnpm install
 pnpm setup`}</pre>
           <p>
-            <code>pnpm setup</code> creates a local SQLite database, mints an API key for you, and
-            writes it to <code>~/.config/krabs/config.json</code>. The CLI is now authenticated
-            against your localhost instance.
+            <code>pnpm setup</code> creates a local SQLite database under <code>./data/</code>,
+            runs all migrations, mints an API key for you, and writes it to{" "}
+            <code>~/.config/krabs/config.json</code>. The CLI is now authenticated against
+            your localhost instance.
           </p>
-          <p>
-            Start the API server in another terminal:
-          </p>
+          <p>Start the API server in another terminal:</p>
           <pre className="dc__code">{`pnpm dev:api`}</pre>
-          <p>
-            Verify everything by listing the contract:
-          </p>
+          <p>Verify everything by listing the contract:</p>
           <pre className="dc__code">{`./cli/dist/index.js schema describe
 # or after pnpm build:cli, just: krabs schema describe`}</pre>
 
-          <Callout tone="info" title="why source-only at v0.4">
-            We ship the CLI as a published npm package + Homebrew tap in <code>v0.5</code>.
-            Until then, source install keeps the release surface small while we stabilize the
-            contract. The flow above is what the published binary will run anyway.
+          <Callout tone="info" title="why source-only today">
+            We&apos;ll cut <code>krabs-cli</code> on npm and a Homebrew tap once the contract has been
+            stable for a release cycle. Source install is the same flow under the hood and stays
+            useful for self-hosters forever — it is not a workaround.
           </Callout>
 
           <h2 className="dc__h2" id="what-you-get">
@@ -62,38 +61,48 @@ pnpm setup`}</pre>
               <code>~/.config/krabs/config.json</code> — your API URL + bearer token
             </li>
             <li>
-              <code>./data/krabs.db</code> — local SQLite, your entire krabs state
+              <code>./data/local.db</code> — local SQLite, your entire krabs state
             </li>
             <li>
               An accounts row + an api_keys row, both visible if you query the DB directly
             </li>
           </ul>
+
+          <h2 className="dc__h2" id="put-on-path">
+            Put the CLI on PATH
+          </h2>
           <p>
-            To put the CLI on your <code>PATH</code> as <code>krabs</code>, symlink it:
+            To call the CLI as <code>krabs</code> from anywhere, symlink the built binary into a
+            directory on your <code>PATH</code>:
           </p>
-          <pre className="dc__code">{`ln -s "$PWD/cli/dist/index.js" /usr/local/bin/krabs
+          <pre className="dc__code">{`pnpm build:cli
+ln -s "$PWD/cli/dist/index.js" /usr/local/bin/krabs
 krabs --version`}</pre>
 
-          <h2 className="dc__h2" id="coming-soon">
-            Coming in v0.5
+          <h2 className="dc__h2" id="homebrew-npm">
+            Homebrew · npm
           </h2>
-          <p>The distribution paths that will work once the CLI is published:</p>
-          <pre className="dc__code">{`# Homebrew
+          <p>
+            A Homebrew formula lives at <code>Formula/krabs.rb</code> in the repo and the CLI
+            workspace publishes as <code>krabs-cli</code> on npm. Both paths are wired but
+            unpublished — once we ship them, these commands work:
+          </p>
+          <pre className="dc__code">{`# Homebrew (planned)
 brew install augusto-devingcc/krabs/krabs
 
-# npm
+# npm (planned)
 npm install -g krabs-cli
 
-# Run without installing
+# Run without installing (planned)
 pnpm dlx krabs-cli auth login`}</pre>
           <p>
-            Track the v0.5 milestone on the{" "}
+            Track readiness on the{" "}
             <a
               href="https://github.com/augusto-devingcc/krabs/milestones"
               target="_blank"
               rel="noopener noreferrer"
             >
-              GitHub milestones page
+              GitHub milestones
             </a>
             .
           </p>
@@ -136,7 +145,7 @@ rm -f /usr/local/bin/krabs`}</pre>
             >
               Edit this page on GitHub →
             </a>
-            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-16 · v0.4.3</span>
+            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-17 · v0.5.0</span>
           </div>
         </article>
       </main>

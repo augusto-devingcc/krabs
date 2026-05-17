@@ -4,7 +4,7 @@ import { BRAND } from "@/lib/brand.js";
 
 const TOC = [
   { id: "the-five-properties", label: "The five properties" },
-  { id: "the-46-operations", label: "The 46 operations" },
+  { id: "the-operations", label: "The 52 operations" },
   { id: "reading-the-schema", label: "Reading the schema" },
   { id: "versioning", label: "Versioning" },
   { id: "compliance-tests", label: "Compliance tests" },
@@ -18,7 +18,7 @@ export default function ContractPage() {
           <div className="dc__breadcrumb">docs / contract</div>
           <h1 className="dc__h1">The contract</h1>
           <p className="dc__lede">
-            Forty-six operations, one machine-readable schema, three transports that honor it
+            Fifty-two operations, one machine-readable schema, three transports that honor it
             identically. {BRAND.name} is the contract.
           </p>
 
@@ -58,66 +58,83 @@ export default function ContractPage() {
             </li>
           </ul>
 
-          <h2 className="dc__h2" id="the-46-operations">
-            The 46 operations
+          <h2 className="dc__h2" id="the-operations">
+            The 52 operations
           </h2>
           <p>
-            Seven primitive nouns plus <code>agent</code> and <code>account</code>, totaling
-            forty-six verbs.
+            Seven primitive nouns plus the meta surfaces (<code>account</code>,{" "}
+            <code>businessProfile</code>, <code>api_key</code>, <code>action</code>,{" "}
+            <code>finance</code>), totaling fifty-two verbs. The exact list, with input schemas, is
+            always at <Link href="/v1/schema"><code>/v1/schema</code></Link>.
           </p>
           <table className="dc__table">
             <thead>
               <tr>
                 <th>namespace</th>
                 <th>count</th>
-                <th>examples</th>
+                <th>verbs</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><code>contact</code></td>
-                <td>8</td>
-                <td><code>contact.upsert</code>, <code>contact.get</code>, <code>contact.search</code>, <code>contact.merge</code></td>
+                <td>10</td>
+                <td><code>create · get · list · update · delete · merge · find_by_identity · import_csv · ingest_vcard · export_csv</code></td>
               </tr>
               <tr>
                 <td><code>identity</code></td>
-                <td>5</td>
-                <td><code>identity.attach</code>, <code>identity.detach</code>, <code>identity.lookup</code></td>
+                <td>3</td>
+                <td><code>add · list · remove</code></td>
               </tr>
               <tr>
                 <td><code>interaction</code></td>
-                <td>6</td>
-                <td><code>interaction.record</code>, <code>interaction.thread</code>, <code>interaction.search</code></td>
+                <td>4</td>
+                <td><code>create · list · delete · ingest_email</code></td>
               </tr>
               <tr>
                 <td><code>deal</code></td>
-                <td>7</td>
-                <td><code>deal.create</code>, <code>deal.advance</code>, <code>deal.close</code>, <code>deal.forecast</code></td>
+                <td>5</td>
+                <td><code>create · get · list · update · delete</code></td>
               </tr>
               <tr>
                 <td><code>task</code></td>
-                <td>6</td>
-                <td><code>task.create</code>, <code>task.assign</code>, <code>task.complete</code></td>
+                <td>5</td>
+                <td><code>create · get · list · update · delete</code></td>
               </tr>
               <tr>
                 <td><code>note</code></td>
                 <td>5</td>
-                <td><code>note.append</code>, <code>note.list</code>, <code>note.pin</code></td>
+                <td><code>create · get · list · update · delete</code></td>
               </tr>
               <tr>
                 <td><code>tag</code></td>
-                <td>4</td>
-                <td><code>tag.apply</code>, <code>tag.remove</code>, <code>tag.list</code></td>
-              </tr>
-              <tr>
-                <td><code>agent</code></td>
-                <td>3</td>
-                <td><code>agent.register</code>, <code>agent.list</code>, <code>agent.revoke</code></td>
+                <td>6</td>
+                <td><code>create · list · update · delete · attach · detach</code></td>
               </tr>
               <tr>
                 <td><code>account</code></td>
                 <td>2</td>
-                <td><code>account.usage</code>, <code>account.audit</code></td>
+                <td><code>update · export</code></td>
+              </tr>
+              <tr>
+                <td><code>businessProfile</code></td>
+                <td>2</td>
+                <td><code>get · set</code> (kickoff, ROAS/CAC framing)</td>
+              </tr>
+              <tr>
+                <td><code>api_key</code></td>
+                <td>3</td>
+                <td><code>create · list · revoke</code></td>
+              </tr>
+              <tr>
+                <td><code>action</code></td>
+                <td>3</td>
+                <td><code>get · list · undo</code></td>
+              </tr>
+              <tr>
+                <td><code>finance</code></td>
+                <td>4</td>
+                <td><code>summary · mrr · expenses_by_category · funnel</code> (ROAS, CAC)</td>
               </tr>
             </tbody>
           </table>
@@ -132,21 +149,26 @@ export default function ContractPage() {
           <p>
             Truncated output:
           </p>
-          <pre className="dc__code">{`"account.audit"
-"account.usage"
-"agent.list"
-"agent.register"
-"agent.revoke"
+          <pre className="dc__code">{`"account.export"
+"account.update"
+"action.get"
+"action.list"
+"action.undo"
+"api_key.create"
+"api_key.list"
+"api_key.revoke"
+"businessProfile.get"
+"businessProfile.set"
+"contact.create"
 "contact.delete"
+"contact.export_csv"
+"contact.find_by_identity"
 "contact.get"
+"contact.import_csv"
+"contact.ingest_vcard"
 "contact.list"
 "contact.merge"
-"contact.search"
-"contact.tag"
-"contact.untag"
-"contact.upsert"
-"deal.advance"
-"deal.close"
+"contact.update"
 …`}</pre>
           <p>
             Each entry resolves to a typed argument schema, a typed return schema, the full set of
@@ -192,7 +214,7 @@ export default function ContractPage() {
             >
               Edit this page on GitHub →
             </a>
-            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-16 · v0.4.3</span>
+            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-17 · v0.5.0</span>
           </div>
         </article>
       </main>

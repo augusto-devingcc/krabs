@@ -55,7 +55,7 @@ async function callApi(
   cfg: KrabsMcpConfig,
   path: string,
   reqOpts: {
-    method: "GET" | "POST" | "PATCH" | "DELETE";
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     body?: unknown;
     query?: Record<string, string | number>;
     intent?: string;
@@ -1436,6 +1436,173 @@ export function registerKrabsTools(server: McpServer, cfg: KrabsMcpConfig): void
         if (a.targetKind) query.target_kind = a.targetKind;
         if (a.targetId) query.target_id = a.targetId;
         return textResult(await callApi(cfg, "/v1/actions", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── business profile ──────────────────────────────────────
+  server.registerTool(
+    "business_profile_get",
+    {
+      title: "Get business profile",
+      description:
+        "Read the operator's business profile. Returns { profile: null, setAt: null } when the kickoff has not run yet — in that case, ask the human the kickoff questions and call business_profile_set.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/account/business-profile", { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "business_profile_set",
+    {
+      title: "Set business profile (kickoff)",
+      description:
+        "Record what kind of business this account runs. Call this once at the start of your first session after asking the human:\n  1) revenue model: recurring_saas (monthly/yearly subscriptions), one_time (memberships or single purchases), hybrid (subs + one-offs), freelance (per project), marketplace, or other\n  2) billing cadence (weekly|monthly|quarterly|yearly|per_project|mixed)\n  3) which paid channels are active (meta_ads, google_ads, tiktok_ads, linkedin_ads, organic, referral, outbound...)\n  4) typical contract size in cents (optional)\n\nThe profile shapes which primitives you default to: recurring_saas → products + subscriptions + invoices; one_time → deals + invoices; freelance → deals + invoices per project. Idempotent — re-call to update.",
+      inputSchema: {
+        revenueModel: z.enum([
+          "recurring_saas",
+          "one_time",
+          "hybrid",
+          "freelance",
+          "marketplace",
+          "other",
+        ]),
+        cadence: z
+          .enum(["weekly", "monthly", "quarterly", "yearly", "per_project", "mixed"])
+          .optional(),
+        typicalContractCents: z.number().int().min(0).optional(),
+        currency: z.string().length(3).optional(),
+        activeChannels: z
+          .array(
+            z.enum([
+              "meta_ads",
+              "google_ads",
+              "tiktok_ads",
+              "linkedin_ads",
+              "x_ads",
+              "youtube_ads",
+              "organic",
+              "referral",
+              "outbound",
+              "events",
+              "other",
+            ]),
+          )
+          .optional(),
+        notes: z.string().max(2000).optional(),
+        intent: intentField,
+        idempotencyKey: idemField,
+        dryRun: dryRunField,
+      },
+    },
+    async (a) => {
+      try {
+        const body: Record<string, unknown> = { revenueModel: a.revenueModel };
+        if (a.cadence) body.cadence = a.cadence;
+        if (a.typicalContractCents !== undefined) body.typicalContractCents = a.typicalContractCents;
+        if (a.currency) body.currency = a.currency;
+        if (a.activeChannels) body.activeChannels = a.activeChannels;
+        if (a.notes) body.notes = a.notes;
+        const opts: Parameters<typeof callApi>[2] = { method: "PUT", body };
+        if (a.intent) opts.intent = a.intent;
+        if (a.idempotencyKey) opts.idempotencyKey = a.idempotencyKey;
+        if (a.dryRun) opts.dryRun = a.dryRun;
+        return textResult(await callApi(cfg, "/v1/account/business-profile", opts));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  // ── finance ───────────────────────────────────────────────
+  server.registerTool(
+    "finance_summary",
+    {
+      title: "Finance summary",
+      description:
+        "Revenue (paid + pending), expenses, net, MRR, ARR, active subscriptions, outstanding invoices over a window. Defaults to month-to-date.",
+      inputSchema: {
+        from: z.string().datetime().optional(),
+        to: z.string().datetime().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string> = {};
+        if (a.from) query.from = a.from;
+        if (a.to) query.to = a.to;
+        return textResult(await callApi(cfg, "/v1/finance/summary", { method: "GET", query }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "finance_mrr",
+    {
+      title: "MRR / ARR breakdown",
+      description: "MRR and ARR broken down by product and billing cycle. Counts trialing / active / paused subs.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return textResult(await callApi(cfg, "/v1/finance/mrr", { method: "GET" }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "finance_expenses_by_category",
+    {
+      title: "Expenses by category",
+      description: "Expenses bucketed by category over a window. Defaults to month-to-date.",
+      inputSchema: {
+        from: z.string().datetime().optional(),
+        to: z.string().datetime().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string> = {};
+        if (a.from) query.from = a.from;
+        if (a.to) query.to = a.to;
+        return textResult(
+          await callApi(cfg, "/v1/finance/expenses-by-category", { method: "GET", query }),
+        );
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "finance_funnel",
+    {
+      title: "Funnel metrics (ROAS, CAC)",
+      description:
+        "Funnel metrics over a window: paid revenue, ad spend with by-source breakdown, new customers, ROAS (revenue ÷ ad spend), CAC (ad spend ÷ new customers), blended-CAC (total expenses ÷ new customers). ROAS is null when ad spend is zero; CAC is null when no contacts converted. To populate this, record ad spend via expense_create with category='ads' and source='meta_ads'|'google_ads'|... — for example after fetching daily spend from Meta's marketing CLI.",
+      inputSchema: {
+        from: z.string().datetime().optional(),
+        to: z.string().datetime().optional(),
+      },
+    },
+    async (a) => {
+      try {
+        const query: Record<string, string> = {};
+        if (a.from) query.from = a.from;
+        if (a.to) query.to = a.to;
+        return textResult(await callApi(cfg, "/v1/finance/funnel", { method: "GET", query }));
       } catch (err) {
         return errorResult(err);
       }

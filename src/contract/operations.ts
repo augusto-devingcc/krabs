@@ -37,6 +37,7 @@ import {
   exportAccountFiltersSchema,
 } from "./schemas/import-export.js";
 import { accountUpdateInputSchema } from "../domain/account.js";
+import { businessProfileSchema } from "../domain/business-profile.js";
 import { apiKeyCreateInputSchema } from "../domain/api-key.js";
 import { reversibilityOf, type Reversibility } from "../domain/action.js";
 import { idSchema } from "./ids.js";
@@ -536,6 +537,83 @@ export function buildOperationCatalog(): OperationDescriptor[] {
           since: z.string().datetime().optional(),
         }),
         { name: "ContactExportCsvInput" },
+      ),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "businessProfile.get",
+      description:
+        "Read the operator's business profile (revenue model, billing cadence, active ad channels, typical contract size). Returned null until the kickoff sets it.",
+      inputSchema: zodToJsonSchema(z.object({}).strict(), { name: "BusinessProfileGetInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "businessProfile.set",
+      description:
+        "Set or replace the business profile. Call this once at the start of an agent's first session after asking the human about revenue model (recurring_saas | one_time | hybrid | freelance | marketplace), billing cadence, ad channels, and typical contract size. The profile shapes how the agent should frame reporting and which primitives (products/subscriptions/deals/invoices) to default to.",
+      inputSchema: zodToJsonSchema(businessProfileSchema, { name: "BusinessProfileSetInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: true,
+      supportsIntent: true,
+    },
+    {
+      operation: "finance.summary",
+      description:
+        "Revenue (paid + pending), expenses, net, MRR, ARR, active subscriptions, outstanding invoices over a window. Defaults to month-to-date if range omitted.",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          from: z.string().datetime().optional(),
+          to: z.string().datetime().optional(),
+        }),
+        { name: "FinanceSummaryInput" },
+      ),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "finance.mrr",
+      description:
+        "MRR / ARR breakdown by product and billing cycle. Includes counts for trialing / active / paused subscriptions.",
+      inputSchema: zodToJsonSchema(z.object({}).strict(), { name: "FinanceMrrInput" }),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "finance.expenses_by_category",
+      description: "Expenses bucketed by category over a window. Defaults to month-to-date.",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          from: z.string().datetime().optional(),
+          to: z.string().datetime().optional(),
+        }),
+        { name: "FinanceExpensesByCategoryInput" },
+      ),
+      destructive: false,
+      idempotent: true,
+      supportsDryRun: false,
+      supportsIntent: false,
+    },
+    {
+      operation: "finance.funnel",
+      description:
+        "Funnel metrics over a window: paid revenue, ad spend (with by-source breakdown), new customers, ROAS (revenue ÷ ad spend), CAC (ad spend ÷ new customers), blended-CAC (total expenses ÷ new customers). ROAS is null when ad spend is zero; CAC is null when no contacts converted. Record ad spend with `expense.create category='ads' source='meta_ads'|'google_ads'|...` so the by-source split lights up.",
+      inputSchema: zodToJsonSchema(
+        z.object({
+          from: z.string().datetime().optional(),
+          to: z.string().datetime().optional(),
+        }),
+        { name: "FinanceFunnelInput" },
       ),
       destructive: false,
       idempotent: true,

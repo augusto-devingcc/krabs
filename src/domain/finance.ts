@@ -1,6 +1,7 @@
-import { and, between, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, between, count, countDistinct, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import {
+  contacts,
   expenses,
   invoices,
   products,
@@ -287,4 +288,137 @@ export async function getExpensesByCategory(
   }));
   const total = byCategory.reduce((acc, c) => acc + c.total_cents, 0);
   return { period: { from, to }, total_cents: total, by_category: byCategory };
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Funnel metrics — ROAS, CAC, blended-CAC over a window.
+//
+//   ROAS  = paid revenue in window ÷ ad spend in window
+//   CAC   = ad spend in window ÷ (contacts that became customers in window)
+//
+// "ad spend" is the sum of expenses with category='ads' inside the period.
+// Source breakdown comes from the expense.source enum (meta_ads, google_ads,
+// tiktok_ads, etc. — recorded by either the dashboard or an agent piping a
+// platform CLI like Meta's marketing CLI into `expense.create`).
+//
+// New customers are contacts whose status transitioned to 'customer' inside
+// the window. We approximate that with contacts where status='customer' AND
+// updated_at is in the window. This is good-enough for ROAS/CAC framing; a
+// dedicated status_history table would let us be exact.
+// ─────────────────────────────────────────────────────────────────
+
+export type FunnelMetrics = {
+  period: { from: string; to: string };
+  revenue: { paid_cents: number; currency: string };
+  ad_spend: {
+    total_cents: number;
+    currency: string;
+    by_source: Array<{ source: string; total_cents: number }>;
+  };
+  new_customers: number;
+  roas: number | null; // null when ad_spend is 0
+  cac_cents: number | null; // null when new_customers is 0
+  blended_cac_cents: number | null; // total expenses ÷ new_customers
+};
+
+export async function getFunnelMetrics(
+  ctx: CallerContext,
+  range?: { from?: string; to?: string },
+): Promise<FunnelMetrics> {
+  const { from, to } = resolveRange(range);
+
+  const paidRow = await db
+    .select({
+      sum: sql<number | null>`COALESCE(SUM(${invoices.amountCents}), 0)`,
+      currency: sql<string | null>`MIN(${invoices.currency})`,
+    })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.accountId, ctx.accountId),
+        eq(invoices.status, "paid"),
+        gte(invoices.paidAt, from),
+        lte(invoices.paidAt, to),
+      ),
+    )
+    .then((r) => r[0]);
+  const paidCents = Number(paidRow?.sum ?? 0);
+  const revenueCurrency = paidRow?.currency ?? "USD";
+
+  const adSpendRow = await db
+    .select({
+      sum: sql<number | null>`COALESCE(SUM(${expenses.amountCents}), 0)`,
+      currency: sql<string | null>`MIN(${expenses.currency})`,
+    })
+    .from(expenses)
+    .where(
+      and(
+        eq(expenses.accountId, ctx.accountId),
+        eq(expenses.category, "ads"),
+        between(expenses.occurredAt, from, to),
+      ),
+    )
+    .then((r) => r[0]);
+  const adSpendCents = Number(adSpendRow?.sum ?? 0);
+
+  const bySourceRows = await db
+    .select({
+      source: expenses.source,
+      total: sql<number>`COALESCE(SUM(${expenses.amountCents}), 0)`,
+    })
+    .from(expenses)
+    .where(
+      and(
+        eq(expenses.accountId, ctx.accountId),
+        eq(expenses.category, "ads"),
+        between(expenses.occurredAt, from, to),
+      ),
+    )
+    .groupBy(expenses.source)
+    .orderBy(desc(sql`COALESCE(SUM(${expenses.amountCents}), 0)`));
+
+  const totalExpensesRow = await db
+    .select({
+      sum: sql<number | null>`COALESCE(SUM(${expenses.amountCents}), 0)`,
+    })
+    .from(expenses)
+    .where(
+      and(
+        eq(expenses.accountId, ctx.accountId),
+        between(expenses.occurredAt, from, to),
+      ),
+    )
+    .then((r) => r[0]);
+  const totalExpensesCents = Number(totalExpensesRow?.sum ?? 0);
+
+  const newCustomerRow = await db
+    .select({ n: countDistinct(contacts.id) })
+    .from(contacts)
+    .where(
+      and(
+        eq(contacts.accountId, ctx.accountId),
+        eq(contacts.status, "customer"),
+        between(contacts.updatedAt, from, to),
+      ),
+    )
+    .then((r) => r[0]);
+  const newCustomers = Number(newCustomerRow?.n ?? 0);
+
+  return {
+    period: { from, to },
+    revenue: { paid_cents: paidCents, currency: revenueCurrency },
+    ad_spend: {
+      total_cents: adSpendCents,
+      currency: adSpendRow?.currency ?? "USD",
+      by_source: bySourceRows.map((r) => ({
+        source: r.source as string,
+        total_cents: Number(r.total ?? 0),
+      })),
+    },
+    new_customers: newCustomers,
+    roas: adSpendCents > 0 ? paidCents / adSpendCents : null,
+    cac_cents: newCustomers > 0 ? Math.round(adSpendCents / newCustomers) : null,
+    blended_cac_cents:
+      newCustomers > 0 ? Math.round(totalExpensesCents / newCustomers) : null,
+  };
 }

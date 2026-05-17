@@ -1,3 +1,4 @@
+import { createRequire } from "module";
 import { createClient as createWebClient, type Client } from "@libsql/client/web";
 import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "./schema.js";
@@ -20,13 +21,15 @@ const isRemote =
   url.startsWith("http://");
 
 // In production (remote Turso) use the pure-HTTP client — no native binding.
-// For local dev/tests with file: URLs, dynamically import the full node
-// client so the serverless bundle never has to resolve native deps.
+// For local dev/tests with file: URLs, load the full node client via
+// createRequire so we stay synchronous (no top-level await) and the
+// serverless bundle still never has to resolve native deps.
 let client: Client;
 if (isRemote) {
   client = createWebClient(clientConfig);
 } else {
-  const mod = await import("@libsql/client");
+  const localRequire = createRequire(import.meta.url);
+  const mod = localRequire("@libsql/client") as typeof import("@libsql/client");
   client = mod.createClient(clientConfig);
 }
 

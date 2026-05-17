@@ -87,7 +87,7 @@ export default function DocsIndex() {
             Primitives
           </h2>
           <p>
-            Seven nouns, forty-six verbs. The full set of operations is described at{" "}
+            Seven core nouns, fifty-two verbs (and counting). The full set of operations is described at{" "}
             <Link href="/v1/schema">
               <code>/v1/schema</code>
             </Link>
@@ -148,7 +148,7 @@ export default function DocsIndex() {
             >
               Edit this page on GitHub →
             </a>
-            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-16 · v0.4.3</span>
+            <span style={{ color: "var(--fg-3)" }}>last updated 2026-05-17 · v0.5.0</span>
           </div>
         </article>
       </main>

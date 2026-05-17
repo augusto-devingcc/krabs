@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  Plug01Icon,
+  TerminalIcon,
+  Globe02Icon,
+  BookOpen01Icon,
+} from "@hugeicons/core-free-icons";
 
 import { BRAND } from "@/lib/brand.js";
 
@@ -10,13 +17,21 @@ import { BRAND } from "@/lib/brand.js";
    Styling lives in globals.css under `.mk-*` classes. Nav + Footer
    are provided by the route-group layout. */
 
-const TABS: Record<
-  "mcp" | "cli" | "http",
-  { label: string; caption: string; code: string }
-> = {
+type TabKey = "mcp" | "cli" | "http";
+type TabInfo = {
+  label: string;
+  caption: string;
+  code: string;
+  icon: IconSvgElement;
+  docsHref: string;
+};
+
+const TABS: Record<TabKey, TabInfo> = {
   mcp: {
     label: "Mount via MCP",
     caption: "Two lines in your agent's MCP config.",
+    icon: Plug01Icon,
+    docsHref: "/docs/quickstart#mcp",
     code: `{
   "mcpServers": {
     "krabs": {
@@ -30,6 +45,8 @@ const TABS: Record<
   cli: {
     label: "Call via CLI",
     caption: "Every endpoint is a tool. Every tool returns JSON.",
+    icon: TerminalIcon,
+    docsHref: "/docs/install",
     code: `$ krabs contact.upsert --email lisa@acme.com --name "Lisa Ortega"
 { "id": "ctc_01J6Q…", "version": 1, "created": true }
 
@@ -42,6 +59,8 @@ $ krabs deal.delete dl_2YxR... --reason "dup of dl_2YxK..."
   http: {
     label: "Use the HTTP API",
     caption: "REST surface — automations, scripts, your own UI.",
+    icon: Globe02Icon,
+    docsHref: "/docs/contract",
     code: `POST https://api.krabs.dev/v1/contact.create
 Authorization: Bearer $KRABS_TOKEN
 Idempotency-Key: new-lead-2401
@@ -81,7 +100,7 @@ const FEATURES: Array<{ eyebrow: string; title: string; body: string }> = [
   },
   {
     eyebrow: "contract",
-    title: "46 operations, self-described.",
+    title: "52 operations, self-described.",
     body: "GET /v1/schema returns the entire contract. Your agent reads its own manual and stops asking you what's possible.",
   },
 ];
@@ -104,7 +123,7 @@ function Hero() {
       <div className="mk-hero__inner">
         <Link href="#features" className="mk-hero__eyebrow">
           <span className="mk-hero__eyebrow-pip">●</span>
-          v1 contract — 46 operations, three transports
+          v1 contract — 52 operations, three transports
           <span style={{ opacity: 0.55, marginLeft: 4 }}>→</span>
         </Link>
         <h1 className="mk-hero__h1">
@@ -194,18 +213,31 @@ function CodeShowcase() {
 
         <div className="mk-cs__pane">
           <div className="mk-cs__tabs">
-            {(Object.keys(TABS) as Array<keyof typeof TABS>).map((k) => (
+            {(Object.keys(TABS) as TabKey[]).map((k) => (
               <button
                 key={k}
                 className={`mk-cs__tab${tab === k ? " on" : ""}`}
                 onClick={() => setTab(k)}
                 type="button"
               >
-                {TABS[k].label}
+                <HugeiconsIcon
+                  icon={TABS[k].icon}
+                  strokeWidth={1.6}
+                  size={14}
+                  className="mk-cs__tab-icon"
+                />
+                <span>{TABS[k].label}</span>
               </button>
             ))}
           </div>
-          <div className="mk-cs__caption">{active.caption}</div>
+          <div className="mk-cs__caption">
+            <span>{active.caption}</span>
+            <Link href={active.docsHref} className="mk-cs__docs">
+              <HugeiconsIcon icon={BookOpen01Icon} strokeWidth={1.6} size={12} />
+              <span>Documentation</span>
+              <span style={{ opacity: 0.7 }}>→</span>
+            </Link>
+          </div>
           <pre className="mk-cs__code">{active.code}</pre>
         </div>
       </div>
