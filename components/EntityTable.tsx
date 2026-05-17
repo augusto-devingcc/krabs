@@ -73,10 +73,15 @@ type CellProps = React.TdHTMLAttributes<HTMLTableCellElement>;
 type HeadProps = React.ThHTMLAttributes<HTMLTableCellElement>;
 
 export function Table({ className, children, ...rest }: TableProps) {
+  // Wrap in an overflow-x scroller so a wide table never pushes the parent
+  // layout (which would shift the sidebar's effective viewport position).
+  // `.dt__table` itself still claims width:100% of this container.
   return (
-    <table className={cn("dt__table", className)} {...rest}>
-      {children}
-    </table>
+    <div className="w-full overflow-x-auto">
+      <table className={cn("dt__table", className)} {...rest}>
+        {children}
+      </table>
+    </div>
   );
 }
 

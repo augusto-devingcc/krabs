@@ -1,20 +1,22 @@
+import Link from "next/link";
 import {
   Square,
   CheckSquare2,
   XSquare,
-  Filter,
 } from "lucide-react";
 import { getDashboardContext } from "../../../../src/lib/web/dashboard-ctx.js";
 import { listTasks } from "../../../../src/domain/task.js";
-import { EntityHeader, EntityEmpty, StatusPill } from "@/components/EntityTable";
-import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  EntityHeader,
+  EntityEmpty,
+  StatusPill,
+  Table,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableBody,
+  TableCell,
+} from "@/components/EntityTable";
 import { cn } from "@/components/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +30,9 @@ type Task = {
   completedAt?: string | null;
 };
 
+const VALID_STATUS = ["open", "in_progress", "done", "cancelled"] as const;
+const VALID_PRIORITY = ["high", "normal", "low"] as const;
+
 export default async function TasksPage({
   searchParams,
 }: {
@@ -40,20 +45,13 @@ export default async function TasksPage({
     status?: "open" | "in_progress" | "done" | "cancelled";
     priority?: "low" | "normal" | "high";
   } = { limit: 200 };
-  if (sp.status && ["open", "in_progress", "done", "cancelled"].includes(sp.status)) {
-    filters.status = sp.status as "open" | "in_progress" | "done" | "cancelled";
+  if (sp.status && (VALID_STATUS as readonly string[]).includes(sp.status)) {
+    filters.status = sp.status as (typeof VALID_STATUS)[number];
   }
-  if (sp.priority && ["low", "normal", "high"].includes(sp.priority)) {
-    filters.priority = sp.priority as "low" | "normal" | "high";
+  if (sp.priority && (VALID_PRIORITY as readonly string[]).includes(sp.priority)) {
+    filters.priority = sp.priority as (typeof VALID_PRIORITY)[number];
   }
   const { items } = await listTasks(ctx, filters);
-
-  const primary = (items as Task[]).filter(
-    (t) => t.status === "open" || t.status === "in_progress",
-  );
-  const secondary = (items as Task[]).filter(
-    (t) => t.status === "done" || t.status === "cancelled",
-  );
 
   return (
     <div className="center">
@@ -63,38 +61,30 @@ export default async function TasksPage({
         count={items.length}
       />
 
-      <form
-        action="/dashboard/tasks"
-        className="mb-6 flex flex-col sm:flex-row gap-2"
-      >
-        <Select name="status" defaultValue={sp.status || "all"}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="all statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">all statuses</SelectItem>
-            <SelectItem value="open">open</SelectItem>
-            <SelectItem value="in_progress">in_progress</SelectItem>
-            <SelectItem value="done">done</SelectItem>
-            <SelectItem value="cancelled">cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select name="priority" defaultValue={sp.priority || "any"}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="any priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="any">any priority</SelectItem>
-            <SelectItem value="high">high</SelectItem>
-            <SelectItem value="normal">normal</SelectItem>
-            <SelectItem value="low">low</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button type="submit" variant="outline" size="sm">
-          <Filter size={14} aria-hidden />
-          Filter
-        </Button>
-      </form>
+      {/* Filter chips — both axes (status + priority). */}
+      <div className="cx__filters mb-6 flex flex-wrap items-center gap-1">
+        <span className="k-eyebrow mr-1">status</span>
+        <Chip label="all" href={chipHref(sp, "status", null)} active={!sp.status} />
+        {VALID_STATUS.map((s) => (
+          <Chip
+            key={s}
+            label={s.replace("_", " ")}
+            href={chipHref(sp, "status", s)}
+            active={sp.status === s}
+          />
+        ))}
+        <span className="cx__filters-sep" />
+        <span className="k-eyebrow mr-1">priority</span>
+        <Chip label="any" href={chipHref(sp, "priority", null)} active={!sp.priority} />
+        {VALID_PRIORITY.map((p) => (
+          <Chip
+            key={p}
+            label={p}
+            href={chipHref(sp, "priority", p)}
+            active={sp.priority === p}
+          />
+        ))}
+      </div>
 
       {items.length === 0 ? (
         <EntityEmpty
@@ -102,104 +92,88 @@ export default async function TasksPage({
           prompt='Add a task to follow up with Maria next Tuesday, high priority.'
         />
       ) : (
-        <div className="flex flex-col gap-8 max-w-4xl">
-          {primary.length > 0 && <TaskGroup label="active" tasks={primary} />}
-          {secondary.length > 0 && (
-            <TaskGroup label="completed" tasks={secondary} muted />
-          )}
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead style={{ width: 32 }} />
+              <TableHead>title</TableHead>
+              <TableHead style={{ width: 110 }}>priority</TableHead>
+              <TableHead style={{ width: 130 }}>status</TableHead>
+              <TableHead style={{ width: 120, textAlign: "right" }}>due</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {(items as Task[]).map((t) => {
+              const done = t.status === "done";
+              const cancelled = t.status === "cancelled";
+              const checked = done || cancelled;
+              const CheckboxIcon = done ? CheckSquare2 : cancelled ? XSquare : Square;
+              return (
+                <TableRow key={t.id}>
+                  <TableCell style={{ paddingRight: 0 }}>
+                    <CheckboxIcon
+                      size={15}
+                      aria-hidden
+                      strokeWidth={1.5}
+                      style={{
+                        color: checked
+                          ? "var(--fg-3)"
+                          : "var(--fg)",
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell
+                    className={cn("dt-name-l", checked && "line-through text-muted-foreground")}
+                  >
+                    {t.title}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill
+                      status={t.priority}
+                      pillTone={t.priority === "high" ? "warning" : "neutral"}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={t.status} />
+                  </TableCell>
+                  <TableCell className="dt-updated">
+                    {t.dueAt ? t.dueAt.slice(0, 10) : "—"}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </div>
   );
 }
 
-function TaskGroup({
+function Chip({
   label,
-  tasks,
-  muted,
+  href,
+  active,
 }: {
   label: string;
-  tasks: Task[];
-  muted?: boolean;
+  href: string;
+  active: boolean;
 }) {
   return (
-    <section className={muted ? "opacity-70" : ""}>
-      <div className="flex items-center gap-2 mb-3">
-        <p className="k-eyebrow">{label}</p>
-        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-          {tasks.length}
-        </span>
-      </div>
-      <div
-        className="border rounded-[var(--radius-3)] bg-card overflow-hidden"
-        style={{ borderColor: "var(--border-light)" }}
-      >
-        {tasks.map((t, i) => (
-          <TaskRow key={t.id} task={t} first={i === 0} />
-        ))}
-      </div>
-    </section>
+    <Link href={href} className={`cx__chip${active ? " cx__chip--active" : ""}`}>
+      {label}
+    </Link>
   );
 }
 
-function TaskRow({ task, first }: { task: Task; first: boolean }) {
-  const done = task.status === "done";
-  const cancelled = task.status === "cancelled";
-  const checked = done || cancelled;
-
-  const CheckboxIcon = done ? CheckSquare2 : cancelled ? XSquare : Square;
-
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-4 px-4 py-3 hover:bg-muted/50 transition-colors",
-        !first && "border-t",
-      )}
-      style={!first ? { borderColor: "var(--border-muted)" } : undefined}
-    >
-      <CheckboxIcon
-        size={16}
-        aria-hidden
-        className={cn(
-          "mt-0.5 shrink-0",
-          checked ? "text-muted-foreground" : "text-foreground",
-        )}
-      />
-
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            "text-sm truncate",
-            checked ? "line-through text-muted-foreground" : "text-foreground",
-          )}
-          title={task.title}
-        >
-          {task.title}
-        </p>
-        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground">
-          <span>{task.id.slice(0, 10)}…</span>
-          {task.dueAt && (
-            <>
-              <span>·</span>
-              <span>due {task.dueAt.slice(0, 10)}</span>
-            </>
-          )}
-          {task.completedAt && (
-            <>
-              <span>·</span>
-              <span>done {task.completedAt.slice(0, 10)}</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 shrink-0">
-        <StatusPill
-          status={task.priority}
-          pillTone={task.priority === "high" ? "warning" : "neutral"}
-        />
-        <StatusPill status={task.status} />
-      </div>
-    </div>
-  );
+function chipHref(
+  sp: { status?: string; priority?: string },
+  axis: "status" | "priority",
+  value: string | null,
+): string {
+  const params = new URLSearchParams();
+  if (axis !== "status" && sp.status) params.set("status", sp.status);
+  if (axis !== "priority" && sp.priority) params.set("priority", sp.priority);
+  if (value) params.set(axis, value);
+  const qs = params.toString();
+  return qs ? `/dashboard/tasks?${qs}` : "/dashboard/tasks";
 }

@@ -31,15 +31,18 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <MarketingThemeProvider>
-      <div className="app min-h-screen flex bg-background text-foreground">
+      {/* Outermost shell — `h-screen` pins the dashboard to viewport height
+          so its flex children (sidebar, main column) own their own scroll
+          contexts. Without a fixed height parent, the inner `.app`/`.main`
+          `overflow:hidden` rules don't have anything to clip against. */}
+      <div className="app h-screen flex bg-background text-foreground">
         <Sidebar />
         <div className="main">
           <Topbar onOpenPalette={open} />
-          {/* Use a plain scrolling main so pages that don't opt into the
-              designer's `.center` / `.rp` / `.cx` layouts still scroll.
-              Pages that DO use those classes will scroll internally and
-              this outer overflow becomes a no-op. */}
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          {/* Page renders directly into `.main`'s flex column. Each route
+              owns its scroll container (`.center`, `.rp`, `.st`, ...) so
+              we don't double-stack overflow:auto contexts. */}
+          {children}
         </div>
       </div>
       <CommandPalette open={paletteOpen} onClose={close} />

@@ -38,7 +38,7 @@ export function SettingsRail() {
               className={`st__rail-item${active ? " st__rail-item--active" : ""}`}
             >
               <span className="st__rail-ic">
-                <Icon size={14} strokeWidth={1.75} />
+                <Icon size={14} strokeWidth={1.5} />
               </span>
               <span>{it.label}</span>
             </Link>

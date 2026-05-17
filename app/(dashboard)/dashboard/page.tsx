@@ -75,22 +75,22 @@ export default async function DashboardOverview() {
         </div>
       )}
 
-      {/* Stats — designer's .ag__summary horizontal bar (mono labels, display numbers). */}
-      <div className="ag__summary mb-8" style={{ marginBottom: "8px" }}>
+      {/* Stats — designer's .ag__summary horizontal bar (top + bottom rules,
+          mono uppercase labels, display-size numbers). One row of 5 primary
+          entities; secondary counts live below as a quiet sub-line. */}
+      <div className="ag__summary mb-3">
         <Stat href="/dashboard/contacts" label="contacts" n={counts.contacts} />
         <Stat href="/dashboard/deals" label="deals" n={counts.deals} />
         <Stat href="/dashboard/tasks" label="tasks" n={counts.tasks} />
         <Stat href="/dashboard/notes" label="notes" n={counts.notes} />
-        <Stat href="/dashboard/tags" label="tags" n={counts.tags} />
-      </div>
-
-      <div className="ag__summary mb-10">
-        <Stat label="identities" n={counts.identities} />
-        <Stat label="interactions" n={counts.interactions} />
         <Stat href="/dashboard/audit" label="actions" n={counts.actions} />
-        <Stat href="/dashboard/keys" label="api keys" n={counts.apiKeys} />
-        <Stat label="" n={0} hidden />
       </div>
+      <p className="font-mono text-[11px] text-muted-foreground mb-10">
+        {counts.identities.toLocaleString()} identities ·{" "}
+        {counts.interactions.toLocaleString()} interactions ·{" "}
+        {counts.tags.toLocaleString()} tags ·{" "}
+        {counts.apiKeys.toLocaleString()} api keys
+      </p>
 
       {/* Recent activity — designer's .rp__list pattern (grid: time / op / intent / via). */}
       <div className="mb-6 flex items-end justify-between">
@@ -149,12 +149,10 @@ function Stat({
   href,
   label,
   n,
-  hidden,
 }: {
   href?: string;
   label: string;
   n: number;
-  hidden?: boolean;
 }) {
   const body = (
     <>
@@ -162,9 +160,6 @@ function Stat({
       <div className="ag__summary-v">{n.toLocaleString()}</div>
     </>
   );
-  if (hidden) {
-    return <div className="ag__summary-stat" style={{ visibility: "hidden" }}>{body}</div>;
-  }
   if (href) {
     return (
       <Link

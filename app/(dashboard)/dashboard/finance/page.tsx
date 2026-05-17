@@ -146,17 +146,23 @@ export default async function FinancePage() {
         </p>
       </div>
 
-      {/* Top summary stats — .ag__summary horizontal bar with mono labels. */}
-      <div className="ag__summary mb-10" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-        <Stat label="mrr" value={`$${formatCents(summary.mrr_cents)}`} sub={`ARR $${formatCents(summary.arr_cents)} · ${summary.counts.active_subscriptions} active`} />
+      {/* Top summary stats — designer's .ag__summary horizontal bar with
+          top+bottom rules, mono uppercase labels, display-size values. */}
+      <div className="ag__summary mb-6" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+        <Stat label="mrr" value={`$${formatCents(summary.mrr_cents)}`} />
+        <Stat label="arr" value={`$${formatCents(summary.arr_cents)}`} />
         <Stat
-          label="net (this month)"
+          label="net · month"
           value={`$${formatCents(summary.net_cents)}`}
-          sub={`revenue $${formatCents(summary.revenue.paid_cents)} · expenses $${formatCents(summary.expenses.total_cents)}`}
           accent={netPositive}
         />
-        <Stat label="outstanding" value={String(summary.counts.invoices_outstanding)} sub="invoices sent or overdue" />
+        <Stat label="active subs" value={String(summary.counts.active_subscriptions)} />
+        <Stat label="outstanding" value={String(summary.counts.invoices_outstanding)} />
       </div>
+      <p className="font-mono text-[11px] text-muted-foreground mb-10">
+        revenue ${formatCents(summary.revenue.paid_cents)} ·{" "}
+        expenses ${formatCents(summary.expenses.total_cents)}
+      </p>
 
       <Section
         title="Subscriptions"
@@ -310,12 +316,10 @@ export default async function FinancePage() {
 function Stat({
   label,
   value,
-  sub,
   accent,
 }: {
   label: string;
   value: string;
-  sub: string;
   accent?: boolean;
 }) {
   return (
@@ -326,9 +330,6 @@ function Stat({
         style={accent ? { color: "var(--accent-500)" } : undefined}
       >
         {value}
-      </div>
-      <div className="font-mono text-[11px] text-muted-foreground mt-2 leading-snug">
-        {sub}
       </div>
     </div>
   );

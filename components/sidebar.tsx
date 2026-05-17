@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   Users,
@@ -54,7 +54,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
       className={`sb-item${active ? " sb-item--active" : ""}`}
     >
       <span className="sb-item__ic">
-        <Icon size={15} strokeWidth={1.75} />
+        <Icon size={15} strokeWidth={1.5} />
       </span>
       <span className="sb-item__lbl">{item.label}</span>
     </Link>
@@ -103,16 +103,6 @@ export function Sidebar() {
         {secondaryNav.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
-        <div className="sb-item" style={{ cursor: "default" }}>
-          <span className="sb-item__ic">
-            <UserButton
-              appearance={{ elements: { avatarBox: "h-[15px] w-[15px]" } }}
-            />
-          </span>
-          <span className="sb-item__lbl" title={email}>
-            {email || "Account"}
-          </span>
-        </div>
       </div>
     </aside>
   );

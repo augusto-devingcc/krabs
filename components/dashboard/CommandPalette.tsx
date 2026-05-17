@@ -218,7 +218,7 @@ export function CommandPalette({ open, onClose }: Props) {
                       }}
                     >
                       <span className="cp-item-ic">
-                        <Icon size={14} strokeWidth={1.75} />
+                        <Icon size={14} strokeWidth={1.5} />
                       </span>
                       <span className="cp-item-l">
                         <span>{highlight(it.label, query)}</span>
