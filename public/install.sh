@@ -67,14 +67,28 @@ fi
 say "  $(c_dim 'node:') $(node -v)"
 say "  $(c_dim 'pnpm:') $(pnpm -v)"
 
-# ── 2. Clone ─────────────────────────────────────────────────
+# ── 2. Clone or refresh ──────────────────────────────────────
 if [ -d "$DIR" ]; then
   step "Directory $DIR already exists"
   if [ -d "$DIR/.git" ]; then
-    say "  $(c_dim 'looks like an existing krabs install — pulling latest')"
+    say "  $(c_dim 'looks like an existing krabs install — refreshing to origin/'"$BRANCH"')'"
+
+    # If the working tree is dirty, auto-stash so the user never loses
+    # accidental edits and the installer never aborts mid-flight. Use a
+    # message they can grep for in `git stash list` if they want to recover.
+    if [ -n "$(git -C "$DIR" status --porcelain)" ]; then
+      STASH_MSG="krabs-installer auto-stash $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      say "  $(c_warn '!') local changes detected — stashing them as: $STASH_MSG"
+      say "      $(c_dim 'recover with:') $(c_dim "cd $DIR && git stash list && git stash pop")"
+      git -C "$DIR" stash push --include-untracked --quiet -m "$STASH_MSG" || true
+    fi
+
     git -C "$DIR" fetch --quiet origin "$BRANCH"
     git -C "$DIR" checkout --quiet "$BRANCH"
-    git -C "$DIR" pull --ff-only --quiet origin "$BRANCH"
+    # Hard reset so the install dir always matches origin/$BRANCH exactly.
+    # Anything important was just stashed above; this is the canonical
+    # state for a managed install.
+    git -C "$DIR" reset --hard --quiet "origin/$BRANCH"
   else
     err "$DIR exists but is not a git checkout. Move it aside and re-run."
     err "Or pass KRABS_DIR=/path/to/empty/dir to install elsewhere."
