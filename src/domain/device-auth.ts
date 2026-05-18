@@ -160,9 +160,24 @@ export type ConsumeResult = {
  * returns null — the caller decides how to respond (pending, denied, expired,
  * already-issued, etc.) by re-reading the row.
  *
- * Uses an UPDATE WHERE approvedApiKeyId IS NULL guard to serialize concurrent
- * polls — only the first poll succeeds in claiming the row.
+ * Order matters: we INSERT the api_key first (so the FK target exists) and
+ * then UPDATE the device_authorization with the WHERE approvedApiKeyId IS NULL
+ * guard. If the UPDATE matches 0 rows (a concurrent poll won the race), we
+ * throw to roll back the transaction — the api_key insert disappears too.
+ * The route handler catches this and re-reads the row to surface the right
+ * OAuth error.
+ *
+ * Turso/libSQL enforce SQLite foreign keys; doing the UPDATE first errored
+ * with SQLITE_CONSTRAINT: FOREIGN KEY constraint failed because the apiKey
+ * row didn't exist yet.
  */
+class DeviceAuthRaceError extends Error {
+  constructor() {
+    super("device-auth race: someone else claimed this row");
+    this.name = "DeviceAuthRaceError";
+  }
+}
+
 export async function consumeApprovedDeviceAuth(args: {
   deviceAuthorizationId: string;
   label?: string;
@@ -174,41 +189,66 @@ export async function consumeApprovedDeviceAuth(args: {
   const tokenPreview = apiKeyPreview(token);
   const now = new Date().toISOString();
 
-  return await db.transaction(async (tx) => {
-    const claimed = await tx
-      .update(deviceAuthorizations)
-      .set({ approvedApiKeyId: candidateKeyId })
-      .where(
-        and(
-          eq(deviceAuthorizations.id, args.deviceAuthorizationId),
-          eq(deviceAuthorizations.status, "approved"),
-          isNull(deviceAuthorizations.approvedApiKeyId),
-        ),
-      )
-      .returning({
-        id: deviceAuthorizations.id,
-        accountId: deviceAuthorizations.accountId,
+  // Read the row up-front to get its accountId and a pre-check. Doesn't
+  // serialize concurrent polls by itself — the UPDATE...WHERE below does.
+  const preCheck = await db
+    .select({
+      id: deviceAuthorizations.id,
+      status: deviceAuthorizations.status,
+      accountId: deviceAuthorizations.accountId,
+      approvedApiKeyId: deviceAuthorizations.approvedApiKeyId,
+    })
+    .from(deviceAuthorizations)
+    .where(eq(deviceAuthorizations.id, args.deviceAuthorizationId))
+    .limit(1)
+    .then((r) => r[0]);
+  if (
+    !preCheck ||
+    preCheck.status !== "approved" ||
+    preCheck.approvedApiKeyId !== null ||
+    !preCheck.accountId
+  ) {
+    return null;
+  }
+  const accountId = preCheck.accountId;
+
+  try {
+    return await db.transaction(async (tx) => {
+      // Insert the api_key FIRST so the FK target exists when the UPDATE
+      // below references it. Libsql/Turso enforce foreign keys eagerly.
+      await tx.insert(apiKeys).values({
+        id: candidateKeyId,
+        accountId,
+        label: keyLabel,
+        tokenHash,
+        tokenPreview,
+        createdAt: now,
       });
-    if (claimed.length === 0) return null;
-    const claim = claimed[0]!;
-    const accountId = claim.accountId;
-    if (!accountId) {
-      throw new Error(
-        "consumeApprovedDeviceAuth: approved row has no accountId (data invariant violated)",
-      );
-    }
 
-    await tx.insert(apiKeys).values({
-      id: candidateKeyId,
-      accountId,
-      label: keyLabel,
-      tokenHash,
-      tokenPreview,
-      createdAt: now,
+      // Now claim the row. The WHERE...approvedApiKeyId IS NULL guard
+      // serializes concurrent polls — only the first poll updates >0 rows.
+      const claimed = await tx
+        .update(deviceAuthorizations)
+        .set({ approvedApiKeyId: candidateKeyId })
+        .where(
+          and(
+            eq(deviceAuthorizations.id, args.deviceAuthorizationId),
+            eq(deviceAuthorizations.status, "approved"),
+            isNull(deviceAuthorizations.approvedApiKeyId),
+          ),
+        )
+        .returning({ id: deviceAuthorizations.id });
+      if (claimed.length === 0) {
+        // Race lost — throw to roll back the api_key insert above.
+        throw new DeviceAuthRaceError();
+      }
+
+      return { apiKeyId: candidateKeyId, accessToken: token, accountId };
     });
-
-    return { apiKeyId: candidateKeyId, accessToken: token, accountId };
-  });
+  } catch (err) {
+    if (err instanceof DeviceAuthRaceError) return null;
+    throw err;
+  }
 }
 
 /**
