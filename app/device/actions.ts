@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDashboardContext } from "@/lib/web/dashboard-ctx.js";
 import {
@@ -22,6 +21,11 @@ export async function submitCodeAction(formData: FormData): Promise<void> {
   redirect(`/device?code=${encodeURIComponent(normalized)}`);
 }
 
+// IMPORTANT: do NOT revalidatePath("/device") after approve/deny — the page
+// would re-render server-side, see status='approved', and replace the
+// success state from <DeviceClient> with the SimpleState fallback that says
+// "Code already used" (which is meant for users who arrive at the URL AFTER
+// approval). The client manages the post-action UI itself.
 export async function approveDeviceAction(
   formData: FormData,
 ): Promise<DeviceActionResult> {
@@ -40,7 +44,6 @@ export async function approveDeviceAction(
 
   const { ctx } = await getDashboardContext();
   await markApproved({ deviceAuthorizationId: row.id, accountId: ctx.accountId });
-  revalidatePath("/device");
   return { ok: true };
 }
 
@@ -60,6 +63,5 @@ export async function denyDeviceAction(
   }
 
   await markDenied(row.id);
-  revalidatePath("/device");
   return { ok: true };
 }
