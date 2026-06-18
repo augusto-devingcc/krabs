@@ -3,7 +3,6 @@ import { z } from "zod";
 import { db } from "../db/client.js";
 import {
   agentActions,
-  contacts,
   invoices,
   invoiceStatuses,
   type InvoiceRow,
@@ -22,22 +21,18 @@ import {
 } from "./shared.js";
 
 export const invoiceCreateInputSchema = z.object({
-  contactId: idSchema("contact"),
+  counterparty: z.string().max(255).optional(),
   subscriptionId: idSchema("subscription").optional(),
-  dealId: idSchema("deal").optional(),
   amountCents: z.number().int().min(0),
   currency: z.string().length(3).default("USD"),
   issuedAt: z.string().datetime().optional(),
   dueAt: z.string().datetime().optional(),
   note: z.string().max(2000).optional(),
   customFields: z.record(z.unknown()).optional(),
-  // Optional provider mirror ids. Populated by integrations (e.g. Stripe webhooks)
-  // so the row can be re-located on later events without a separate UPDATE.
-  stripeInvoiceId: z.string().max(255).optional(),
-  stripeChargeId: z.string().max(255).optional(),
 });
 
 export const invoiceUpdateInputSchema = z.object({
+  counterparty: z.string().max(255).nullable().optional(),
   amountCents: z.number().int().min(0).optional(),
   currency: z.string().length(3).optional(),
   issuedAt: z.string().datetime().optional(),
@@ -48,9 +43,7 @@ export const invoiceUpdateInputSchema = z.object({
 
 export const invoiceListFiltersSchema = z.object({
   status: z.enum(invoiceStatuses).optional(),
-  contactId: idSchema("contact").optional(),
   subscriptionId: idSchema("subscription").optional(),
-  dealId: idSchema("deal").optional(),
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
 });
@@ -67,9 +60,8 @@ export type MarkInvoicePaidInput = z.infer<typeof markInvoicePaidInputSchema>;
 export type Invoice = {
   id: string;
   accountId: string;
-  contactId: string;
+  counterparty: string | null;
   subscriptionId: string | null;
-  dealId: string | null;
   number: string;
   amountCents: number;
   currency: string;
@@ -79,8 +71,6 @@ export type Invoice = {
   paidAt: string | null;
   voidedAt: string | null;
   note: string | null;
-  stripeInvoiceId: string | null;
-  stripeChargeId: string | null;
   customFields: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
@@ -90,9 +80,8 @@ function rowToInvoice(row: InvoiceRow): Invoice {
   return {
     id: row.id,
     accountId: row.accountId,
-    contactId: row.contactId,
+    counterparty: row.counterparty,
     subscriptionId: row.subscriptionId,
-    dealId: row.dealId,
     number: row.number,
     amountCents: row.amountCents,
     currency: row.currency,
@@ -102,24 +91,12 @@ function rowToInvoice(row: InvoiceRow): Invoice {
     paidAt: row.paidAt,
     voidedAt: row.voidedAt,
     note: row.note,
-    stripeInvoiceId: row.stripeInvoiceId,
-    stripeChargeId: row.stripeChargeId,
     customFields: row.customFields
       ? (JSON.parse(row.customFields) as Record<string, unknown>)
       : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
-}
-
-async function requireContactExists(ctx: CallerContext, contactId: string): Promise<void> {
-  const r = await db
-    .select({ id: contacts.id })
-    .from(contacts)
-    .where(and(eq(contacts.id, contactId), eq(contacts.accountId, ctx.accountId)))
-    .limit(1)
-    .then((r) => r[0]);
-  if (!r) throw new ApiError({ code: "NOT_FOUND", message: `Contact ${contactId} not found` });
 }
 
 async function computeNextInvoiceNumber(ctx: CallerContext, year: number): Promise<string> {
@@ -161,8 +138,6 @@ export async function createInvoice(
     if (cache.hit) return { ...cache.body, replayed: true };
   }
 
-  await requireContactExists(ctx, parsed.contactId);
-
   const now = new Date().toISOString();
   const issuedAt = parsed.issuedAt ?? now;
   const year = new Date(issuedAt).getUTCFullYear();
@@ -172,9 +147,8 @@ export async function createInvoice(
   const planned: Invoice = {
     id,
     accountId: ctx.accountId,
-    contactId: parsed.contactId,
+    counterparty: parsed.counterparty ?? null,
     subscriptionId: parsed.subscriptionId ?? null,
-    dealId: parsed.dealId ?? null,
     number,
     amountCents: parsed.amountCents,
     currency: parsed.currency,
@@ -184,8 +158,6 @@ export async function createInvoice(
     paidAt: null,
     voidedAt: null,
     note: parsed.note ?? null,
-    stripeInvoiceId: parsed.stripeInvoiceId ?? null,
-    stripeChargeId: parsed.stripeChargeId ?? null,
     customFields: parsed.customFields ?? null,
     createdAt: now,
     updatedAt: now,
@@ -198,9 +170,8 @@ export async function createInvoice(
     await tx.insert(invoices).values({
       id: planned.id,
       accountId: planned.accountId,
-      contactId: planned.contactId,
+      counterparty: planned.counterparty,
       subscriptionId: planned.subscriptionId,
-      dealId: planned.dealId,
       number: planned.number,
       amountCents: planned.amountCents,
       currency: planned.currency,
@@ -210,8 +181,6 @@ export async function createInvoice(
       paidAt: planned.paidAt,
       voidedAt: planned.voidedAt,
       note: planned.note,
-      stripeInvoiceId: planned.stripeInvoiceId,
-      stripeChargeId: planned.stripeChargeId,
       customFields: planned.customFields ? JSON.stringify(planned.customFields) : null,
       createdAt: planned.createdAt,
       updatedAt: planned.updatedAt,
@@ -231,7 +200,7 @@ export async function createInvoice(
       targetId: id,
       metadata: {
         number: planned.number,
-        contactId: planned.contactId,
+        counterparty: planned.counterparty,
         amountCents: planned.amountCents,
       },
       createdAt: now,
@@ -267,9 +236,7 @@ export async function listInvoices(
 ): Promise<ListInvoicesResult> {
   const conds = [eq(invoices.accountId, ctx.accountId)];
   if (filters.status) conds.push(eq(invoices.status, filters.status));
-  if (filters.contactId) conds.push(eq(invoices.contactId, filters.contactId));
   if (filters.subscriptionId) conds.push(eq(invoices.subscriptionId, filters.subscriptionId));
-  if (filters.dealId) conds.push(eq(invoices.dealId, filters.dealId));
   if (filters.from) conds.push(gte(invoices.issuedAt, filters.from));
   if (filters.to) conds.push(lte(invoices.issuedAt, filters.to));
   const rows = await db
@@ -323,6 +290,7 @@ export async function updateInvoice(
   const now = new Date().toISOString();
   const next: Invoice = {
     ...before,
+    counterparty: parsed.counterparty === undefined ? before.counterparty : parsed.counterparty,
     amountCents: parsed.amountCents ?? before.amountCents,
     currency: parsed.currency ?? before.currency,
     issuedAt: parsed.issuedAt ?? before.issuedAt,
@@ -339,6 +307,7 @@ export async function updateInvoice(
     await tx
       .update(invoices)
       .set({
+        counterparty: next.counterparty,
         amountCents: next.amountCents,
         currency: next.currency,
         issuedAt: next.issuedAt,

@@ -6,22 +6,12 @@ const PREFIX_SEP = "_";
 const prefixes = {
   account: "acc",
   apiKey: "key",
-  contact: "cnt",
-  identity: "idy",
   agentAction: "act",
   idempotencyKey: "idem",
-  interaction: "int",
-  deal: "dl",
-  task: "tsk",
-  note: "not",
-  tag: "tag",
-  deviceAuth: "dev",
   product: "prd",
   subscription: "sub",
   invoice: "inv",
   expense: "exp",
-  integration: "intg",
-  emailDomain: "edm",
 } as const;
 
 export type EntityKind = keyof typeof prefixes;

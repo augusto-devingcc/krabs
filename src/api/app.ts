@@ -1,28 +1,17 @@
 import { Hono } from "hono";
 import { healthRoute } from "./routes/health.js";
 import { meRoute } from "./routes/me.js";
-import { contactsRoute, actionsRoute } from "./routes/contacts.js";
 import { accountRoute } from "./routes/account.js";
 import { apiKeysRoute } from "./routes/api-keys.js";
 import { schemaRoute } from "./routes/schema.js";
-import { identitiesRoute, contactFindRoute } from "./routes/identities.js";
-import { interactionsRoute } from "./routes/interactions.js";
-import { dealsRoute } from "./routes/deals.js";
-import { tasksRoute } from "./routes/tasks.js";
-import { notesRoute } from "./routes/notes.js";
-import { tagsRoute } from "./routes/tags.js";
+import { actionsRoute } from "./routes/actions.js";
 import { productsRoute } from "./routes/products.js";
 import { subscriptionsRoute } from "./routes/subscriptions.js";
 import { invoicesRoute } from "./routes/invoices.js";
 import { expensesRoute } from "./routes/expenses.js";
 import { financeRoute } from "./routes/finance.js";
-import { authDeviceRoute } from "./routes/auth-device.js";
-import { integrationsStripeRoute } from "./routes/integrations-stripe.js";
-import { webhookStripeRoute } from "./routes/webhook-stripe.js";
-import { integrationsResendRoute } from "./routes/integrations-resend.js";
-import { emailDomainsRoute } from "./routes/email-domains.js";
-import { emailRoute } from "./routes/email.js";
 import { mcpRoute } from "./routes/mcp.js";
+import { webhookStripeRoute } from "./routes/webhook-stripe.js";
 import { errorHandler } from "./middleware/error.js";
 
 export function buildApp() {
@@ -30,34 +19,19 @@ export function buildApp() {
 
   app.onError(errorHandler);
 
-  app.route("/v1/auth", authDeviceRoute);
+  // Stripe webhook — no auth middleware, Stripe authenticates via signature
+  app.route("/v1/webhooks/stripe", webhookStripeRoute);
+
   app.route("/v1/health", healthRoute);
   app.route("/v1/schema", schemaRoute);
   app.route("/v1/me", meRoute);
   app.route("/v1/account", accountRoute);
   app.route("/v1/api-keys", apiKeysRoute);
-  // Mount /v1/contacts/find BEFORE the parameterized contact routes
-  app.route("/v1/contacts/find", contactFindRoute);
-  app.route("/v1/contacts", contactsRoute);
-  app.route("/v1/identities", identitiesRoute);
-  app.route("/v1/interactions", interactionsRoute);
-  app.route("/v1/deals", dealsRoute);
-  app.route("/v1/tasks", tasksRoute);
-  app.route("/v1/notes", notesRoute);
-  app.route("/v1/tags", tagsRoute);
   app.route("/v1/products", productsRoute);
   app.route("/v1/subscriptions", subscriptionsRoute);
   app.route("/v1/invoices", invoicesRoute);
   app.route("/v1/expenses", expensesRoute);
   app.route("/v1/finance", financeRoute);
-  // Webhook mounted FIRST so its specific /:accountId/webhook route wins before
-  // the auth-gated sub-app's "*" middleware claims the path. Stripe authenticates
-  // via signature, not a krabs API key.
-  app.route("/v1/integrations/stripe", webhookStripeRoute);
-  app.route("/v1/integrations/stripe", integrationsStripeRoute);
-  app.route("/v1/integrations/resend", integrationsResendRoute);
-  app.route("/v1/email-domains", emailDomainsRoute);
-  app.route("/v1/email", emailRoute);
   app.route("/v1/actions", actionsRoute);
   app.route("/v1/mcp", mcpRoute);
 

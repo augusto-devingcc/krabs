@@ -3,7 +3,6 @@ import { z } from "zod";
 import { db } from "../db/client.js";
 import {
   agentActions,
-  contacts,
   products,
   subscriptions,
   billingCycles,
@@ -27,7 +26,7 @@ import {
 
 export const subscriptionCreateInputSchema = z
   .object({
-    contactId: idSchema("contact"),
+    counterparty: z.string().max(255).optional(),
     productId: idSchema("product").optional(),
     amountCents: z.number().int().min(0),
     currency: z.string().length(3).default("USD"),
@@ -36,9 +35,6 @@ export const subscriptionCreateInputSchema = z
     status: z.enum(subscriptionStatuses).default("active"),
     startedAt: z.string().datetime().optional(),
     customFields: z.record(z.unknown()).optional(),
-    // Optional provider mirror id. Populated by integrations (e.g. Stripe webhooks)
-    // so the row can be re-located on later events without a separate UPDATE.
-    stripeSubscriptionId: z.string().max(255).optional(),
   })
   .superRefine((val, ctx) => {
     if (val.billingCycle === "custom_days" && !val.customCycleDays) {
@@ -51,6 +47,7 @@ export const subscriptionCreateInputSchema = z
   });
 
 export const subscriptionUpdateInputSchema = z.object({
+  counterparty: z.string().max(255).nullable().optional(),
   productId: idSchema("product").nullable().optional(),
   amountCents: z.number().int().min(0).optional(),
   currency: z.string().length(3).optional(),
@@ -61,7 +58,6 @@ export const subscriptionUpdateInputSchema = z.object({
 
 export const subscriptionListFiltersSchema = z.object({
   status: z.enum(subscriptionStatuses).optional(),
-  contactId: idSchema("contact").optional(),
   productId: idSchema("product").optional(),
 });
 
@@ -78,7 +74,7 @@ export type CancelSubscriptionInput = z.infer<typeof cancelSubscriptionInputSche
 export type Subscription = {
   id: string;
   accountId: string;
-  contactId: string;
+  counterparty: string | null;
   productId: string | null;
   amountCents: number;
   currency: string;
@@ -92,7 +88,6 @@ export type Subscription = {
   canceledAt: string | null;
   cancelAt: string | null;
   cancelReason: string | null;
-  stripeSubscriptionId: string | null;
   customFields: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
@@ -102,7 +97,7 @@ function rowToSubscription(row: SubscriptionRow): Subscription {
   return {
     id: row.id,
     accountId: row.accountId,
-    contactId: row.contactId,
+    counterparty: row.counterparty,
     productId: row.productId,
     amountCents: row.amountCents,
     currency: row.currency,
@@ -116,23 +111,12 @@ function rowToSubscription(row: SubscriptionRow): Subscription {
     canceledAt: row.canceledAt,
     cancelAt: row.cancelAt,
     cancelReason: row.cancelReason,
-    stripeSubscriptionId: row.stripeSubscriptionId,
     customFields: row.customFields
       ? (JSON.parse(row.customFields) as Record<string, unknown>)
       : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
-}
-
-async function requireContactExists(ctx: CallerContext, contactId: string): Promise<void> {
-  const r = await db
-    .select({ id: contacts.id })
-    .from(contacts)
-    .where(and(eq(contacts.id, contactId), eq(contacts.accountId, ctx.accountId)))
-    .limit(1)
-    .then((r) => r[0]);
-  if (!r) throw new ApiError({ code: "NOT_FOUND", message: `Contact ${contactId} not found` });
 }
 
 async function requireProductExists(ctx: CallerContext, productId: string): Promise<void> {
@@ -165,7 +149,6 @@ export async function createSubscription(
     if (cache.hit) return { ...cache.body, replayed: true };
   }
 
-  await requireContactExists(ctx, parsed.contactId);
   if (parsed.productId) await requireProductExists(ctx, parsed.productId);
 
   const now = new Date().toISOString();
@@ -177,7 +160,7 @@ export async function createSubscription(
   const planned: Subscription = {
     id,
     accountId: ctx.accountId,
-    contactId: parsed.contactId,
+    counterparty: parsed.counterparty ?? null,
     productId: parsed.productId ?? null,
     amountCents: parsed.amountCents,
     currency: parsed.currency,
@@ -191,7 +174,6 @@ export async function createSubscription(
     canceledAt: null,
     cancelAt: null,
     cancelReason: null,
-    stripeSubscriptionId: parsed.stripeSubscriptionId ?? null,
     customFields: parsed.customFields ?? null,
     createdAt: now,
     updatedAt: now,
@@ -204,7 +186,7 @@ export async function createSubscription(
     await tx.insert(subscriptions).values({
       id: planned.id,
       accountId: planned.accountId,
-      contactId: planned.contactId,
+      counterparty: planned.counterparty,
       productId: planned.productId,
       amountCents: planned.amountCents,
       currency: planned.currency,
@@ -218,7 +200,6 @@ export async function createSubscription(
       canceledAt: planned.canceledAt,
       cancelAt: planned.cancelAt,
       cancelReason: planned.cancelReason,
-      stripeSubscriptionId: planned.stripeSubscriptionId,
       customFields: planned.customFields ? JSON.stringify(planned.customFields) : null,
       createdAt: planned.createdAt,
       updatedAt: planned.updatedAt,
@@ -237,7 +218,7 @@ export async function createSubscription(
       targetKind: "subscription",
       targetId: id,
       metadata: {
-        contactId: planned.contactId,
+        counterparty: planned.counterparty,
         productId: planned.productId,
         amountCents: planned.amountCents,
         mrrCents: planned.mrrCents,
@@ -275,7 +256,6 @@ export async function listSubscriptions(
 ): Promise<ListSubscriptionsResult> {
   const conds = [eq(subscriptions.accountId, ctx.accountId)];
   if (filters.status) conds.push(eq(subscriptions.status, filters.status));
-  if (filters.contactId) conds.push(eq(subscriptions.contactId, filters.contactId));
   if (filters.productId) conds.push(eq(subscriptions.productId, filters.productId));
   const rows = await db
     .select()
@@ -351,6 +331,7 @@ export async function updateSubscription(
 
   const next: Subscription = {
     ...before,
+    counterparty: parsed.counterparty === undefined ? before.counterparty : parsed.counterparty,
     productId: parsed.productId === undefined ? before.productId : parsed.productId,
     amountCents: nextAmount,
     currency: parsed.currency ?? before.currency,
@@ -368,6 +349,7 @@ export async function updateSubscription(
     await tx
       .update(subscriptions)
       .set({
+        counterparty: next.counterparty,
         productId: next.productId,
         amountCents: next.amountCents,
         currency: next.currency,

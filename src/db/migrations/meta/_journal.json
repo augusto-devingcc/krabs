@@ -5,78 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1778862145600,
-      "tag": "0000_luxuriant_blue_blade",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1778862442379,
-      "tag": "0001_gray_the_leader",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1778863995069,
-      "tag": "0002_wandering_ravenous",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1778874590970,
-      "tag": "0003_flimsy_mister_fear",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1778880435680,
-      "tag": "0004_rainy_zaran",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1778889245520,
-      "tag": "0005_wooden_ted_forrester",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1778945670995,
-      "tag": "0006_legal_yellow_claw",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1778956855593,
-      "tag": "0007_slow_dracula",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1778962770508,
-      "tag": "0008_soft_captain_universe",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "6",
-      "when": 1778989142590,
-      "tag": "0009_low_star_brand",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "6",
-      "when": 1779033663241,
-      "tag": "0010_business_profile",
+      "when": 1781760166361,
+      "tag": "0000_nostalgic_punisher",
       "breakpoints": true
     }
   ]
