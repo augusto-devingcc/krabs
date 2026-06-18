@@ -1,6 +1,6 @@
 # krabs-cli
 
-The command-line interface for [krabs.dev](https://krabs.dev) — a CRM for AI agents.
+The command-line interface for [krabs](https://github.com/augusto-devingcc/krabs) — a self-host personal finance tracker for AI agents.
 
 ## Install
 
@@ -14,27 +14,25 @@ npm install -g krabs-cli
 brew install augusto-devingcc/krabs/krabs
 ```
 
-### Standalone (no install)
-```bash
-pnpm dlx krabs-cli auth login
-```
+## Setup
 
-## Authenticate
+After installing, point the CLI at your krabs instance:
 
 ```bash
-krabs auth login
+export KRABS_API_KEY=your_api_key
+export KRABS_API_URL=http://localhost:3000   # or wherever your instance runs
 ```
 
-Opens a browser. Sign in with your krabs.dev account, approve the device. The CLI receives a token and saves it to `~/.config/krabs/config.json`.
+Or put them in `~/.config/krabs/config.json`.
 
 ## Common commands
 
 ```bash
-krabs auth status                # who am I
-krabs contact list               # list contacts
-krabs contact create --email "lisa@acme.com" --name "Lisa Ortega"
-krabs deal create --contact ctc_... --amount 12000 --stage qualified
-krabs schema describe            # the full operation contract
+krabs schema describe            # full operation contract
+krabs finance summary            # revenue / expenses / net / MRR / ARR
+krabs finance mrr                # MRR breakdown
+krabs key list                   # list API keys
+krabs action list                # audit log
 ```
 
 For the full command tree, run `krabs --help`.

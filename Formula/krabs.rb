@@ -8,7 +8,7 @@
 #      under Formula/krabs.rb, open a PR, merge.
 #   4. Users can then `brew install augusto-devingcc/krabs/krabs`.
 class Krabs < Formula
-  desc "Command-line interface for krabs.dev — a CRM for AI agents"
+  desc "Command-line interface for krabs — a self-host personal finance tracker for AI agents"
   homepage "https://krabs.dev"
   url "https://registry.npmjs.org/krabs-cli/-/krabs-cli-0.5.0.tgz"
   sha256 "PLACEHOLDER_REPLACE_AFTER_NPM_PUBLISH"
