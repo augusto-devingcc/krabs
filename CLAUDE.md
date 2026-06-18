@@ -128,7 +128,7 @@ pnpm lint             # next lint
 
 - Hosting: **Vercel**. Production domain `krabs.dev` aliases to the latest production deploy automatically on push to `main`.
 - Other aliases on the same project: `api.krabs.dev`, `app.krabs.dev`, `mcp.krabs.dev`.
-- DNS: Cloudflare. Cloudflare creds live in `~/.claude/credentials/cloudflare.env` (Realtia Labs account, owns `realtialabs.com` and `panamakey.com`) — note that `krabs.dev` is NOT in that Cloudflare account, it's on Vercel's nameservers.
+- DNS: Cloudflare. Cloudflare creds live in `~/.claude/credentials/cloudflare.env` (Realtia Labs account, owns `realtialabs.com`, `panamakey.com`, and — since 2026-06-18 — `krabs.dev`). `krabs.dev` was migrated off Vercel's nameservers (`ns1/ns2.vercel-dns.com`) onto Cloudflare (`luke/virginia.ns.cloudflare.com`). Vercel still hosts the deploy; Cloudflare now serves DNS for the zone.
 
 ---
 
