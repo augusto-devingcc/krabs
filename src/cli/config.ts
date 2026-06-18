@@ -73,7 +73,7 @@ export function requireConfig(): CliConfig {
   const cfg = readConfig();
   if (!cfg.token) {
     throw new CliConfigError(
-      "Not authenticated. Run `krabs auth login` or set KRABS_API_KEY.",
+      "Not authenticated. Run `pnpm setup` to mint a local API key, or set KRABS_API_KEY.",
     );
   }
   return { apiUrl: cfg.apiUrl ?? DEFAULT_API_URL, token: cfg.token };

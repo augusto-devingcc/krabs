@@ -1,3 +1,44 @@
+CREATE TABLE `accounts` (
+	`id` text PRIMARY KEY NOT NULL,
+	`email` text NOT NULL,
+	`name` text,
+	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+	`updated_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `accounts_email_unique` ON `accounts` (`email`);--> statement-breakpoint
+CREATE TABLE `agent_actions` (
+	`id` text PRIMARY KEY NOT NULL,
+	`account_id` text NOT NULL,
+	`api_key_id` text NOT NULL,
+	`operation` text NOT NULL,
+	`target_kind` text NOT NULL,
+	`target_id` text NOT NULL,
+	`intent` text,
+	`metadata` text,
+	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+	FOREIGN KEY (`account_id`) REFERENCES `accounts`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`api_key_id`) REFERENCES `api_keys`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `agent_actions_account_created_idx` ON `agent_actions` (`account_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX `agent_actions_target_idx` ON `agent_actions` (`target_kind`,`target_id`);--> statement-breakpoint
+CREATE INDEX `agent_actions_actor_idx` ON `agent_actions` (`api_key_id`);--> statement-breakpoint
+CREATE TABLE `api_keys` (
+	`id` text PRIMARY KEY NOT NULL,
+	`account_id` text NOT NULL,
+	`label` text NOT NULL,
+	`token_hash` text NOT NULL,
+	`token_preview` text NOT NULL,
+	`last_used_at` text,
+	`revoked_at` text,
+	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+	FOREIGN KEY (`account_id`) REFERENCES `accounts`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `api_keys_token_hash_unique` ON `api_keys` (`token_hash`);--> statement-breakpoint
+CREATE INDEX `api_keys_account_idx` ON `api_keys` (`account_id`);--> statement-breakpoint
+CREATE INDEX `api_keys_hash_idx` ON `api_keys` (`token_hash`);--> statement-breakpoint
 CREATE TABLE `expenses` (
 	`id` text PRIMARY KEY NOT NULL,
 	`account_id` text NOT NULL,
@@ -17,12 +58,25 @@ CREATE TABLE `expenses` (
 CREATE INDEX `expenses_account_occurred_idx` ON `expenses` (`account_id`,`occurred_at`);--> statement-breakpoint
 CREATE INDEX `expenses_account_category_idx` ON `expenses` (`account_id`,`category`);--> statement-breakpoint
 CREATE UNIQUE INDEX `expenses_source_ref_idx` ON `expenses` (`account_id`,`source`,`source_ref`);--> statement-breakpoint
+CREATE TABLE `idempotency_keys` (
+	`id` text PRIMARY KEY NOT NULL,
+	`account_id` text NOT NULL,
+	`api_key_id` text NOT NULL,
+	`key` text NOT NULL,
+	`operation` text NOT NULL,
+	`response_status` integer NOT NULL,
+	`response_body` text NOT NULL,
+	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+	FOREIGN KEY (`account_id`) REFERENCES `accounts`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`api_key_id`) REFERENCES `api_keys`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `idempotency_keys_account_key_idx` ON `idempotency_keys` (`account_id`,`key`);--> statement-breakpoint
 CREATE TABLE `invoices` (
 	`id` text PRIMARY KEY NOT NULL,
 	`account_id` text NOT NULL,
-	`contact_id` text NOT NULL,
+	`counterparty` text,
 	`subscription_id` text,
-	`deal_id` text,
 	`number` text NOT NULL,
 	`amount_cents` integer NOT NULL,
 	`currency` text DEFAULT 'USD' NOT NULL,
@@ -36,15 +90,11 @@ CREATE TABLE `invoices` (
 	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
 	`updated_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
 	FOREIGN KEY (`account_id`) REFERENCES `accounts`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`deal_id`) REFERENCES `deals`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE INDEX `invoices_account_status_idx` ON `invoices` (`account_id`,`status`);--> statement-breakpoint
-CREATE INDEX `invoices_contact_idx` ON `invoices` (`contact_id`);--> statement-breakpoint
 CREATE INDEX `invoices_subscription_idx` ON `invoices` (`subscription_id`);--> statement-breakpoint
-CREATE INDEX `invoices_deal_idx` ON `invoices` (`deal_id`);--> statement-breakpoint
 CREATE INDEX `invoices_account_issued_idx` ON `invoices` (`account_id`,`issued_at`);--> statement-breakpoint
 CREATE UNIQUE INDEX `invoices_account_number_idx` ON `invoices` (`account_id`,`number`);--> statement-breakpoint
 CREATE TABLE `products` (
@@ -69,7 +119,7 @@ CREATE INDEX `products_account_status_idx` ON `products` (`account_id`,`status`)
 CREATE TABLE `subscriptions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`account_id` text NOT NULL,
-	`contact_id` text NOT NULL,
+	`counterparty` text,
 	`product_id` text,
 	`amount_cents` integer NOT NULL,
 	`currency` text DEFAULT 'USD' NOT NULL,
@@ -87,11 +137,9 @@ CREATE TABLE `subscriptions` (
 	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
 	`updated_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
 	FOREIGN KEY (`account_id`) REFERENCES `accounts`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE INDEX `subs_account_status_idx` ON `subscriptions` (`account_id`,`status`);--> statement-breakpoint
-CREATE INDEX `subs_contact_idx` ON `subscriptions` (`contact_id`);--> statement-breakpoint
 CREATE INDEX `subs_product_idx` ON `subscriptions` (`product_id`);--> statement-breakpoint
 CREATE INDEX `subs_period_end_idx` ON `subscriptions` (`account_id`,`current_period_end`);

@@ -28,14 +28,11 @@ jobs:
         run: pnpm typecheck
       - name: Tests
         run: pnpm test
-      - name: Build
+      - name: Build CLI / API / MCP
         run: |
           mkdir -p ./data
-          pnpm build
+          pnpm build:cli
         env:
-          # Stub Clerk vars so the Next.js build doesn't fail when CLERK_* is empty.
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_stub
-          CLERK_SECRET_KEY: sk_test_stub
           DATABASE_URL: file:./data/ci.db
 
   cli:

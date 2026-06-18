@@ -1,19 +1,10 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { authCommand } from "./commands/auth.js";
-import { contactCommand } from "./commands/contact.js";
 import { actionCommand } from "./commands/action.js";
 import { accountCommand } from "./commands/account.js";
 import { keyCommand } from "./commands/key.js";
 import { schemaCommand } from "./commands/schema.js";
-import { identityCommand } from "./commands/identity.js";
-import { interactionCommand } from "./commands/interaction.js";
-import { dealCommand } from "./commands/deal.js";
-import { taskCommand } from "./commands/task.js";
-import { noteCommand } from "./commands/note.js";
-import { tagCommand } from "./commands/tag.js";
 import { financeCommand } from "./commands/finance.js";
-import { integrationCommand } from "./commands/integration.js";
 import { ApiClientError } from "./client.js";
 import { CliConfigError } from "./config.js";
 import { codeToExit, ExitCode } from "./exit-codes.js";
@@ -22,23 +13,14 @@ const program = new Command();
 
 program
   .name("krabs")
-  .description("krabs.dev — CRM for AI agents")
-  .version("0.0.1")
+  .description("krabs — personal finance tracker for AI agents")
+  .version("0.6.0")
   .enablePositionalOptions();
 
-program.addCommand(authCommand());
 program.addCommand(schemaCommand());
 program.addCommand(accountCommand());
 program.addCommand(keyCommand());
-program.addCommand(contactCommand());
-program.addCommand(identityCommand());
-program.addCommand(interactionCommand());
-program.addCommand(dealCommand());
-program.addCommand(taskCommand());
-program.addCommand(noteCommand());
-program.addCommand(tagCommand());
 program.addCommand(financeCommand());
-program.addCommand(integrationCommand());
 program.addCommand(actionCommand());
 
 async function main() {

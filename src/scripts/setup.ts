@@ -269,7 +269,6 @@ async function main() {
       id: accountId,
       email: flags.email,
       name: flags.name,
-      clerkUserId: null,
     });
     await db.insert(apiKeys).values({
       id: apiKeyId,
@@ -346,11 +345,10 @@ async function main() {
   console.log("  1. Start the API:    pnpm dev:api   (in another terminal)");
   console.log("  2. Restart Claude Desktop / Cursor so it loads the new MCP server");
   console.log("  3. In your agent, say:");
-  console.log('       "Read https://krabs.dev/skill.md and run the kickoff."');
+  console.log('       "Call schema.describe on krabs, then record my income and expenses."');
   console.log("");
-  console.log("The agent fetches the skill, sees business_profile is null,");
-  console.log("asks you the kickoff questions, and persists the answers via");
-  console.log("businessProfile.set. You don't have to teach it anything.");
+  console.log("Everything (products, subscriptions, invoices, expenses, finance");
+  console.log("reporting) is reachable over MCP / CLI / HTTP with the same contract.");
   console.log("");
 }
 

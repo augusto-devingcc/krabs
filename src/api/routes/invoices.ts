@@ -21,22 +21,16 @@ invoicesRoute.get("/", async (c) => {
   const auth = c.get("auth");
   const filters: {
     status?: string;
-    contactId?: string;
     subscriptionId?: string;
-    dealId?: string;
     from?: string;
     to?: string;
   } = {};
   const status = c.req.query("status");
-  const contactId = c.req.query("contact_id");
   const subscriptionId = c.req.query("subscription_id");
-  const dealId = c.req.query("deal_id");
   const from = c.req.query("from");
   const to = c.req.query("to");
   if (status) filters.status = status;
-  if (contactId) filters.contactId = contactId;
   if (subscriptionId) filters.subscriptionId = subscriptionId;
-  if (dealId) filters.dealId = dealId;
   if (from) filters.from = from;
   if (to) filters.to = to;
   return c.json(wrap(await listInvoices(auth, filters as Parameters<typeof listInvoices>[1])));

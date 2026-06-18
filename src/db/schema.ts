@@ -3,25 +3,16 @@ import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqli
 
 const nowDefault = sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`;
 
-export const accounts = sqliteTable(
-  "accounts",
-  {
-    id: text("id").primaryKey(),
-    email: text("email").notNull().unique(),
-    name: text("name"),
-    clerkUserId: text("clerk_user_id"),
-    // JSON: free-form business profile filled during the agent kickoff —
-    // revenue model (recurring / one_time / hybrid / freelance), ad channels,
-    // typical contract size, etc. Used by the agent to frame reporting and
-    // structure deals/products/subscriptions correctly.
-    businessProfile: text("business_profile"),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    updatedAt: text("updated_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    clerkUserIdx: uniqueIndex("accounts_clerk_user_id_idx").on(t.clerkUserId),
-  }),
-);
+// Single-account, self-host personal finance tracker. `accounts` is retained
+// as internal plumbing so multi-tenant column filters stay intact, but in
+// practice there is exactly one row (seeded by `pnpm setup`).
+export const accounts = sqliteTable("accounts", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  createdAt: text("created_at").notNull().default(nowDefault),
+  updatedAt: text("updated_at").notNull().default(nowDefault),
+});
 
 export const apiKeys = sqliteTable(
   "api_keys",
@@ -43,74 +34,6 @@ export const apiKeys = sqliteTable(
   }),
 );
 
-export const contactStatuses = ["lead", "prospect", "customer", "archived"] as const;
-export type ContactStatus = (typeof contactStatuses)[number];
-
-export const contacts = sqliteTable(
-  "contacts",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    primaryEmail: text("primary_email"),
-    primaryPhone: text("primary_phone"),
-    status: text("status").notNull().default("lead"),
-    // External provider IDs — populated when an integration mirrors the entity.
-    stripeCustomerId: text("stripe_customer_id"),
-    // JSON object as TEXT
-    customFields: text("custom_fields"),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    updatedAt: text("updated_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountIdx: index("contacts_account_idx").on(t.accountId),
-    accountEmailIdx: index("contacts_account_email_idx").on(t.accountId, t.primaryEmail),
-    stripeCustomerIdx: index("contacts_stripe_customer_idx").on(
-      t.accountId,
-      t.stripeCustomerId,
-    ),
-  }),
-);
-
-export const identityKinds = [
-  "email",
-  "phone",
-  "whatsapp",
-  "telegram",
-  "linkedin",
-  "twitter",
-  "instagram",
-  "other",
-] as const;
-export type IdentityKind = (typeof identityKinds)[number];
-
-export const identities = sqliteTable(
-  "identities",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    contactId: text("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
-    kind: text("kind").notNull(),
-    value: text("value").notNull(),
-    confidence: integer("confidence").notNull().default(100),
-    createdAt: text("created_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    contactIdx: index("identities_contact_idx").on(t.contactId),
-    accountKindValueIdx: uniqueIndex("identities_account_kind_value_idx").on(
-      t.accountId,
-      t.kind,
-      t.value,
-    ),
-  }),
-);
-
 export const agentActions = sqliteTable(
   "agent_actions",
   {
@@ -125,7 +48,7 @@ export const agentActions = sqliteTable(
     targetKind: text("target_kind").notNull(),
     targetId: text("target_id").notNull(),
     intent: text("intent"),
-    // JSON: structured metadata (e.g. snapshot of deleted entity, merge plan)
+    // JSON: structured metadata (e.g. snapshot of deleted entity).
     metadata: text("metadata"),
     createdAt: text("created_at").notNull().default(nowDefault),
   },
@@ -133,159 +56,6 @@ export const agentActions = sqliteTable(
     accountCreatedIdx: index("agent_actions_account_created_idx").on(t.accountId, t.createdAt),
     targetIdx: index("agent_actions_target_idx").on(t.targetKind, t.targetId),
     actorIdx: index("agent_actions_actor_idx").on(t.apiKeyId),
-  }),
-);
-
-export const interactionKinds = [
-  "email_in",
-  "email_out",
-  "call",
-  "meeting",
-  "message",
-  "note",
-  "agent_log",
-  "custom",
-] as const;
-export type InteractionKind = (typeof interactionKinds)[number];
-
-export const interactionDirections = ["inbound", "outbound", "internal"] as const;
-export type InteractionDirection = (typeof interactionDirections)[number];
-
-export const interactions = sqliteTable(
-  "interactions",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
-    kind: text("kind").notNull(),
-    direction: text("direction"),
-    source: text("source"),
-    subject: text("subject"),
-    body: text("body"),
-    metadata: text("metadata"),
-    occurredAt: text("occurred_at").notNull(),
-    createdAt: text("created_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountOccurredIdx: index("interactions_account_occurred_idx").on(t.accountId, t.occurredAt),
-    contactOccurredIdx: index("interactions_contact_occurred_idx").on(t.contactId, t.occurredAt),
-    kindIdx: index("interactions_kind_idx").on(t.accountId, t.kind),
-  }),
-);
-
-export const dealStages = ["new", "qualified", "proposal", "negotiation", "closed"] as const;
-export const dealStatuses = ["open", "won", "lost"] as const;
-export type DealStatus = (typeof dealStatuses)[number];
-
-export const deals = sqliteTable(
-  "deals",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
-    title: text("title").notNull(),
-    stage: text("stage").notNull().default("new"),
-    status: text("status").notNull().default("open"),
-    value: integer("value"),
-    currency: text("currency"),
-    expectedCloseDate: text("expected_close_date"),
-    customFields: text("custom_fields"),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    updatedAt: text("updated_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountIdx: index("deals_account_idx").on(t.accountId),
-    contactIdx: index("deals_contact_idx").on(t.contactId),
-    stageIdx: index("deals_account_stage_idx").on(t.accountId, t.stage),
-  }),
-);
-
-export const taskStatuses = ["open", "in_progress", "done", "cancelled"] as const;
-export type TaskStatus = (typeof taskStatuses)[number];
-export const taskPriorities = ["low", "normal", "high"] as const;
-export type TaskPriority = (typeof taskPriorities)[number];
-
-export const tasks = sqliteTable(
-  "tasks",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
-    dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
-    title: text("title").notNull(),
-    description: text("description"),
-    status: text("status").notNull().default("open"),
-    priority: text("priority").notNull().default("normal"),
-    dueAt: text("due_at"),
-    completedAt: text("completed_at"),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    updatedAt: text("updated_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountStatusIdx: index("tasks_account_status_idx").on(t.accountId, t.status),
-    contactIdx: index("tasks_contact_idx").on(t.contactId),
-    dealIdx: index("tasks_deal_idx").on(t.dealId),
-    dueIdx: index("tasks_due_idx").on(t.accountId, t.dueAt),
-  }),
-);
-
-export const notes = sqliteTable(
-  "notes",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
-    dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
-    title: text("title"),
-    body: text("body").notNull(),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    updatedAt: text("updated_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountIdx: index("notes_account_idx").on(t.accountId),
-    contactIdx: index("notes_contact_idx").on(t.contactId),
-    dealIdx: index("notes_deal_idx").on(t.dealId),
-  }),
-);
-
-export const tags = sqliteTable(
-  "tags",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    color: text("color"),
-    createdAt: text("created_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountNameIdx: uniqueIndex("tags_account_name_idx").on(t.accountId, t.name),
-  }),
-);
-
-export const contactTags = sqliteTable(
-  "contact_tags",
-  {
-    contactId: text("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
-    tagId: text("tag_id")
-      .notNull()
-      .references(() => tags.id, { onDelete: "cascade" }),
-    createdAt: text("created_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    pk: uniqueIndex("contact_tags_pk").on(t.contactId, t.tagId),
-    tagIdx: index("contact_tags_tag_idx").on(t.tagId),
   }),
 );
 
@@ -311,10 +81,11 @@ export const idempotencyKeys = sqliteTable(
 );
 
 // ─────────────────────────────────────────────────────────────────
-// Financial primitives (Phase A): products, subscriptions, invoices, expenses.
+// Financial primitives: products, subscriptions, invoices, expenses.
 // All money is stored as integer cents to avoid float drift. Currency defaults
 // to USD per row but is overridable. MRR is denormalized on subscriptions for
-// O(1) aggregate queries.
+// O(1) aggregate queries. `counterparty` is free-text (a customer/vendor name)
+// since this is a single-operator tracker with no contact graph.
 // ─────────────────────────────────────────────────────────────────
 
 export const productKinds = ["saas", "service", "retainer", "product", "other"] as const;
@@ -370,9 +141,8 @@ export const subscriptions = sqliteTable(
     accountId: text("account_id")
       .notNull()
       .references(() => accounts.id, { onDelete: "cascade" }),
-    contactId: text("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
+    // Free-text customer/payer name. Optional.
+    counterparty: text("counterparty"),
     productId: text("product_id").references(() => products.id, { onDelete: "set null" }),
     amountCents: integer("amount_cents").notNull(),
     currency: text("currency").notNull().default("USD"),
@@ -387,18 +157,14 @@ export const subscriptions = sqliteTable(
     canceledAt: text("canceled_at"),
     cancelAt: text("cancel_at"),
     cancelReason: text("cancel_reason"),
-    // Mirror id from the upstream integration (e.g. Stripe sub_XXX).
-    stripeSubscriptionId: text("stripe_subscription_id"),
     customFields: text("custom_fields"),
     createdAt: text("created_at").notNull().default(nowDefault),
     updatedAt: text("updated_at").notNull().default(nowDefault),
   },
   (t) => ({
     accountStatusIdx: index("subs_account_status_idx").on(t.accountId, t.status),
-    contactIdx: index("subs_contact_idx").on(t.contactId),
     productIdx: index("subs_product_idx").on(t.productId),
     periodEndIdx: index("subs_period_end_idx").on(t.accountId, t.currentPeriodEnd),
-    stripeSubIdx: index("subs_stripe_id_idx").on(t.accountId, t.stripeSubscriptionId),
   }),
 );
 
@@ -419,13 +185,11 @@ export const invoices = sqliteTable(
     accountId: text("account_id")
       .notNull()
       .references(() => accounts.id, { onDelete: "cascade" }),
-    contactId: text("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
+    // Free-text customer/payer name. Optional.
+    counterparty: text("counterparty"),
     subscriptionId: text("subscription_id").references(() => subscriptions.id, {
       onDelete: "set null",
     }),
-    dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
     number: text("number").notNull(),
     amountCents: integer("amount_cents").notNull(),
     currency: text("currency").notNull().default("USD"),
@@ -435,20 +199,15 @@ export const invoices = sqliteTable(
     paidAt: text("paid_at"),
     voidedAt: text("voided_at"),
     note: text("note"),
-    stripeInvoiceId: text("stripe_invoice_id"),
-    stripeChargeId: text("stripe_charge_id"),
     customFields: text("custom_fields"),
     createdAt: text("created_at").notNull().default(nowDefault),
     updatedAt: text("updated_at").notNull().default(nowDefault),
   },
   (t) => ({
     accountStatusIdx: index("invoices_account_status_idx").on(t.accountId, t.status),
-    contactIdx: index("invoices_contact_idx").on(t.contactId),
     subscriptionIdx: index("invoices_subscription_idx").on(t.subscriptionId),
-    dealIdx: index("invoices_deal_idx").on(t.dealId),
     issuedIdx: index("invoices_account_issued_idx").on(t.accountId, t.issuedAt),
     numberIdx: uniqueIndex("invoices_account_number_idx").on(t.accountId, t.number),
-    stripeInvoiceIdx: index("invoices_stripe_id_idx").on(t.accountId, t.stripeInvoiceId),
   }),
 );
 
@@ -490,7 +249,7 @@ export const expenses = sqliteTable(
     description: text("description"),
     occurredAt: text("occurred_at").notNull(),
     source: text("source").notNull().default("manual"),
-    // Used to dedup imports from external sources (stripe charge id, ads transaction id…).
+    // Used to dedup imports from external sources (bank/ads transaction id…).
     sourceRef: text("source_ref"),
     customFields: text("custom_fields"),
     createdAt: text("created_at").notNull().default(nowDefault),
@@ -502,162 +261,11 @@ export const expenses = sqliteTable(
   }),
 );
 
+export type AccountRow = typeof accounts.$inferSelect;
+export type ApiKeyRow = typeof apiKeys.$inferSelect;
+export type AgentActionRow = typeof agentActions.$inferSelect;
+export type IdempotencyKeyRow = typeof idempotencyKeys.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
 export type SubscriptionRow = typeof subscriptions.$inferSelect;
 export type InvoiceRow = typeof invoices.$inferSelect;
 export type ExpenseRow = typeof expenses.$inferSelect;
-
-// ─────────────────────────────────────────────────────────────────
-// Integrations (Phase B): external service connections per account.
-// Credentials are encrypted at rest (AES-256-GCM, KRABS_CRED_ENCRYPTION_KEY).
-// stripe_events is a dedup ledger — Stripe redelivers events for ~3 days on
-// any non-2xx response, so the webhook handler must short-circuit on repeats.
-// ─────────────────────────────────────────────────────────────────
-
-export const integrationProviders = ["stripe", "resend"] as const;
-export type IntegrationProvider = (typeof integrationProviders)[number];
-
-export const integrationStatuses = ["active", "disconnected", "error"] as const;
-export type IntegrationStatus = (typeof integrationStatuses)[number];
-
-export const integrations = sqliteTable(
-  "integrations",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    provider: text("provider").notNull(),
-    displayName: text("display_name").notNull(),
-    // Encrypted blobs — AES-256-GCM ciphertext, base64-encoded with iv prefix.
-    // Never log, never return in API responses.
-    secretKeyEncrypted: text("secret_key_encrypted").notNull(),
-    webhookSecretEncrypted: text("webhook_secret_encrypted"),
-    // Provider's id for the webhook endpoint we created (e.g. we_XXX in Stripe).
-    // Used to delete the endpoint cleanly on disconnect.
-    webhookEndpointId: text("webhook_endpoint_id"),
-    // Provider's account id (Stripe acct_XXX, etc.) — useful for routing and
-    // for the dashboard to display "Connected to Acme LLC's Stripe account".
-    providerAccountId: text("provider_account_id"),
-    status: text("status").notNull().default("active"),
-    lastSyncedAt: text("last_synced_at"),
-    lastErrorMessage: text("last_error_message"),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    updatedAt: text("updated_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountProviderIdx: uniqueIndex("integrations_account_provider_idx").on(
-      t.accountId,
-      t.provider,
-    ),
-    statusIdx: index("integrations_status_idx").on(t.status),
-  }),
-);
-
-export const stripeEvents = sqliteTable(
-  "stripe_events",
-  {
-    // The Stripe event id (evt_XXX) is the primary key — natural dedup.
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    integrationId: text("integration_id")
-      .notNull()
-      .references(() => integrations.id, { onDelete: "cascade" }),
-    type: text("type").notNull(),
-    receivedAt: text("received_at").notNull().default(nowDefault),
-    processedAt: text("processed_at"),
-    // Raw event payload, kept for replay/debug. Capped via cron later.
-    payload: text("payload").notNull(),
-    errorMessage: text("error_message"),
-    retries: integer("retries").notNull().default(0),
-  },
-  (t) => ({
-    accountReceivedIdx: index("stripe_events_account_received_idx").on(
-      t.accountId,
-      t.receivedAt,
-    ),
-    typeIdx: index("stripe_events_type_idx").on(t.type),
-  }),
-);
-
-export type IntegrationRow = typeof integrations.$inferSelect;
-export type StripeEventRow = typeof stripeEvents.$inferSelect;
-
-export const emailDomainStatuses = ["pending", "verified", "failed"] as const;
-export type EmailDomainStatus = (typeof emailDomainStatuses)[number];
-
-export const emailDomains = sqliteTable(
-  "email_domains",
-  {
-    id: text("id").primaryKey(),
-    accountId: text("account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    integrationId: text("integration_id")
-      .notNull()
-      .references(() => integrations.id, { onDelete: "cascade" }),
-    domain: text("domain").notNull(),
-    resendDomainId: text("resend_domain_id"),
-    status: text("status").notNull().default("pending"),
-    // JSON array of { name, type, value, ttl, status } DNS records Resend wants us to add.
-    dnsRecords: text("dns_records"),
-    region: text("region"),
-    lastVerifiedAt: text("last_verified_at"),
-    lastErrorMessage: text("last_error_message"),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    updatedAt: text("updated_at").notNull().default(nowDefault),
-  },
-  (t) => ({
-    accountIdx: index("email_domains_account_idx").on(t.accountId),
-    integrationIdx: index("email_domains_integration_idx").on(t.integrationId),
-    accountDomainIdx: uniqueIndex("email_domains_account_domain_idx").on(t.accountId, t.domain),
-  }),
-);
-
-export type EmailDomainRow = typeof emailDomains.$inferSelect;
-
-export const deviceAuthorizationStatuses = ["pending", "approved", "denied", "expired"] as const;
-export type DeviceAuthorizationStatus = (typeof deviceAuthorizationStatuses)[number];
-
-export const deviceAuthorizations = sqliteTable(
-  "device_authorizations",
-  {
-    id: text("id").primaryKey(),
-    deviceCode: text("device_code").notNull().unique(),
-    userCode: text("user_code").notNull().unique(),
-    // Null until approved (we don't know which account until human approves).
-    accountId: text("account_id").references(() => accounts.id, { onDelete: "cascade" }),
-    // pending | approved | denied | expired
-    status: text("status").notNull().default("pending"),
-    // JSON: { clientName, userAgent, ip } — what the agent told us about itself.
-    clientMeta: text("client_meta"),
-    // The api_key row created on approval. Null while pending/denied/expired.
-    approvedApiKeyId: text("approved_api_key_id").references(() => apiKeys.id, {
-      onDelete: "set null",
-    }),
-    createdAt: text("created_at").notNull().default(nowDefault),
-    expiresAt: text("expires_at").notNull(),
-    approvedAt: text("approved_at"),
-  },
-  (t) => ({
-    statusIdx: index("device_authorizations_status_idx").on(t.status),
-    expiresIdx: index("device_authorizations_expires_idx").on(t.expiresAt),
-  }),
-);
-
-export type DeviceAuthorizationRow = typeof deviceAuthorizations.$inferSelect;
-
-export type AccountRow = typeof accounts.$inferSelect;
-export type ApiKeyRow = typeof apiKeys.$inferSelect;
-export type ContactRow = typeof contacts.$inferSelect;
-export type IdentityRow = typeof identities.$inferSelect;
-export type AgentActionRow = typeof agentActions.$inferSelect;
-export type IdempotencyKeyRow = typeof idempotencyKeys.$inferSelect;
-export type InteractionRow = typeof interactions.$inferSelect;
-export type DealRow = typeof deals.$inferSelect;
-export type TaskRow = typeof tasks.$inferSelect;
-export type NoteRow = typeof notes.$inferSelect;
-export type TagRow = typeof tags.$inferSelect;
-export type ContactTagRow = typeof contactTags.$inferSelect;

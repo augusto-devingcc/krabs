@@ -19,12 +19,10 @@ subscriptionsRoute.use("*", apiKeyAuth);
 
 subscriptionsRoute.get("/", async (c) => {
   const auth = c.get("auth");
-  const filters: { status?: string; contactId?: string; productId?: string } = {};
+  const filters: { status?: string; productId?: string } = {};
   const status = c.req.query("status");
-  const contactId = c.req.query("contact_id");
   const productId = c.req.query("product_id");
   if (status) filters.status = status;
-  if (contactId) filters.contactId = contactId;
   if (productId) filters.productId = productId;
   return c.json(
     wrap(await listSubscriptions(auth, filters as Parameters<typeof listSubscriptions>[1])),
