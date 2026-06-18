@@ -29,6 +29,9 @@ importers:
       pino:
         specifier: ^9.5.0
         version: 9.14.0
+      stripe:
+        specifier: ^22.2.1
+        version: 22.2.1(@types/node@22.19.19)
       ulid:
         specifier: ^2.3.0
         version: 2.4.0
@@ -2016,6 +2019,15 @@ packages:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
 
+  stripe@22.2.1:
+    resolution: {integrity: sha512-ULAtq25USBEx3yeN5zimEkfYVFETVMP5om25Ryr8ol11P62imaCZLBIEW78T7zm7Wg3wnZi+80S72yf3LCpNhw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
   thread-stream@3.1.0:
     resolution: {integrity: sha512-OqyPZ9u96VohAyMfJykzmivOrY2wfMSf3C5TtFJVgN+Hm6aj+voFhlK+kZEIv2FBh1X6Xp3DlnCOfEQ3B2J86A==}
 
@@ -3800,6 +3812,10 @@ snapshots:
   std-env@3.10.0: {}
 
   strip-json-comments@5.0.3: {}
+
+  stripe@22.2.1(@types/node@22.19.19):
+    optionalDependencies:
+      '@types/node': 22.19.19
 
   thread-stream@3.1.0:
     dependencies:

@@ -11,12 +11,16 @@ import { invoicesRoute } from "./routes/invoices.js";
 import { expensesRoute } from "./routes/expenses.js";
 import { financeRoute } from "./routes/finance.js";
 import { mcpRoute } from "./routes/mcp.js";
+import { webhookStripeRoute } from "./routes/webhook-stripe.js";
 import { errorHandler } from "./middleware/error.js";
 
 export function buildApp() {
   const app = new Hono();
 
   app.onError(errorHandler);
+
+  // Stripe webhook — no auth middleware, Stripe authenticates via signature
+  app.route("/v1/webhooks/stripe", webhookStripeRoute);
 
   app.route("/v1/health", healthRoute);
   app.route("/v1/schema", schemaRoute);
